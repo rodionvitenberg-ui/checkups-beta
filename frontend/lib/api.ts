@@ -5,8 +5,17 @@ const api = axios.create({
     headers: { 'Content-Type': 'application/json' },
 });
 
+// --- Типы данных ---
+
+export interface PatientMetadata {
+    extracted_name?: string;
+    extracted_birth_date?: string;
+    extracted_gender?: string;
+}
+
 export interface AIIndicator {
     name: string;
+    slug?: string; // <-- Новое поле для графиков
     value: string;
     unit?: string;
     ref_range?: string;
@@ -30,6 +39,8 @@ export interface AISummary {
 }
 
 export interface AIResult {
+    reasoning: string; // <-- Новое поле (Chain-of-Thought)
+    patient_info?: PatientMetadata; // <-- Данные о пациенте с бланка
     summary: AISummary;
     indicators: AIIndicator[];
     causes: AICause[];
@@ -40,7 +51,16 @@ export interface AnalysisResponse {
     uid: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
     ai_result?: AIResult;
+    patient_profile_id?: number; // <-- ID профиля, если привязан
 }
+
+export interface AuthResponse {
+    token: string;
+    user_email: string;
+}
+
+// --- API Методы ---
+
 export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);
@@ -52,5 +72,13 @@ export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
 
 export const getAnalysisResult = async (uid: string): Promise<AnalysisResponse> => {
     const response = await api.get<AnalysisResponse>(`/analyses/${uid}`);
+    return response.data;
+};
+
+export const claimAnalysis = async (analysisUid: string, email: string): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/claim-analysis', {
+        analysis_uid: analysisUid,
+        email: email
+    });
     return response.data;
 };

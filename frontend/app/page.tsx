@@ -1,5 +1,6 @@
 import Link from 'next/link';
 import { FileUploader } from '@/components/home/FileUploader';
+import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { Activity, Brain, ShieldCheck, FileClock, ArrowRight } from 'lucide-react';
 
 export default function Home() {
@@ -93,27 +94,8 @@ export default function Home() {
           </Link>
         </section>
 
-        {/* 5. Блок отзывов */}
-        <section className="text-center border-t border-slate-100 pt-16">
-          <h2 className="text-2xl font-bold text-slate-900 mb-8">Что говорят пользователи</h2>
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-            {/* Заглушки для отзывов */}
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm text-left">
-                <div className="flex items-center gap-1 text-yellow-400 mb-3">
-                  {'★'.repeat(5)}
-                </div>
-                <p className="text-slate-600 text-sm mb-4">
-                  "Отличный сервис! Очень помог разобраться с анализом крови. Теперь понимаю, о чем говорить с врачом."
-                </p>
-                <div className="flex items-center gap-3">
-                  <div className="w-8 h-8 rounded-full bg-slate-200"></div>
-                  <span className="text-sm font-medium text-slate-900">Пользователь #{i}</span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </section>
+        {/* 5. Блок отзывов (Новый) */}
+       <TestimonialsSection />
 
       </div>
     </div>

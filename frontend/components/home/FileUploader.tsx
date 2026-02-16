@@ -53,8 +53,17 @@ export function FileUploader() {
     setError(null);
 
     try {
-      const { id } = await uploadAnalysis(file);
-      router.push(`/analysis/${id}`);
+      // api.ts: uploadAnalysis возвращает response.data, который соответствует типу AnalysisResponse
+      const response = await uploadAnalysis(file);
+
+      // FIX: Используем uid вместо id, согласно интерфейсу в api.ts
+      const analysisId = response.uid;
+
+      if (!analysisId) {
+        throw new Error('ID анализа не получен от сервера');
+      }
+
+      router.push(`/analysis/${analysisId}`);
     } catch (err) {
       console.error(err);
       setError('Произошла ошибка при загрузке. Попробуйте еще раз.');
