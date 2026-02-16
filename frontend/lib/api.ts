@@ -1,13 +1,9 @@
-// frontend/lib/api.ts
-
 import axios from 'axios';
 
 const api = axios.create({
     baseURL: 'http://localhost:8000/api',
     headers: { 'Content-Type': 'application/json' },
 });
-
-// --- Типы данных (соответствуют Pydantic схемам бэкенда) ---
 
 export interface AIIndicator {
     name: string;
@@ -43,10 +39,8 @@ export interface AIResult {
 export interface AnalysisResponse {
     uid: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
-    ai_result?: AIResult; // Теперь тут строгая типизация
+    ai_result?: AIResult;
 }
-
-// ... функции uploadAnalysis и getAnalysisResult остаются прежними ...
 export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);

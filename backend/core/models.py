@@ -1,4 +1,5 @@
 import uuid
+import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
 
@@ -31,19 +32,42 @@ class User(AbstractUser):
 
     def __str__(self):
         return self.email
+    
+class PatientProfile(models.Model):
+    """
+    Профиль конкретного человека (Папа, Ребенок, Я), 
+    к которому привязываются анализы.
+    """
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patients')
+    
+    # Как пользователь называет пациента (например: "Сынок", "Мама", "Василий")
+    full_name = models.CharField(max_length=255)
+    
+    # Данные для медицинской логики
+    birth_date = models.DateField(null=True, blank=True)
+    gender = models.CharField(
+        max_length=10, 
+        choices=[('M', 'Male'), ('F', 'Female')],
+        null=True, blank=True
+    )
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.full_name} ({self.user.email})"
 
 # --- Модель Анализа ---
 class MedicalAnalysis(models.Model):
-    # Уникальный ID, который мы отдадим фронту сразу после загрузки файла
-    # По этому ID мы будем "клеймить" (claim) анализ после регистрации
     uid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='analyses', null=True, blank=True)
     
+    # Ссылка на профиль (может быть пустой, пока юзер не привяжет)
+    patient = models.ForeignKey(PatientProfile, on_delete=models.SET_NULL, related_name='analyses', null=True, blank=True)
+    
     file = models.FileField(upload_to='analyses/%Y/%m/%d/')
     created_at = models.DateTimeField(auto_now_add=True)
     
-    # Статус обработки
     class Status(models.TextChoices):
         PENDING = 'pending', 'Ожидает'
         PROCESSING = 'processing', 'В работе'
@@ -52,9 +76,46 @@ class MedicalAnalysis(models.Model):
         
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
     
-    # Результат от AI храним в JSON, чтобы фронт мог красиво рендерить блоки
-    # (Клинический анализ, Причины, Рекомендации)
+    # JSON от AI (теперь будет включать и данные о найденном имени)
     ai_result = models.JSONField(null=True, blank=True)
     
     def __str__(self):
         return f"Analysis {self.uid} ({self.status})"
+    
+class AnalysisIndicator(models.Model):
+    """
+    Атомарная запись одного показателя для построения графиков.
+    Одна строка = Одна точка на графике.
+    """
+    analysis = models.ForeignKey(MedicalAnalysis, on_delete=models.CASCADE, related_name='atomic_indicators')
+    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='indicators')
+    
+    # slug из справочника (например, 'hemoglobin'). 
+    # db_index=True критически важен для быстрого поиска по всей истории.
+    slug = models.CharField(max_length=50, db_index=True)
+    
+    # Оригинальное название (для отображения в тултипе графика)
+    name = models.CharField(max_length=255)
+    
+    # Числовое значение для графиков. 
+    # Если AI вернул "не обнаружено", value будет null.
+    value = models.FloatField(null=True, blank=True)
+    
+    # Строковое значение (на всякий случай, если парсинг числа не удался)
+    string_value = models.CharField(max_length=50)
+    
+    unit = models.CharField(max_length=50, null=True, blank=True)
+    
+    # Дата взятия анализа (берем из анализа или OCR)
+    date = models.DateField(default=datetime.date.today)
+    
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        # Ускоряет запросы вида: "Дай мне гемоглобин этого пациента за год"
+        indexes = [
+            models.Index(fields=['patient', 'slug', 'date']),
+        ]
+
+    def __str__(self):
+        return f"{self.patient.full_name} - {self.slug}: {self.value}"

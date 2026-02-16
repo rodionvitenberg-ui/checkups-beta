@@ -12,13 +12,9 @@ from .prompts import EXTRACTOR_SYSTEM_PROMPT, INTERPRETER_SYSTEM_PROMPT, VERIFIE
 class AnalysisPipeline:
     def __init__(self):
         self.client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-        
-        # Конфигурация моделей
-        self.flash_model = "gemini-2.5-flash"
-        self.pro_model = "gemini-3.0-pro-001" # Или актуальная версия 3.0 Pro
+        self.model_name = "gemini-2.5-flash" 
 
     def _get_image_content(self, file_path: str):
-        """Подготовка изображения (как и раньше)"""
         path_obj = Path(file_path)
         parts = []
         if path_obj.suffix.lower() == '.pdf':
@@ -28,37 +24,31 @@ class AnalysisPipeline:
             parts.append(PIL.Image.open(file_path))
         return parts
 
-    def run_pipeline(self, file_path: str) -> dict:
-        """
-        Главный метод, запускающий цепочку:
-        Extract -> Interpret -> Verify
-        """
+    # ОБНОВЛЕННАЯ СИГНАТУРА: принимаем контекст
+    def run_pipeline(self, file_path: str, patient_context: str = None) -> dict:
         try:
-            print("--- Stage 1: Extraction (Flash) ---")
+            print(f"--- Stage 1: Extraction ({self.model_name}) ---")
             raw_data = self._step_extract(file_path)
-            if not raw_data: raise ValueError("Extraction failed")
-
-            print("--- Stage 2: Interpretation (Pro) ---")
-            interpreted_data = self._step_interpret(raw_data)
-            if not interpreted_data: raise ValueError("Interpretation failed")
-
-            print("--- Stage 3: Verification (Pro) ---")
+            
+            print(f"--- Stage 2: Interpretation ({self.model_name}) ---")
+            # Передаем контекст на этап интерпретации
+            interpreted_data = self._step_interpret(raw_data, patient_context)
+            
+            print(f"--- Stage 3: Verification ({self.model_name}) ---")
             verified_data = self._step_verify(raw_data, interpreted_data)
             
-            # Финальная валидация схемы перед отдачей
-            return AIResultSchema(**verified_data).dict()
+            return verified_data.model_dump()
 
         except Exception as e:
             print(f"Pipeline Error: {e}")
             return None
 
     def _step_extract(self, file_path):
-        """Шаг 1: Видим цифры"""
         content = self._get_image_content(file_path)
         content.insert(0, EXTRACTOR_SYSTEM_PROMPT)
         
         response = self.client.models.generate_content(
-            model=self.flash_model,
+            model=self.model_name,
             contents=content,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
@@ -67,27 +57,33 @@ class AnalysisPipeline:
         )
         return json.loads(response.text)
 
-    def _step_interpret(self, raw_data: dict):
-        """Шаг 2: Думаем как врач"""
+    def _step_interpret(self, raw_data: dict, patient_context: str = None):
+        # Формируем строку контекста
+        context_str = f"КОНТЕКСТ ПАЦИЕНТА: {patient_context}" if patient_context else "КОНТЕКСТ ПАЦИЕНТА: Неизвестен (анализируй по общим нормам)."
+
         prompt = f"""
         {INTERPRETER_SYSTEM_PROMPT}
+        
+        {context_str}
         
         ВОТ ИСХОДНЫЕ ДАННЫЕ (RAW JSON):
         {json.dumps(raw_data, ensure_ascii=False)}
         """
         
         response = self.client.models.generate_content(
-            model=self.pro_model,
+            model=self.model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                temperature=0.4 # Чуть больше свободы для объяснений
+                response_schema=AIResultSchema, # Chain-of-Thought поле 'reasoning' заполнится здесь
+                temperature=0.4
             )
         )
-        return json.loads(response.text)
+        return response.parsed
 
-    def _step_verify(self, raw_data: dict, interpreted_data: dict):
-        """Шаг 3: Проверяем ошибки"""
+    def _step_verify(self, raw_data: dict, interpreted_data):
+        interpreted_json = interpreted_data.model_dump_json() if hasattr(interpreted_data, 'model_dump_json') else json.dumps(interpreted_data, ensure_ascii=False)
+
         prompt = f"""
         {VERIFIER_SYSTEM_PROMPT}
         
@@ -95,15 +91,16 @@ class AnalysisPipeline:
         {json.dumps(raw_data, ensure_ascii=False)}
         
         ЗАКЛЮЧЕНИЕ ИНТЕРПРЕТАТОРА:
-        {json.dumps(interpreted_data, ensure_ascii=False)}
+        {interpreted_json}
         """
         
         response = self.client.models.generate_content(
-            model=self.pro_model,
+            model=self.model_name,
             contents=prompt,
             config=types.GenerateContentConfig(
                 response_mime_type="application/json",
-                temperature=0.1 # Максимальная строгость
+                response_schema=AIResultSchema,
+                temperature=0.1
             )
         )
-        return json.loads(response.text)
+        return response.parsed
