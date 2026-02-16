@@ -64,9 +64,8 @@ export interface AuthResponse {
 export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await api.post<AnalysisResponse>('/analyses/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' },
-    });
+    const response = await api.post<AnalysisResponse>('/analyses/upload', formData);
+    
     return response.data;
 };
 
