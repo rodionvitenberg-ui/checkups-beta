@@ -149,7 +149,11 @@ CELERY_TIMEZONE = 'UTC'
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
+    "http://92.113.146.158:3000",
+    "http://92.113.146.158",
 ]
+if os.getenv('CORS_ALLOWED_ORIGIN'):
+    CORS_ALLOWED_ORIGINS.append(os.getenv('CORS_ALLOWED_ORIGIN'))
 
 # Разрешаем передачу кук/токенов (важно для авторизации)
 CORS_ALLOW_CREDENTIALS = True
