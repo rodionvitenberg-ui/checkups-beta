@@ -1,7 +1,8 @@
 import axios from 'axios';
 
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+    baseURL: 'http://localhost:8000/api',
+    headers: { 'Content-Type': 'application/json' },
 });
 
 // --- Типы данных ---
@@ -63,8 +64,9 @@ export interface AuthResponse {
 export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    const response = await api.post<AnalysisResponse>('/analyses/upload', formData);
-    
+    const response = await api.post<AnalysisResponse>('/analyses/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+    });
     return response.data;
 };
 
