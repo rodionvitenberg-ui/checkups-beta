@@ -3,7 +3,7 @@
 import { useState, useRef } from 'react';
 import { UploadCloud, FileText, Loader2, FileUp } from 'lucide-react';
 import { clsx } from 'clsx';
-// Импорт API функции. Убедись, что путь верный.
+// Импорт API функции
 import { uploadAnalysis } from '@/lib/api'; 
 import { useRouter } from 'next/navigation';
 
@@ -53,17 +53,25 @@ export function FileUploader() {
     setError(null);
 
     try {
-      // api.ts: uploadAnalysis возвращает response.data, который соответствует типу AnalysisResponse
+      // Отправляем файл на сервер
       const response = await uploadAnalysis(file);
-
-      // FIX: Используем uid вместо id, согласно интерфейсу в api.ts
       const analysisId = response.uid;
 
       if (!analysisId) {
         throw new Error('ID анализа не получен от сервера');
       }
 
-      router.push(`/analysis/${analysisId}`);
+      // --- НОВАЯ ЛОГИКА МАРШРУТИЗАЦИИ ---
+      const token = localStorage.getItem('token');
+
+      if (token) {
+          // Если юзер авторизован - сразу на страницу анализа
+          router.push(`/analysis/${analysisId}`);
+      } else {
+          // Если аноним - на страницу псевдо-регистрации (claim)
+          router.push(`/claim/${analysisId}`);
+      }
+      
     } catch (err) {
       console.error(err);
       setError('Произошла ошибка при загрузке. Попробуйте еще раз.');

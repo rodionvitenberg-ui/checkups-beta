@@ -56,7 +56,12 @@ export default function AuthPage() {
                     variant: "success",
                 });
                 
-                router.push('/dashboard');
+                // МАГИЯ: Читаем callbackUrl из адресной строки (например ?callbackUrl=/analysis/123)
+                // Если параметра нет, отправляем в дефолтный дашборд
+                const searchParams = new URLSearchParams(window.location.search);
+                const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
+                
+                router.push(callbackUrl);
             }
         } catch (err: any) {
             console.error(err);
@@ -68,7 +73,7 @@ export default function AuthPage() {
                 toast({
                     title: "Аккаунт уже существует",
                     description: "Этот email уже зарегистрирован. Хотите восстановить пароль?",
-                    variant: "warning", // Используем желтый/предупреждающий стиль
+                    variant: "warning",
                     action: {
                         label: "Сбросить пароль",
                         onClick: () => router.push('/auth/reset-password-request')

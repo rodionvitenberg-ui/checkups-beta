@@ -121,7 +121,8 @@ def login(request, payload: LoginSchema):
 @api.post("/auth/claim-analysis", response=AuthResponseSchema)
 def claim_analysis(request, payload: ClaimRequestSchema):
     """
-    Привязка анализа к пользователю (регистрация или вход).
+    Привязка анализа к пользователю.
+    Создает аккаунт, если нужно, и корректно переносит все показатели.
     """
     analysis = get_object_or_404(MedicalAnalysis, uid=payload.analysis_uid)
     
@@ -129,12 +130,9 @@ def claim_analysis(request, payload: ClaimRequestSchema):
         return api.create_response(request, {"message": "Анализ уже привязан к аккаунту"}, status=400)
 
     with transaction.atomic():
-        user, created = User.objects.get_or_create(
-            email=payload.email
-        )
+        user, created = User.objects.get_or_create(email=payload.email)
         
         if created:
-            # ИСПРАВЛЕНИЕ: Используем get_random_string вместо make_random_password
             password = get_random_string(12)
             user.set_password(password)
             user.phone = payload.phone
@@ -143,31 +141,44 @@ def claim_analysis(request, payload: ClaimRequestSchema):
             try:
                 send_mail(
                     subject='Ваш результат сохранен | Checkups',
-                    message=f'Ваш анализ успешно сохранен в системе.\n\nМы автоматически создали для вас личный кабинет.\nЛогин: {user.email}\nПароль: {password}\n\nИспользуйте эти данные для входа и просмотра истории анализов.',
+                    message=f'Ваш анализ успешно расшифрован.\n\nМы создали для вас личный кабинет.\nЛогин: {user.email}\nПароль: {password}\n\nИспользуйте эти данные для входа.',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=True,
                 )
             except Exception as e:
                 print(f"❌ Ошибка отправки письма при claim: {e}")
-            
-            main_profile = PatientProfile.objects.create(user=user, full_name="Я (Основной профиль)")
-        else:
-            main_profile = user.patients.first()
-            if not main_profile:
-                 main_profile = PatientProfile.objects.create(user=user, full_name="Я")
 
         analysis.user = user
-        if not analysis.patient:
-            analysis.patient = main_profile
-        analysis.save()
+        
+        # МАГИЯ: Пытаемся вытащить имя из уже готового ai_result
+        patient_profile = None
+        if analysis.ai_result and isinstance(analysis.ai_result, dict):
+            p_info = analysis.ai_result.get('patient_info') or {}
+            ext_name = p_info.get('extracted_name')
+            if ext_name and str(ext_name).strip():
+                patient_profile, _ = PatientProfile.objects.get_or_create(
+                    user=user,
+                    full_name=str(ext_name).strip()
+                )
+        
+        # Fallback, если имя не найдено
+        if not patient_profile:
+            patient_profile = PatientProfile.objects.filter(user=user).first()
+            if not patient_profile:
+                 patient_profile = PatientProfile.objects.create(user=user, full_name="Анализы")
+
+        analysis.patient = patient_profile
+        analysis.save(update_fields=['user', 'patient'])
+        
+        # ВАЖНО: привязываем уже сохраненные показатели графиков к новому профилю
+        AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
     
     refresh = RefreshToken.for_user(user)
     return {
         "token": str(refresh.access_token),
         "user_email": user.email
     }
-
 # --- Восстановление пароля ---
 
 @api.post("/auth/reset-password-request")
