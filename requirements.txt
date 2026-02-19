@@ -67,3 +67,4 @@ vine==5.1.0
 wcwidth==0.6.0
 websockets==15.0.1
 gunicorn==21.2.0
+django-ninja-jwt

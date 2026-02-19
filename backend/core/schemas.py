@@ -1,7 +1,7 @@
-import uuid
-import datetime
 from ninja import Schema
-from typing import List, Optional
+from typing import List, Optional, Any
+import uuid
+from datetime import date, datetime
 
 class PatientMetadataSchema(Schema):
     extracted_name: Optional[str] = None
@@ -30,23 +30,23 @@ class RecommendationSchema(Schema):
     text: str
 
 class AIResultSchema(Schema):
-    reasoning: str 
+    reasoning: Optional[str] = "" 
     
     patient_info: Optional[PatientMetadataSchema] = None 
-    summary: SummarySchema
-    indicators: List[IndicatorSchema]
-    causes: List[CauseSchema]
-    recommendations: List[RecommendationSchema]
+    summary: Optional[SummarySchema] = None
+    indicators: List[IndicatorSchema] = []
+    causes: List[CauseSchema] = []
+    recommendations: List[RecommendationSchema] = []
 
 class PatientProfileSchema(Schema):
     id: int
     full_name: str
-    birth_date: Optional[datetime.date] = None
+    birth_date: Optional[date] = None
     gender: Optional[str] = None
 
 class CreateProfileSchema(Schema):
     full_name: str
-    birth_date: Optional[datetime.date] = None
+    birth_date: Optional[date] = None
     gender: Optional[str] = None 
 
 class AssignProfileRequest(Schema):
@@ -55,7 +55,7 @@ class AssignProfileRequest(Schema):
 class ClaimRequestSchema(Schema):
     analysis_uid: uuid.UUID
     email: str
-    phone: str = None
+    phone: Optional[str] = None
 
 class AuthResponseSchema(Schema):
     token: str 
@@ -64,14 +64,15 @@ class AuthResponseSchema(Schema):
 class AnalysisResponseSchema(Schema):
     uid: uuid.UUID
     status: str
+    created_at: datetime
     ai_result: Optional[AIResultSchema] = None
     patient_profile_id: Optional[int] = None
 
 class IndicatorHistoryPoint(Schema):
-    date: datetime.date
+    date: date  # <--- ИСПРАВЛЕНО: было datetime.date, стало просто date
     value: float
     unit: Optional[str] = None
-    analysis_uid: uuid.UUID  # Чтобы по клику на точку открыть сам анализ
+    analysis_uid: uuid.UUID
 
 class ChartResponseSchema(Schema):
     slug: str

@@ -2,8 +2,12 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-import { getAnalysisResult, claimAnalysis, AnalysisResponse, AIIndicator } from '@/lib/api';
+// ИМПОРТИРУЕМ НОВУЮ ФУНКЦИЮ viewOriginalFile
+import { getAnalysisResult, claimAnalysis, viewOriginalFile, AnalysisResponse, AIIndicator } from '@/lib/api';
 import { ReasoningBlock } from '@/components/analysis/ReasoningBlock';
+import { pdf } from '@react-pdf/renderer';
+import { AnalysisPDF } from '@/components/analysis/AnalysisPDF';
+
 import { 
   Activity, 
   CheckCircle2, 
@@ -11,7 +15,9 @@ import {
   Loader2, 
   Save,
   User,
-  AlertCircle
+  AlertCircle,
+  Download,
+  Eye // <--- Добавили иконку Глаза
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -21,12 +27,14 @@ export default function AnalysisPage() {
   const [data, setData] = useState<AnalysisResponse | null>(null);
   const [isPolling, setIsPolling] = useState(true);
   
-  // State для Claim (Сохранение)
   const [email, setEmail] = useState('');
   const [isClaiming, setIsClaiming] = useState(false);
   const [claimSuccess, setClaimSuccess] = useState(false);
+  
+  const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
+  // НОВЫЙ СТЕЙТ для загрузки оригинала
+  const [isViewingOriginal, setIsViewingOriginal] = useState(false);
 
-  // --- Polling ---
   useEffect(() => {
     let intervalId: NodeJS.Timeout;
     const fetchStatus = async () => {
@@ -50,7 +58,6 @@ export default function AnalysisPage() {
     try {
         await claimAnalysis(id, email);
         setClaimSuccess(true);
-        // В будущем: перенаправление на Dashboard или сохранение токена
     } catch (e) {
         alert('Ошибка при сохранении. Возможно, Email уже занят.');
     } finally {
@@ -58,7 +65,40 @@ export default function AnalysisPage() {
     }
   };
 
-  // --- Loading Screen ---
+  const handleDownloadPDF = async () => {
+    if (!data) return;
+    setIsGeneratingPDF(true);
+    try {
+      const blob = await pdf(<AnalysisPDF data={data!} />).toBlob();
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `Checkups_Report_${id.slice(0, 8)}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error("Ошибка при генерации PDF:", error);
+      alert("Не удалось сгенерировать PDF.");
+    } finally {
+      setIsGeneratingPDF(false);
+    }
+  };
+
+  // --- ОТКРЫТИЕ ОРИГИНАЛА ---
+  const handleViewOriginal = async () => {
+    setIsViewingOriginal(true);
+    try {
+      await viewOriginalFile(id);
+    } catch (error) {
+      console.error("Ошибка открытия оригинала:", error);
+      alert("Не удалось загрузить исходный файл.");
+    } finally {
+      setIsViewingOriginal(false);
+    }
+  };
+
   if (!data || data.status !== 'completed') {
     return (
       <div className="h-screen w-screen flex flex-col items-center justify-center bg-slate-50">
@@ -76,53 +116,69 @@ export default function AnalysisPage() {
   return (
     <div className="h-screen w-screen bg-slate-100 flex flex-col overflow-hidden font-sans">
       
-      {/* 1. Header */}
       <header className="flex-shrink-0 bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center z-10">
-        <div>
+        <div className="flex-1">
           <h1 className="text-lg font-bold text-slate-900 flex items-center gap-2">
             <FileText className="w-5 h-5 text-blue-600" />
             Анализ #{id.slice(0, 6)}
           </h1>
-          <p className="text-xs text-slate-500 mt-0.5">
+          <p className="text-xs text-slate-500 mt-0.5 hidden sm:block">
             {result.summary.general_comment.slice(0, 100)}...
           </p>
         </div>
 
-        <div className="flex items-center gap-4">
-             {/* Если AI нашел пациента - показываем подсказку */}
+        <div className="flex items-center gap-3">
              {patientInfo?.extracted_name && !claimSuccess && (
-                 <div className="hidden md:flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg border border-blue-100">
+                 <div className="hidden lg:flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg border border-blue-100">
                     <User className="w-3 h-3 mr-2" />
-                    Пациент: {patientInfo.extracted_name} ({patientInfo.extracted_gender === 'Male' ? 'М' : 'Ж'}, {patientInfo.extracted_birth_date})
+                    Пациент: {patientInfo.extracted_name}
                  </div>
              )}
 
             {!result.summary.is_critical ? (
-            <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wide">
-                Норма
-            </span>
+                <span className="px-3 py-1 bg-green-100 text-green-700 text-xs font-bold rounded-full uppercase tracking-wide hidden md:block">
+                    Норма
+                </span>
             ) : (
-            <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full uppercase tracking-wide">
-                Внимание
-            </span>
+                <span className="px-3 py-1 bg-amber-100 text-amber-700 text-xs font-bold rounded-full uppercase tracking-wide hidden md:block">
+                    Внимание
+                </span>
             )}
+
+            {/* НОВАЯ КНОПКА: Открыть оригинал */}
+            <button 
+                onClick={handleViewOriginal}
+                disabled={isViewingOriginal}
+                className="flex items-center gap-2 bg-white border border-slate-300 hover:bg-slate-50 text-slate-700 px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-70"
+                title="Посмотреть загруженный бланк"
+            >
+                {isViewingOriginal ? <Loader2 className="w-4 h-4 animate-spin text-slate-500" /> : <Eye className="w-4 h-4 text-slate-500" />}
+                <span className="hidden sm:inline">Оригинал</span>
+            </button>
+
+            {/* КНОПКА: Скачать PDF */}
+            <button 
+                onClick={handleDownloadPDF}
+                disabled={isGeneratingPDF}
+                className="flex items-center gap-2 bg-slate-900 hover:bg-slate-800 text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-70"
+            >
+                {isGeneratingPDF ? <Loader2 className="w-4 h-4 animate-spin" /> : <Download className="w-4 h-4" />}
+                <span className="hidden sm:inline">Скачать PDF</span>
+            </button>
         </div>
       </header>
 
       {/* 2. Scrollable Content */}
       <div className="flex-1 overflow-y-auto p-4 md:p-6 space-y-6">
         
-        {/* БЛОК 1: Reasoning (Мысли врача) - НОВОЕ */}
         {result.reasoning && (
             <div className="max-w-5xl mx-auto">
                 <ReasoningBlock text={result.reasoning} />
             </div>
         )}
 
-        {/* БЛОК 2: Dashboard Grid */}
         <div className="max-w-5xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-6 pb-20">
             
-            {/* Показатели */}
             <div className="md:col-span-7 bg-white rounded-xl shadow-sm border border-slate-200 overflow-hidden">
                 <div className="px-4 py-3 border-b border-slate-100 bg-slate-50/50 flex justify-between items-center">
                     <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
@@ -137,10 +193,8 @@ export default function AnalysisPage() {
                 </div>
             </div>
 
-            {/* Правая колонка: Причины и Рекомендации */}
             <div className="md:col-span-5 space-y-6">
                 
-                {/* Причины */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                     <div className="flex items-center gap-2 mb-3">
                         <Activity className="w-4 h-4 text-amber-500" />
@@ -158,7 +212,6 @@ export default function AnalysisPage() {
                     </div>
                 </div>
 
-                {/* Рекомендации */}
                 <div className="bg-white rounded-xl shadow-sm border border-slate-200 p-4">
                     <div className="flex items-center gap-2 mb-3">
                         <CheckCircle2 className="w-4 h-4 text-blue-500" />
@@ -174,7 +227,6 @@ export default function AnalysisPage() {
                     </ul>
                 </div>
             </div>
-
         </div>
       </div>
 
@@ -230,7 +282,6 @@ export default function AnalysisPage() {
   );
 }
 
-// Вспомогательный компонент строки
 function IndicatorRow({ item }: { item: AIIndicator }) {
     const isNormal = item.status === 'normal';
     
@@ -239,7 +290,6 @@ function IndicatorRow({ item }: { item: AIIndicator }) {
         <div>
           <div className="flex items-center gap-2">
             <span className="font-medium text-slate-900 text-sm">{item.name}</span>
-            {/* Если есть slug, можно показать иконку, но пока не будем перегружать */}
             {!isNormal && (
               <span className={clsx(
                 "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
@@ -272,4 +322,4 @@ function IndicatorRow({ item }: { item: AIIndicator }) {
         </div>
       </div>
     );
-  }
+}

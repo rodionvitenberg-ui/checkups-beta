@@ -11,7 +11,7 @@ def process_analysis_task(self, analysis_id):
     print(f"🔄 Pipeline started for Analysis ID: {analysis_id}")
     
     try:
-        analysis = MedicalAnalysis.objects.select_related('patient').get(id=analysis_id)
+        analysis = MedicalAnalysis.objects.select_related('patient').get(uid=analysis_id)
         
         # Если это не первая попытка (например, ретрай), не сбрасываем статус, 
         # но можем обновить время обновления
