@@ -154,6 +154,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://92.113.146.158:3000",
     "http://92.113.146.158",
+    "https://biocheck.pro",
+    "https://www.biocheck.pro",
 ]
 if os.getenv('CORS_ALLOWED_ORIGIN'):
     CORS_ALLOWED_ORIGINS.append(os.getenv('CORS_ALLOWED_ORIGIN'))
