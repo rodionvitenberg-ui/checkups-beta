@@ -58,8 +58,12 @@ class ClaimRequestSchema(Schema):
     phone: Optional[str] = None
 
 class AuthResponseSchema(Schema):
-    token: str 
+    token: str
+    refresh_token: str
     user_email: str
+    
+class RefreshRequestSchema(Schema):
+    refresh: str
 
 class AnalysisResponseSchema(Schema):
     uid: uuid.UUID

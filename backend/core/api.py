@@ -31,7 +31,8 @@ from .schemas import (
     PatientProfileSchema,
     CreateProfileSchema,
     AssignProfileRequest,
-    ChartResponseSchema
+    ChartResponseSchema,
+    RefreshRequestSchema,
 )
 from .tasks import process_analysis_task
 
@@ -103,6 +104,7 @@ def register(request, payload: RegisterSchema):
     refresh = RefreshToken.for_user(user)
     return {
         "token": str(refresh.access_token),
+        "refresh_token": str(refresh),
         "user_email": user.email
     }
 
@@ -115,6 +117,7 @@ def login(request, payload: LoginSchema):
     refresh = RefreshToken.for_user(user)
     return {
         "token": str(refresh.access_token),
+        "refresh_token": str(refresh),
         "user_email": user.email
     }
 
@@ -177,8 +180,20 @@ def claim_analysis(request, payload: ClaimRequestSchema):
     refresh = RefreshToken.for_user(user)
     return {
         "token": str(refresh.access_token),
+        "refresh_token": str(refresh),
         "user_email": user.email
     }
+
+@api.post("/auth/refresh")
+def refresh_token(request, payload: RefreshRequestSchema):
+    try:
+        # Проверяем старый рефреш токен и генерируем новый access токен
+        refresh = RefreshToken(payload.refresh)
+        return {
+            "access": str(refresh.access_token)
+        }
+    except TokenError:
+        return api.create_response(request, {"message": "Токен устарел или недействителен"}, status=401)
 # --- Восстановление пароля ---
 
 @api.post("/auth/reset-password-request")
@@ -193,7 +208,7 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     
     # Ссылка на фронтенд (Замени localhost на боевой домен при деплое!)
-    domain = "http://92.113.146.158" 
+    domain = "https://biocheck.pro" 
     reset_link = f"{domain}/auth/reset-password?uid={uid}&token={token}"
     
     try:
@@ -419,6 +434,7 @@ def download_analysis_file(request, uid: uuid.UUID):
     # Указываем inline, чтобы браузер мог его прочитать прямо во вкладке, 
     # а фронтенд корректно сгенерировал Blob
     response['Content-Disposition'] = f'inline; filename="{fname}"'
+    return response
     
     
 @api.put("/profiles/{profile_id}", response=PatientProfileSchema, auth=JWTAuth())

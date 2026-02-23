@@ -1,14 +1,19 @@
 import axios from 'axios';
 
+export interface AuthResponse {
+    token: string;
+    refresh_token: string; 
+    user_email: string;
+}
+
 // Создаем экземпляр axios
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
     headers: { 'Content-Type': 'application/json' },
 });
 
-// --- ВАЖНО: Перехватчик запросов (Добавляет токен) ---
+// 1. Интерцептор запросов: автоматически прикрепляем access-токен ко всем запросам
 api.interceptors.request.use((config) => {
-    // Этот код выполняется ПЕРЕД каждым запросом
     if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
         if (token) {
@@ -16,27 +21,51 @@ api.interceptors.request.use((config) => {
         }
     }
     return config;
-}, (error) => {
-    return Promise.reject(error);
 });
 
-// --- Перехватчик ответов (Ловит протухший токен) ---
-api.interceptors.response.use((response) => {
-    return response;
-}, (error) => {
-    // Если сервер вернул 401 (Unauthorized), значит токен протух или неверен
-    if (error.response && error.response.status === 401) {
-        if (typeof window !== 'undefined') {
-            // Можно разлогинить пользователя или попробовать обновить токен
-            // Пока просто удалим токен и перекинем на вход
-            localStorage.removeItem('token');
-            localStorage.removeItem('user_email');
-            window.location.href = '/auth'; 
+// 2. Интерцептор ответов: отлавливаем 401 ошибку и незаметно обновляем токен
+api.interceptors.response.use(
+    (response) => response,
+    async (error) => {
+        const originalRequest = error.config;
+
+        // Если ошибка 401 (Unauthorized) и мы еще не пробовали рефрешнуть токен (_isRetry - наш кастомный флаг)
+        if (error.response?.status === 401 && !originalRequest._isRetry) {
+            originalRequest._isRetry = true;
+
+            try {
+                const refreshToken = localStorage.getItem('refresh_token');
+                if (!refreshToken) throw new Error('Нет refresh токена');
+
+                // Делаем запрос за новым токеном (используем чистый axios, чтобы не зациклить интерцепторы!)
+                const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
+                    refresh: refreshToken
+                });
+
+                const newAccessToken = response.data.access;
+                
+                // Сохраняем новый access-токен
+                localStorage.setItem('token', newAccessToken);
+                
+                // Повторяем оригинальный запрос уже с новым токеном
+                originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
+                return api(originalRequest);
+                
+            } catch (refreshError) {
+                // Если refresh-токен тоже протух — разлогиниваем пользователя
+                if (typeof window !== 'undefined') {
+                    localStorage.removeItem('token');
+                    localStorage.removeItem('refresh_token');
+                    localStorage.removeItem('user_email');
+                    window.location.href = '/auth'; // Принудительный редирект на логин
+                }
+                return Promise.reject(refreshError);
+            }
         }
-    }
-    return Promise.reject(error);
-});
 
+        return Promise.reject(error);
+    }
+);
 
 // --- Типы данных ---
 
@@ -116,6 +145,28 @@ export interface ChartData {
 
 // --- API Методы ---
 
+export const login = async (data: any): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/login', data);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('refresh_token', response.data.refresh_token); // <--- СОХРАНЯЕМ REFRESH
+        localStorage.setItem('user_email', response.data.user_email);
+    }
+    return response.data;
+};
+
+export const register = async (data: any): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/register', data);
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('refresh_token', response.data.refresh_token); // <--- СОХРАНЯЕМ REFRESH
+        localStorage.setItem('user_email', response.data.user_email);
+    }
+    return response.data;
+};
+
+
+
 // 1. Загрузка
 export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
     const formData = new FormData();
@@ -144,9 +195,13 @@ export const claimAnalysis = async (analysisUid: string, email: string, phone?: 
         email,
         phone
     });
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('token', response.data.token);
+        localStorage.setItem('refresh_token', response.data.refresh_token); // <--- СОХРАНЯЕМ REFRESH
+        localStorage.setItem('user_email', response.data.user_email);
+    }
     return response.data;
 };
-
 // 4. Профили
 export const getProfiles = async (): Promise<PatientProfile[]> => {
     const response = await api.get<PatientProfile[]>('/profiles');
