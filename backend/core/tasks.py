@@ -17,7 +17,7 @@ def process_analysis_task(self, analysis_id):
         # но можем обновить время обновления
         if analysis.status != MedicalAnalysis.Status.PROCESSING:
             analysis.status = MedicalAnalysis.Status.PROCESSING
-            analysis.save()
+            analysis.save(update_fields=['status'])
         
         # Формирование контекста
         patient_context = None
@@ -34,9 +34,15 @@ def process_analysis_task(self, analysis_id):
         result = pipeline.run_pipeline(str(analysis.file.path), patient_context=patient_context)
         
         if result:
+            # 🛑 РЕШЕНИЕ ГОНКИ СОСТОЯНИЙ:
+            # Обновляем объект из БД, чтобы не затереть юзера, который мог 
+            # привязать анализ через функцию claim_analysis, пока ИИ думал.
+            analysis.refresh_from_db()
+            
             analysis.ai_result = result
             analysis.status = MedicalAnalysis.Status.COMPLETED
-            analysis.save()
+            # Сохраняем ТОЛЬКО эти два поля
+            analysis.save(update_fields=['ai_result', 'status'])
             
             try:
                 save_atomic_indicators(analysis, result)
@@ -46,32 +52,28 @@ def process_analysis_task(self, analysis_id):
             print(f"✅ Pipeline finished for {analysis_id}")
             return True
         else:
-            # Если pipeline вернул None (внутренняя ошибка без эксепшна), 
-            # тоже можно попробовать повторить, или сразу упасть.
-            # Пока считаем это фатальной ошибкой (например, файл не читается).
+            # Внутренняя ошибка пайплайна
+            analysis.refresh_from_db()
             analysis.status = MedicalAnalysis.Status.FAILED
-            analysis.save()
+            analysis.save(update_fields=['status'])
             return False
 
     except Exception as exc:
         print(f"❌ Error in Task: {exc}")
         
         # Логика повтора (Retry)
-        # countdown = задержка в секундах (экспоненциальная: 2^retry * 5)
-        # 1-я попытка: 5 сек, 2-я: 10 сек, 3-я: 20 сек...
         countdown = 5 * (2 ** self.request.retries)
         
         try:
             print(f"⚠️ Retrying in {countdown}s... (Attempt {self.request.retries + 1}/5)")
-            # Это выбросит исключение Retry, которое Celery перехватит
             raise self.retry(exc=exc, countdown=countdown)
         except self.MaxRetriesExceededError:
             print("❌ Max retries exceeded.")
             # Только когда попытки кончились, ставим статус FAILED
             try:
-                analysis = MedicalAnalysis.objects.get(id=analysis_id)
+                analysis.refresh_from_db()
                 analysis.status = MedicalAnalysis.Status.FAILED
-                analysis.save()
-            except:
+                analysis.save(update_fields=['status'])
+            except Exception:
                 pass
             return False
