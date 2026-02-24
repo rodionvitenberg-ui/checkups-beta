@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'ninja_jwt',
     'core',
     'analysis',
+    'cms',
 ]
 
 MIDDLEWARE = [

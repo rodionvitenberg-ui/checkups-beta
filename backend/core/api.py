@@ -1,10 +1,12 @@
 import uuid
 import json
+import random
 from typing import List, Optional
 from ninja import NinjaAPI, UploadedFile, File, Schema
 from ninja.security import HttpBearer
 from ninja.errors import HttpError
 from ninja_jwt.authentication import JWTAuth
+from cms.api import cms_router
 
 # Django imports
 from django.shortcuts import get_object_or_404
@@ -18,6 +20,7 @@ from django.utils.encoding import force_bytes, force_str
 from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
+from django.core.cache import cache
 
 # JWT imports
 from ninja_jwt.authentication import JWTAuth
@@ -28,13 +31,14 @@ from ninja_jwt.exceptions import InvalidToken, TokenError
 from .models import MedicalAnalysis, PatientProfile, User, AnalysisIndicator
 from .schemas import (
     AnalysisResponseSchema,
-    ClaimRequestSchema,
     AuthResponseSchema,
     PatientProfileSchema,
     CreateProfileSchema,
     AssignProfileRequest,
     ChartResponseSchema,
     RefreshRequestSchema,
+    ClaimRequestOTPSchema,
+    ClaimVerifyOTPSchema,
 )
 from .tasks import process_analysis_task
 
@@ -64,6 +68,7 @@ class UpdateProfileSchema(Schema):
 
 api = NinjaAPI()
 User = get_user_model()
+api.add_router("/cms/", cms_router)
 
 # ДОБАВЬ ЭТОТ КЛАСС ПОСЛЕ ИМПОРТОВ
 class OptionalJWTAuth(JWTAuth):
@@ -127,46 +132,72 @@ def login(request, payload: LoginSchema):
         "user_email": user.email
     }
 
-@api.post("/auth/claim-analysis", response=AuthResponseSchema)
-def claim_analysis(request, payload: ClaimRequestSchema):
+@api.post("/auth/claim-request")
+def claim_request(request, payload: ClaimRequestOTPSchema):
     """
-    Привязка анонимного анализа к новому пользователю.
-    ЗАКРЫТА ДЫРА: Если email существует, требуем войти в аккаунт.
+    Шаг 1: Проверка данных и отправка 6-значного кода на почту.
     """
     analysis = get_object_or_404(MedicalAnalysis, uid=payload.analysis_uid)
     
     if analysis.user:
         return api.create_response(request, {"message": "Анализ уже привязан к аккаунту"}, status=400)
 
-    # Если пользователь уже есть, он не должен использовать форму Claim! 
-    # Это защита от угона чужих аккаунтов.
+    # Защита: Если email уже есть в базе, заставляем юзера просто войти по паролю
     if User.objects.filter(email=payload.email).exists():
         return api.create_response(
             request, 
-            {"message": "Этот email уже зарегистрирован. Пожалуйста, войдите в свой кабинет, чтобы сохранить анализ."}, 
+            {"message": "Этот email уже зарегистрирован. Пожалуйста, войдите в свой кабинет."}, 
             status=400
         )
 
-    with transaction.atomic():
-        # Точно знаем, что создаем НОВОГО юзера
-        user = User.objects.create(email=payload.email, phone=payload.phone)
-        password = get_random_string(12)
-        user.set_password(password)
-        user.save()
-            
-        try:
-            send_mail(
-                subject='Ваш результат сохранен | Checkups',
-                message=f'Ваш анализ успешно расшифрован.\n\nМы создали для вас личный кабинет.\nЛогин: {user.email}\nПароль: {password}\n\nИспользуйте эти данные для входа.',
-                from_email=settings.DEFAULT_FROM_EMAIL,
-                recipient_list=[user.email],
-                fail_silently=True,
-            )
-        except Exception as e:
-            print(f"❌ Ошибка отправки письма при claim: {e}")
+    # Генерируем 6-значный код
+    otp_code = str(random.randint(100000, 999999))
+    
+    # Сохраняем в кэш Django на 10 минут (600 секунд)
+    cache_key = f"otp_{payload.email}"
+    cache.set(cache_key, otp_code, timeout=600)
+    
+    # Отправляем письмо
+    try:
+        send_mail(
+            subject='Код подтверждения | Checkups',
+            message=f'Ваш код для сохранения медицинских анализов: {otp_code}\n\nНикому не сообщайте этот код. Он действителен 10 минут.',
+            from_email=settings.DEFAULT_FROM_EMAIL,
+            recipient_list=[payload.email],
+            fail_silently=False,
+        )
+    except Exception as e:
+        print(f"❌ Ошибка отправки письма (OTP): {e}")
+        return api.create_response(request, {"message": "Не удалось отправить письмо с кодом"}, status=500)
 
-        # ИСПРАВЛЕНА ЛОГИКА ИЗВЛЕЧЕНИЯ ИМЕНИ:
-        # ai_result может вернуться как json-строка, страхуемся!
+    return {"message": "Код успешно отправлен на почту"}
+
+
+@api.post("/auth/claim-verify", response=AuthResponseSchema)
+def claim_verify(request, payload: ClaimVerifyOTPSchema):
+    """
+    Шаг 2: Проверка кода, создание пользователя, установка пароля и привязка анализа.
+    """
+    # 1. Проверяем код из кэша
+    cache_key = f"otp_{payload.email}"
+    cached_code = cache.get(cache_key)
+    
+    if not cached_code or cached_code != payload.code:
+        return api.create_response(request, {"message": "Неверный или устаревший код"}, status=400)
+
+    # 2. Проверяем анализ
+    analysis = get_object_or_404(MedicalAnalysis, uid=payload.analysis_uid)
+    if analysis.user:
+        return api.create_response(request, {"message": "Анализ уже привязан"}, status=400)
+
+    # 3. Финальная транзакция (создаем всё и привязываем)
+    with transaction.atomic():
+        # Создаем юзера с паролем, который он придумал сам!
+        user = User.objects.create(email=payload.email, phone=payload.phone)
+        user.set_password(payload.password)
+        user.save()
+
+        # Достаем имя из результатов ИИ
         ai_data = analysis.ai_result
         if isinstance(ai_data, str):
             try:
@@ -184,20 +215,24 @@ def claim_analysis(request, payload: ClaimRequestSchema):
                     full_name=str(ext_name).strip()
                 )
         
-        # Если ИИ не нашел имя (или произошла ошибка), создаем дефолтный профиль
+        # Если ИИ не нашел имя, создаем дефолтный
         if not patient_profile:
              patient_profile = PatientProfile.objects.create(
                  user=user, 
-                 full_name="Основной профиль (Анализы)"
+                 full_name="Основной профиль"
              )
 
+        # Привязываем анализ и графики к пользователю и профилю
         analysis.user = user
         analysis.patient = patient_profile
         analysis.save(update_fields=['user', 'patient'])
         
-        # Привязываем графики к новому профилю
         AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
     
+    # Удаляем код из кэша после успешного использования
+    cache.delete(cache_key)
+
+    # 4. Генерируем JWT токены и отдаем фронтенду для мгновенного автологина
     refresh = RefreshToken.for_user(user)
     return {
         "token": str(refresh.access_token),

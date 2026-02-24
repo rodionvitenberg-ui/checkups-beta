@@ -52,10 +52,17 @@ class CreateProfileSchema(Schema):
 class AssignProfileRequest(Schema):
     profile_id: int
 
-class ClaimRequestSchema(Schema):
+class ClaimRequestOTPSchema(Schema):
     analysis_uid: uuid.UUID
     email: str
     phone: Optional[str] = None
+
+class ClaimVerifyOTPSchema(Schema):
+    analysis_uid: uuid.UUID
+    email: str
+    phone: Optional[str] = None
+    code: str
+    password: str
 
 class AuthResponseSchema(Schema):
     token: str
