@@ -2,8 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
-// ИМПОРТИРУЕМ НОВУЮ ФУНКЦИЮ viewOriginalFile
-import { getAnalysisResult, claimAnalysis, viewOriginalFile, AnalysisResponse, AIIndicator } from '@/lib/api';
+import { getAnalysisResult, viewOriginalFile, AnalysisResponse, AIIndicator } from '@/lib/api';
 import { ReasoningBlock } from '@/components/analysis/ReasoningBlock';
 import { pdf } from '@react-pdf/renderer';
 import { AnalysisPDF } from '@/components/analysis/AnalysisPDF';
@@ -26,13 +25,7 @@ export default function AnalysisPage() {
   const id = params.id as string;
   const [data, setData] = useState<AnalysisResponse | null>(null);
   const [isPolling, setIsPolling] = useState(true);
-  
-  const [email, setEmail] = useState('');
-  const [isClaiming, setIsClaiming] = useState(false);
-  const [claimSuccess, setClaimSuccess] = useState(false);
-  
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
-  // НОВЫЙ СТЕЙТ для загрузки оригинала
   const [isViewingOriginal, setIsViewingOriginal] = useState(false);
 
   useEffect(() => {
@@ -51,19 +44,6 @@ export default function AnalysisPage() {
     if (isPolling) intervalId = setInterval(fetchStatus, 3000);
     return () => clearInterval(intervalId);
   }, [id, isPolling]);
-
-  const handleClaim = async () => {
-    if (!email) return;
-    setIsClaiming(true);
-    try {
-        await claimAnalysis(id, email);
-        setClaimSuccess(true);
-    } catch (e) {
-        alert('Ошибка при сохранении. Возможно, Email уже занят.');
-    } finally {
-        setIsClaiming(false);
-    }
-  };
 
   const handleDownloadPDF = async () => {
     if (!data) return;
@@ -128,7 +108,7 @@ export default function AnalysisPage() {
         </div>
 
         <div className="flex items-center gap-3">
-             {patientInfo?.extracted_name && !claimSuccess && (
+             {patientInfo?.extracted_name && (
                  <div className="hidden lg:flex items-center px-3 py-1.5 bg-blue-50 text-blue-700 text-xs font-medium rounded-lg border border-blue-100">
                     <User className="w-3 h-3 mr-2" />
                     Пациент: {patientInfo.extracted_name}
@@ -229,55 +209,6 @@ export default function AnalysisPage() {
             </div>
         </div>
       </div>
-
-      {/* 3. Footer / Auth Trigger */}
-      {!claimSuccess ? (
-        <div className="flex-shrink-0 bg-blue-900 text-white p-4 shadow-lg z-20">
-            <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-3">
-                <div className="p-2 bg-blue-800 rounded-full">
-                    <AlertCircle className="w-5 h-5 text-blue-200" />
-                </div>
-                <div className="text-sm opacity-90">
-                    <p className="font-semibold">
-                        {patientInfo?.extracted_name 
-                            ? `Сохранить историю болезни для "${patientInfo.extracted_name}"?`
-                            : "Сохраните результат в личном кабинете"}
-                    </p>
-                    <p className="text-xs text-blue-300">
-                        Это позволит отслеживать динамику показателей во времени.
-                    </p>
-                </div>
-            </div>
-            
-            <div className="flex w-full md:w-auto gap-2">
-                <input 
-                    type="email" 
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    placeholder="Ваш Email" 
-                    className="flex-1 md:w-64 bg-blue-800 border border-blue-700 text-white text-sm px-4 py-2 rounded-lg placeholder-blue-400 focus:outline-none focus:ring-2 focus:ring-blue-500"
-                />
-                <button 
-                    onClick={handleClaim}
-                    disabled={isClaiming || !email}
-                    className="bg-white text-blue-900 hover:bg-blue-50 px-6 py-2 rounded-lg text-sm font-bold flex items-center gap-2 transition-colors disabled:opacity-50"
-                >
-                    {isClaiming ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                    Сохранить
-                </button>
-            </div>
-            </div>
-        </div>
-      ) : (
-        <div className="flex-shrink-0 bg-green-600 text-white p-3 shadow-lg z-20 text-center">
-            <p className="text-sm font-medium flex items-center justify-center gap-2">
-                <CheckCircle2 className="w-5 h-5" />
-                Анализ успешно сохранен! Пароль отправлен на почту.
-            </p>
-        </div>
-      )}
-
     </div>
   );
 }

@@ -1,50 +1,146 @@
 "use client";
 
 import Link from "next/link";
-import Image from "next/image"; // Импортируем Image
-import { User, LogIn } from "lucide-react";
+import Image from "next/image"; 
 import { useEffect, useState } from "react";
+import { useRouter } from "next/navigation";
+import { cn } from "@/lib/utils";
+import { MorphyButton } from "@/components/ui/morphy-button";
 
 export function Header() {
   const [isAuth, setIsAuth] = useState(false);
+  const [isVisible, setIsVisible] = useState(true);
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  
+  // Добавляем флаг монтирования компонента на клиенте
+  const [isMounted, setIsMounted] = useState(false); 
+  const router = useRouter();
 
   useEffect(() => {
-    const token = localStorage.getItem('token');
-    setIsAuth(!!token);
+    const checkAuth = () => {
+      const token = localStorage.getItem('token');
+      setIsAuth(!!token);
+    };
+
+    checkAuth();
+    setIsMounted(true); // Указываем, что клиент отрендерился и localStorage прочитан
+
+    window.addEventListener('auth-change', checkAuth);
+    return () => window.removeEventListener('auth-change', checkAuth);
   }, []);
 
+  useEffect(() => {
+    let lastScrollY = window.scrollY;
+
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      if (currentScrollY > lastScrollY && currentScrollY > 50) {
+        setIsVisible(false);
+        setIsMobileMenuOpen(false);
+      } else {
+        setIsVisible(true);
+      }
+      lastScrollY = currentScrollY;
+    };
+
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleNavigation = (path: string) => {
+    setIsMobileMenuOpen(false);
+    router.push(path);
+  };
+
   return (
-    <header className="sticky top-0 z-50 w-full border-b border-gray-200 bg-white/80 backdrop-blur-md">
-      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
-        {/* ЛЕВАЯ ЧАСТЬ: Логотип */}
+    <header 
+      className={cn(
+        // ДОБАВЛЕНО: transform-gpu, antialiased и [backface-visibility:hidden] для четкости всего хедера
+        "fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 bg-background backdrop-blur-md transition-transform duration-300 ease-in-out transform-gpu antialiased [backface-visibility:hidden]",
+        isVisible ? "translate-y-0" : "-translate-y-full"
+      )}
+    >
+      <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8 relative bg-transparent z-10">
         <div className="flex items-center">
           <Link 
             href="/" 
             className="hover:opacity-80 transition-opacity flex items-center"
+            onClick={() => setIsMobileMenuOpen(false)}
           >
-            {/* Заменили текст и иконку на картинку */}
             <Image 
                 src="/logo.png" 
                 alt="Checkups Logo" 
-                width={140} // Подбери ширину под свой логотип
+                width={140} 
                 height={40} 
-                className="h-15 w-auto object-contain" // h-10 фиксирует высоту, ширина авто
-                priority // Важно для LCP (чтобы не прыгало при загрузке)
+                className="h-15 w-auto object-contain" 
+                priority 
+                unoptimized // ДОБАВЛЕНО: отключаем оптимизацию Next.js
             />
           </Link>
         </div>
 
-        {/* ПРАВАЯ ЧАСТЬ: Умная кнопка */}
-        <div className="flex items-center gap-4">
-          <Link
-            href={isAuth ? "/dashboard" : "/auth"}
-            className="flex items-center gap-2 rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800 transition-all shadow-md hover:shadow-lg"
+        {/* Десктопная версия */}
+        <div className="hidden md:flex items-center gap-3 sm:gap-5">
+          <MorphyButton 
+            size="default" 
+            onClick={() => handleNavigation('/faq')}
           >
-            {isAuth ? <User className="h-4 w-4" /> : <LogIn className="h-4 w-4" />}
-            <span className="hidden sm:inline">
-                {isAuth ? "Кабинет" : "Войти"}
-            </span>
-          </Link>
+            FAQ
+          </MorphyButton>
+
+          {/* Добавили w-[130px] для фиксации ширины и скрываем текст до загрузки */}
+          <MorphyButton 
+            size="default" 
+            className="w-[130px] flex justify-center"
+            onClick={() => handleNavigation(isAuth ? "/dashboard" : "/auth")}
+            disabled={!isMounted} // Опционально: отключаем клик в первую долю секунды
+          >
+            {!isMounted ? (
+              <span className="opacity-0">Кабинет</span> // Невидимый текст, чтобы кнопка не сплющилась по высоте
+            ) : isAuth ? (
+              "Кабинет"
+            ) : (
+              "Войти"
+            )}
+          </MorphyButton>
+        </div>
+
+        {/* Мобильная кнопка MENU */}
+        <div className="flex md:hidden items-center">
+          <MorphyButton 
+            size="sm" 
+            className="w-[100px] flex justify-center" // Тоже фиксируем ширину, чтобы не прыгала между MENU и ЗАКРЫТЬ
+            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+          >
+            {isMobileMenuOpen ? "ЗАКРЫТЬ" : "MENU"}
+          </MorphyButton>
+        </div>
+      </div>
+
+      {/* Выдвижное мобильное меню */}
+      <div 
+        className={cn(
+          "absolute top-16 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg md:hidden transition-all duration-300 origin-top overflow-hidden",
+          isMobileMenuOpen ? "scale-y-100 opacity-100 h-auto py-4" : "scale-y-0 opacity-0 h-0 py-0"
+        )}
+      >
+        <div className="flex flex-col gap-3 px-4">
+          <MorphyButton 
+            size="default" 
+            className="w-full"
+            onClick={() => handleNavigation('/faq')}
+          >
+            FAQ
+          </MorphyButton>
+
+          <MorphyButton 
+            size="default" 
+            className="w-full"
+            onClick={() => handleNavigation(isAuth ? "/dashboard" : "/auth")}
+            disabled={!isMounted}
+          >
+             {!isMounted ? <span className="opacity-0">Кабинет</span> : (isAuth ? "Кабинет" : "Войти")}
+          </MorphyButton>
         </div>
       </div>
     </header>

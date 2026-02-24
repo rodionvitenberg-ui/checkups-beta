@@ -143,29 +143,34 @@ export interface ChartData {
 }
 
 
-// --- API Методы ---
+// ДОБАВЛЯЕМ ФУНКЦИЮ-ХЕЛПЕР
+const setAuthTokens = (token: string, refresh: string, email: string) => {
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('token', token);
+        localStorage.setItem('refresh_token', refresh);
+        localStorage.setItem('user_email', email);
+        // Запускаем событие, чтобы Header моментально перерисовался
+        window.dispatchEvent(new Event('auth-change'));
+    }
+};
 
+// ОБНОВЛЯЕМ МЕТОДЫ АВТОРИЗАЦИИ
 export const login = async (data: any): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/login', data);
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('refresh_token', response.data.refresh_token); // <--- СОХРАНЯЕМ REFRESH
-        localStorage.setItem('user_email', response.data.user_email);
-    }
+    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
     return response.data;
 };
 
 export const register = async (data: any): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/register', data);
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('refresh_token', response.data.refresh_token); // <--- СОХРАНЯЕМ REFRESH
-        localStorage.setItem('user_email', response.data.user_email);
-    }
+    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
     return response.data;
 };
 
-
+// ВОТ ОНА — НАША НОВАЯ ФУНКЦИЯ ДЛЯ СМЕНЫ ПАРОЛЯ
+export const requestPasswordReset = async (email: string): Promise<void> => {
+    await api.post('/auth/reset-password-request', { email });
+};
 
 // 1. Загрузка
 export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
@@ -189,19 +194,34 @@ export const getAnalysisResult = async (uid: string): Promise<AnalysisResponse> 
 };
 
 // 3. Claim (Привязка/Регистрация)
-export const claimAnalysis = async (analysisUid: string, email: string, phone?: string): Promise<AuthResponse> => {
-    const response = await api.post<AuthResponse>('/auth/claim-analysis', {
+export const claimRequest = async (analysisUid: string, email: string, phone?: string) => {
+    const response = await api.post('/auth/claim-request', {
         analysis_uid: analysisUid,
         email,
         phone
     });
-    if (typeof window !== 'undefined') {
-        localStorage.setItem('token', response.data.token);
-        localStorage.setItem('refresh_token', response.data.refresh_token); // <--- СОХРАНЯЕМ REFRESH
-        localStorage.setItem('user_email', response.data.user_email);
-    }
     return response.data;
 };
+
+export const claimVerify = async (
+    analysisUid: string, 
+    email: string, 
+    code: string, 
+    password: string, 
+    phone?: string
+): Promise<AuthResponse> => {
+    const response = await api.post<AuthResponse>('/auth/claim-verify', {
+        analysis_uid: analysisUid,
+        email,
+        phone,
+        code,
+        password
+    });
+    // При успешной проверке кода бэкенд возвращает токены, сохраняем их!
+    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
+    return response.data;
+};
+
 // 4. Профили
 export const getProfiles = async (): Promise<PatientProfile[]> => {
     const response = await api.get<PatientProfile[]>('/profiles');
@@ -268,5 +288,50 @@ export const viewOriginalFile = async (uid: string) => {
 
 export const updateProfile = async (profileId: number, newName: string): Promise<PatientProfile> => {
     const response = await api.put<PatientProfile>(`/profiles/${profileId}`, { full_name: newName });
+    return response.data;
+};
+
+export interface FAQItem {
+    id: number;
+    question: string;
+    answer: string;
+    image: string | null;
+}
+
+// Получение списка вопросов из нашей новой CMS
+export const getFaqs = async (): Promise<FAQItem[]> => {
+    // Обращаемся к роутеру CMS, который мы добавили в Django
+    const response = await api.get<FAQItem[]>('/cms/faq');
+    return response.data;
+};
+
+export interface ContentBlock {
+    slug: string;
+    title: string;
+    content: string;
+    image: string | null;
+}
+
+export const getBlocks = async (): Promise<ContentBlock[]> => {
+    const response = await api.get<ContentBlock[]>('/cms/blocks');
+    return response.data;
+};
+
+export interface Testimonial {
+    id: number;
+    name: string;
+    text: string;
+    avatar: string | null;
+}
+
+export const getTestimonials = async (): Promise<Testimonial[]> => {
+    const response = await api.get<Testimonial[]>('/cms/testimonials');
+    return response.data;
+};
+
+export const createTestimonial = async (formData: FormData): Promise<Testimonial> => {
+    const response = await api.post<Testimonial>('/cms/testimonials', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+    });
     return response.data;
 };
