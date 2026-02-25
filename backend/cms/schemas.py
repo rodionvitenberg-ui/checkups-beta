@@ -18,3 +18,9 @@ class TestimonialSchema(Schema):
     name: str
     text: str
     avatar: Optional[str] = None
+
+class LegalDocumentSchema(Schema):
+    slug: str
+    title: str
+    content: str
+    updated_at: str

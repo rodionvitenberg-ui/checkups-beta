@@ -1,5 +1,5 @@
 from django.contrib import admin
-from .models import FAQItem, ContentBlock
+from .models import FAQItem, ContentBlock, LegalDocument
 
 @admin.register(FAQItem)
 class FAQItemAdmin(admin.ModelAdmin):
@@ -11,3 +11,7 @@ class FAQItemAdmin(admin.ModelAdmin):
 class ContentBlockAdmin(admin.ModelAdmin):
     list_display = ('title', 'slug')
     search_fields = ('title', 'slug', 'content')
+
+@admin.register(LegalDocument)
+class LegalDocumentAdmin(admin.ModelAdmin):
+    list_display = ('title', 'slug', 'updated_at')

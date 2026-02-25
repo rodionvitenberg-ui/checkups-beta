@@ -3,8 +3,8 @@ from ninja import Form, File, UploadedFile
 from ninja_jwt.authentication import JWTAuth
 from typing import List
 from django.shortcuts import get_object_or_404
-from .models import FAQItem, ContentBlock, Testimonial
-from .schemas import FAQSchema, ContentBlockSchema, TestimonialSchema
+from .models import FAQItem, ContentBlock, Testimonial, LegalDocument
+from .schemas import FAQSchema, ContentBlockSchema, TestimonialSchema, LegalDocumentSchema
 
 # Создаем отдельный роутер для CMS
 cms_router = Router()
@@ -42,3 +42,8 @@ def create_testimonial(
         avatar=avatar
     )
     return testimonial
+
+@cms_router.get("/legal", response=List[LegalDocumentSchema])
+def get_legal_documents(request):
+    """Получить все юридические документы"""
+    return LegalDocument.objects.all()

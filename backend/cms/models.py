@@ -77,3 +77,25 @@ class Testimonial(models.Model):
 
     def __str__(self):
         return f"Отзыв от {self.name}"
+
+class LegalDocument(models.Model):
+    class DocumentType(models.TextChoices):
+        TERMS = 'terms', 'Пользовательское соглашение'
+        PRIVACY = 'privacy', 'Политика конфиденциальности'
+
+    slug = models.CharField(
+        'Тип документа', 
+        max_length=50, 
+        unique=True, 
+        choices=DocumentType.choices
+    )
+    title = models.CharField('Заголовок', max_length=255)
+    content = models.TextField('Текст документа')
+    updated_at = models.DateTimeField('Дата последнего обновления', auto_now=True)
+
+    class Meta:
+        verbose_name = 'Юридический документ'
+        verbose_name_plural = 'Юридическая информация'
+
+    def __str__(self):
+        return f"{self.title} ({self.get_slug_display()})"
