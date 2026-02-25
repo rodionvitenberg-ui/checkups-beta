@@ -5,7 +5,6 @@ class FAQSchema(Schema):
     id: int
     question: str
     answer: str
-    image: Optional[str] = None
 
 class ContentBlockSchema(Schema):
     slug: str

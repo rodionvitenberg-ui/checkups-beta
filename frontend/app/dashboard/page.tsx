@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link'; // <-- Импортировали Link
 import { 
     Calendar, FileText, Download, ChevronDown, 
     Plus, Loader2, ArrowRight, Trash2, Activity, List, FolderOpen, User, Eye, Edit2, Check, X, LogOut, Key
@@ -26,6 +27,7 @@ import { PatientChart } from '@/components/dashboard/PatientChart';
 import { pdf } from '@react-pdf/renderer';
 import { AnalysisPDF } from '@/components/analysis/AnalysisPDF';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { FileUploader } from '@/components/home/FileUploader';
 
 // --- Компонент Элемента Списка (Анализа) ---
 function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisResponse, onDeleteSuccess: () => void }) {
@@ -85,9 +87,11 @@ function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisRespons
 
     return (
         <div className="flex items-center justify-between p-4 bg-white border border-slate-100 rounded-2xl hover:border-blue-200 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 mb-3 group">
-            <div className="flex items-center gap-4">
+            
+            {/* Обернули левую часть в Link для перехода на страницу анализа */}
+            <Link href={`/analysis/${analysis.uid}`} className="flex items-center gap-4 flex-1 cursor-pointer">
                 <div className={clsx(
-                    "w-11 h-11 rounded-xl flex items-center justify-center transition-colors shadow-sm",
+                    "w-11 h-11 rounded-xl flex items-center justify-center transition-colors shadow-sm shrink-0",
                     analysis.status === 'completed' ? "bg-gradient-to-br from-green-50 to-green-100 text-green-600" :
                     analysis.status === 'processing' ? "bg-gradient-to-br from-yellow-50 to-yellow-100 text-yellow-600" :
                     "bg-gradient-to-br from-slate-50 to-slate-100 text-slate-500"
@@ -95,7 +99,7 @@ function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisRespons
                     <FileText className="w-5 h-5" />
                 </div>
                 <div>
-                    <h4 className="text-sm font-semibold text-slate-900">
+                    <h4 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
                         Анализ от {analysis.created_at ? format(new Date(analysis.created_at), 'd MMMM yyyy', { locale: ru }) : 'Неизвестная дата'}
                     </h4>
                     <span className={clsx(
@@ -105,13 +109,13 @@ function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisRespons
                         {analysis.status === 'completed' ? 'Готов к просмотру' : 'Обработка...'}
                     </span>
                 </div>
-            </div>
+            </Link>
 
             <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                 {analysis.status === 'completed' && (
-                    <a href={`/analysis/${analysis.uid}`} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="Открыть расшифровку">
+                    <Link href={`/analysis/${analysis.uid}`} className="p-2 text-slate-400 hover:text-blue-600 hover:bg-blue-50 rounded-xl transition-colors" title="Открыть расшифровку">
                         <ArrowRight className="w-5 h-5" />
-                    </a>
+                    </Link>
                 )}
                 <button onClick={handleViewOriginal} disabled={viewing} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100 rounded-xl transition-colors" title="Посмотреть оригинал">
                     {viewing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Eye className="w-5 h-5" />}
@@ -329,8 +333,10 @@ export default function DashboardPage() {
     const { toast } = useToast();
     const [expandedProfileId, setExpandedProfileId] = useState<number | null>(null);
     const [isResetting, setIsResetting] = useState(false);
+    
+    // Новое состояние для модалки загрузки
+    const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
-    // Логика получения профилей
     const { data: profiles = [], isLoading } = useQuery({
         queryKey: ['profiles'],
         queryFn: async () => {
@@ -347,7 +353,6 @@ export default function DashboardPage() {
         setExpandedProfileId(profiles[0].id);
     }
 
-    // --- ФУНКЦИИ ДЛЯ НАСТРОЕК АККАУНТА ---
     const handleLogout = () => {
         localStorage.removeItem('token');
         localStorage.removeItem('refresh_token');
@@ -404,8 +409,9 @@ export default function DashboardPage() {
                         <p className="text-slate-500 mt-1 font-medium">Управление вашими документами и профилями</p>
                     </div>
                     
+                    {/* Кнопка теперь открывает модалку, а не делает редирект */}
                     <button 
-                        onClick={() => router.push('/')} 
+                        onClick={() => setIsUploadModalOpen(true)} 
                         className="group flex items-center justify-center gap-2 bg-secondary text-white px-6 py-3 rounded-2xl hover:bg-accent hover:text-black transition-all shadow-[0_0_20px_rgba(37,99,235,0.3)] hover:shadow-[0_0_25px_rgba(37,99,235,0.5)] hover:-translate-y-0.5 font-semibold w-full sm:w-auto"
                     >
                         <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
@@ -447,6 +453,28 @@ export default function DashboardPage() {
                         </button>
                     </div>
                 </div>
+
+                {/* --- МОДАЛЬНОЕ ОКНО ЗАГРУЗКИ --- */}
+                {isUploadModalOpen && (
+                    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
+                        <div className="bg-white rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative">
+                            <div className="flex justify-between items-center p-6 border-b border-slate-100 bg-slate-50">
+                                <h3 className="text-xl font-bold text-slate-900">Загрузка анализа</h3>
+                                <button 
+                                    onClick={() => setIsUploadModalOpen(false)} 
+                                    className="text-slate-400 hover:text-slate-600 transition-colors bg-white rounded-full p-1.5 shadow-sm border border-slate-200"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
+                            </div>
+                            <div className="p-6">
+                                {/* Наш готовый компонент загрузки */}
+                                <FileUploader /> 
+                            </div>
+                        </div>
+                    </div>
+                )}
+                {/* ------------------------------- */}
 
             </div>
         </div>

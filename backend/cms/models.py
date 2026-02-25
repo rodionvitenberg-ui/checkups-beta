@@ -6,7 +6,6 @@ User = get_user_model()
 class FAQItem(models.Model):
     question = models.CharField('Вопрос', max_length=255)
     answer = models.TextField('Ответ')
-    image = models.ImageField('Изображение', upload_to='cms/faq/', null=True, blank=True)
     order = models.IntegerField('Порядок сортировки', default=0)
     is_active = models.BooleanField('Показывать на сайте', default=True)
 

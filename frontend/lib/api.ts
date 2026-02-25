@@ -295,7 +295,6 @@ export interface FAQItem {
     id: number;
     question: string;
     answer: string;
-    image: string | null;
 }
 
 // Получение списка вопросов из нашей новой CMS
