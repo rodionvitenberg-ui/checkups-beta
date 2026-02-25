@@ -39,7 +39,8 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-white">
-      <div className="max-w-6xl mx-auto px-4 sm:px-6 py-12 md:py-20">
+      {/* ИЗМЕНЕНО: Добавили pt-24 для мобилки и pt-32 для десктопа */}
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-12 md:pt-32 md:pb-20">
         
         {/* 1. ГЛАВНЫЙ БЛОК (О ПРОЕКТЕ) */}
         <section className="flex flex-col md:flex-row gap-12 items-center mb-16">

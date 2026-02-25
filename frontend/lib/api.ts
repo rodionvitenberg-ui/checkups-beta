@@ -335,3 +335,15 @@ export const createTestimonial = async (formData: FormData): Promise<Testimonial
     });
     return response.data;
 };
+
+export interface LegalDocument {
+    slug: string;
+    title: string;
+    content: string;
+    updated_at: string;
+}
+
+export const getLegalDocuments = async (): Promise<LegalDocument[]> => {
+    const response = await api.get<LegalDocument[]>('/cms/legal');
+    return response.data;
+};

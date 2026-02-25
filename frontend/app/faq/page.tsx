@@ -15,7 +15,8 @@ export default function FAQPage() {
     });
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-slate-50 py-16 px-4 sm:px-6 lg:px-8 overflow-hidden">
+        // ИЗМЕНЕНО: Заменили py-16 на pt-28 pb-16 md:pt-36 md:pb-24 для правильного отступа от хедера
+        <div className="min-h-[calc(100vh-64px)] bg-slate-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8 md:pt-36 md:pb-24 overflow-hidden">
             <div className="max-w-6xl mx-auto">
                 
                 {/* ШАПКА СТРАНИЦЫ */}

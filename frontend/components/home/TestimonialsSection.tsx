@@ -107,12 +107,18 @@ export function TestimonialsSection() {
                 <Loader2 className="w-8 h-8 animate-spin text-blue-500" />
             </div>
         ) : (
-            <div className="mb-10">
+            <div className="mb-10 [&_.lucide-arrow-left]:hidden [&_.lucide-arrow-right]:hidden [&_button[class*='absolute']]:hidden">
+              {/* Добавили хак для скрытия стрелок карусели прямо отсюда */}
               <TestimonialCarousel data={displayData} />
             </div>
         )}
         
-        <Button onClick={handleOpenModal} className="gap-2" size="lg">
+        {/* НАША НОВАЯ КНОПКА СО СТИЛЯМИ */}
+        <Button 
+          onClick={handleOpenModal} 
+          className="gap-2 bg-secondary text-white hover:bg-accent hover:text-black transition-colors duration-300 border-transparent" 
+          size="lg"
+        >
           <MessageSquarePlus className="w-5 h-5" />
           Добавить свой отзыв
         </Button>

@@ -55,7 +55,6 @@ export function Header() {
   return (
     <header 
       className={cn(
-        // ДОБАВЛЕНО: transform-gpu, antialiased и [backface-visibility:hidden] для четкости всего хедера
         "fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 bg-background backdrop-blur-md transition-transform duration-300 ease-in-out transform-gpu antialiased [backface-visibility:hidden]",
         isVisible ? "translate-y-0" : "-translate-y-full"
       )}
@@ -74,7 +73,7 @@ export function Header() {
                 height={40} 
                 className="h-15 w-auto object-contain" 
                 priority 
-                unoptimized // ДОБАВЛЕНО: отключаем оптимизацию Next.js
+                unoptimized 
             />
           </Link>
         </div>
@@ -88,15 +87,14 @@ export function Header() {
             FAQ
           </MorphyButton>
 
-          {/* Добавили w-[130px] для фиксации ширины и скрываем текст до загрузки */}
           <MorphyButton 
             size="default" 
             className="w-[130px] flex justify-center"
             onClick={() => handleNavigation(isAuth ? "/dashboard" : "/auth")}
-            disabled={!isMounted} // Опционально: отключаем клик в первую долю секунды
+            disabled={!isMounted} 
           >
             {!isMounted ? (
-              <span className="opacity-0">Кабинет</span> // Невидимый текст, чтобы кнопка не сплющилась по высоте
+              <span className="opacity-0">Кабинет</span> 
             ) : isAuth ? (
               "Кабинет"
             ) : (
@@ -105,15 +103,37 @@ export function Header() {
           </MorphyButton>
         </div>
 
-        {/* Мобильная кнопка MENU */}
+        {/* Мобильная кнопка-бургер */}
         <div className="flex md:hidden items-center">
-          <MorphyButton 
-            size="sm" 
-            className="w-[100px] flex justify-center" // Тоже фиксируем ширину, чтобы не прыгала между MENU и ЗАКРЫТЬ
+          <button
             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            className="relative flex h-10 w-10 items-center justify-center transition-colors focus:outline-none"
+            aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
           >
-            {isMobileMenuOpen ? "ЗАКРЫТЬ" : "MENU"}
-          </MorphyButton>
+            <div className="relative flex h-[14px] w-[22px] flex-col items-center justify-between overflow-visible">
+              {/* Верхняя линия */}
+              <span
+                className={cn(
+                  "absolute left-0 h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out",
+                  isMobileMenuOpen ? "top-[6px] rotate-45" : "top-0"
+                )}
+              />
+              {/* Средняя линия */}
+              <span
+                className={cn(
+                  "absolute left-0 top-[6px] h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out",
+                  isMobileMenuOpen ? "translate-x-3 opacity-0" : "translate-x-0 opacity-100"
+                )}
+              />
+              {/* Нижняя линия */}
+              <span
+                className={cn(
+                  "absolute left-0 h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out",
+                  isMobileMenuOpen ? "top-[6px] -rotate-45" : "bottom-0"
+                )}
+              />
+            </div>
+          </button>
         </div>
       </div>
 

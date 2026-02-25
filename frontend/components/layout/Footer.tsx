@@ -17,7 +17,8 @@ export function Footer() {
                 alt="Checkups Logo" 
                 width={140} 
                 height={40} 
-                className="h-10 w-auto object-contain grayscale opacity-70 hover:grayscale-0 hover:opacity-100 transition-all duration-300" 
+                className="h-10 w-auto object-contain" 
+                unoptimized // ДОБАВЛЕНО: отключаем сжатие для максимальной четкости
               />
             </Link>
             <p className="text-sm text-slate-400">

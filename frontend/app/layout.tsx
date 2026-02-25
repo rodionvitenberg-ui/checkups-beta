@@ -16,8 +16,8 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Checkups",
-  description: "Пре-альфа, но рабочая!",
+  title: "Biocheck.pro",
+  description: "Сканер лабораторных анализов",
 };
 
 export default function RootLayout({
