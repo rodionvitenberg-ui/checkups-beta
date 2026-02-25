@@ -70,7 +70,6 @@ api = NinjaAPI()
 User = get_user_model()
 api.add_router("/cms/", cms_router)
 
-# ДОБАВЬ ЭТОТ КЛАСС ПОСЛЕ ИМПОРТОВ
 class OptionalJWTAuth(JWTAuth):
     """
     Кастомный класс авторизации. 
@@ -135,110 +134,73 @@ def login(request, payload: LoginSchema):
 @api.post("/auth/claim-request")
 def claim_request(request, payload: ClaimRequestOTPSchema):
     """
-    Шаг 1: Проверка данных и отправка 6-значного кода на почту.
+    Фоновая регистрация пользователя и привязка анализа.
+    Пароль генерируется автоматически и отправляется на почту.
+    Авторизация не происходит (токены не возвращаются).
     """
     analysis = get_object_or_404(MedicalAnalysis, uid=payload.analysis_uid)
     
     if analysis.user:
         return api.create_response(request, {"message": "Анализ уже привязан к аккаунту"}, status=400)
 
-    # Защита: Если email уже есть в базе, заставляем юзера просто войти по паролю
-    if User.objects.filter(email=payload.email).exists():
-        return api.create_response(
-            request, 
-            {"message": "Этот email уже зарегистрирован. Пожалуйста, войдите в свой кабинет."}, 
-            status=400
-        )
+    user = User.objects.filter(email=payload.email).first()
+    is_new_user = False
 
-    # Генерируем 6-значный код
-    otp_code = str(random.randint(100000, 999999))
-    
-    # Сохраняем в кэш Django на 10 минут (600 секунд)
-    cache_key = f"otp_{payload.email}"
-    cache.set(cache_key, otp_code, timeout=600)
-    
-    # Отправляем письмо
-    try:
-        send_mail(
-            subject='Код подтверждения | Checkups',
-            message=f'Ваш код для сохранения медицинских анализов: {otp_code}\n\nНикому не сообщайте этот код. Он действителен 10 минут.',
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[payload.email],
-            fail_silently=False,
-        )
-    except Exception as e:
-        print(f"❌ Ошибка отправки письма (OTP): {e}")
-        return api.create_response(request, {"message": "Не удалось отправить письмо с кодом"}, status=500)
-
-    return {"message": "Код успешно отправлен на почту"}
-
-
-@api.post("/auth/claim-verify", response=AuthResponseSchema)
-def claim_verify(request, payload: ClaimVerifyOTPSchema):
-    """
-    Шаг 2: Проверка кода, создание пользователя, установка пароля и привязка анализа.
-    """
-    # 1. Проверяем код из кэша
-    cache_key = f"otp_{payload.email}"
-    cached_code = cache.get(cache_key)
-    
-    if not cached_code or cached_code != payload.code:
-        return api.create_response(request, {"message": "Неверный или устаревший код"}, status=400)
-
-    # 2. Проверяем анализ
-    analysis = get_object_or_404(MedicalAnalysis, uid=payload.analysis_uid)
-    if analysis.user:
-        return api.create_response(request, {"message": "Анализ уже привязан"}, status=400)
-
-    # 3. Финальная транзакция (создаем всё и привязываем)
     with transaction.atomic():
-        # Создаем юзера с паролем, который он придумал сам!
-        user = User.objects.create(email=payload.email, phone=payload.phone)
-        user.set_password(payload.password)
-        user.save()
+        # Если такого email нет, создаем аккаунт
+        if not user:
+            user = User.objects.create(email=payload.email, phone=payload.phone)
+            password = get_random_string(12)
+            user.set_password(password)
+            user.save()
+            is_new_user = True
 
-        # Достаем имя из результатов ИИ
+        # Пытаемся достать имя пациента из результатов ИИ
         ai_data = analysis.ai_result
         if isinstance(ai_data, str):
-            try:
-                ai_data = json.loads(ai_data)
-            except json.JSONDecodeError:
-                ai_data = {}
+            try: ai_data = json.loads(ai_data)
+            except json.JSONDecodeError: ai_data = {}
 
         patient_profile = None
         if isinstance(ai_data, dict):
             p_info = ai_data.get('patient_info') or {}
             ext_name = p_info.get('extracted_name')
             if ext_name and str(ext_name).strip():
-                patient_profile = PatientProfile.objects.create(
-                    user=user,
-                    full_name=str(ext_name).strip()
-                )
-        
-        # Если ИИ не нашел имя, создаем дефолтный
-        if not patient_profile:
-             patient_profile = PatientProfile.objects.create(
-                 user=user, 
-                 full_name="Основной профиль"
-             )
+                # Ищем, есть ли уже такой профиль у пользователя
+                patient_profile = PatientProfile.objects.filter(user=user, full_name__iexact=str(ext_name).strip()).first()
+                if not patient_profile:
+                    patient_profile = PatientProfile.objects.create(
+                        user=user, full_name=str(ext_name).strip()
+                    )
 
-        # Привязываем анализ и графики к пользователю и профилю
+        # Если профиль так и не создался, берем дефолтный
+        if not patient_profile:
+            patient_profile = PatientProfile.objects.filter(user=user).first()
+            if not patient_profile:
+                patient_profile = PatientProfile.objects.create(user=user, full_name="Основной профиль")
+
+        # Привязываем анализ к юзеру
         analysis.user = user
         analysis.patient = patient_profile
         analysis.save(update_fields=['user', 'patient'])
-        
-        AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
-    
-    # Удаляем код из кэша после успешного использования
-    cache.delete(cache_key)
 
-    # 4. Генерируем JWT токены и отдаем фронтенду для мгновенного автологина
-    refresh = RefreshToken.for_user(user)
-    return {
-        "token": str(refresh.access_token),
-        "refresh_token": str(refresh),
-        "user_email": user.email
-    }
+        # Привязываем все индикаторы (точки графиков)
+        AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
+
+    # Отправляем письмо с паролем только новому пользователю
+    if is_new_user:
+        try:
+            send_mail(
+                subject='Ваши результаты анализов | Checkups',
+                message=f'Ваш анализ успешно обработан!\n\nМы автоматически создали для вас личный кабинет, чтобы история ваших результатов не потерялась.\n\nЛогин: {user.email}\nПароль: {password}\n\nВы можете войти в кабинет по ссылке: https://biocheck.pro/auth',
+                from_email=settings.DEFAULT_FROM_EMAIL,
+                recipient_list=[user.email],
+                fail_silently=True,
+            )
+        except Exception as e:
+            print(f"❌ Ошибка отправки письма: {e}")
+
+    return {"message": "Анализ успешно привязан. Данные отправлены на почту."}
 
 @api.post("/auth/refresh")
 def refresh_token(request, payload: RefreshRequestSchema):
@@ -335,46 +297,17 @@ def get_analysis_result(request, uid: uuid.UUID):
     except MedicalAnalysis.DoesNotExist:
         raise Http404("Анализ не найден")
 
-    user = None
-    auth_header = request.headers.get('Authorization')
-    if auth_header and auth_header.startswith('Bearer '):
-        token_str = auth_header.split(' ')[1]
-        try:
-            access_token = AccessToken(token_str)
-            user = User.objects.get(id=access_token['user_id'])
-        except (TokenError, User.DoesNotExist):
-            pass
-
-    # ЖЕЛЕЗОБЕТОННАЯ БЕЗОПАСНОСТЬ:
-    if analysis.user is not None:
-        # Если анализ имеет владельца, а пользователь не авторизован ИЛИ это чужой анализ
-        if user is None or not user.is_authenticated or analysis.user != user:
-            raise Http404("Анализ не найден")
-
+    # Доступ по UUID открыт для всех (т.к. UUID - это как секретная ссылка)
     return analysis
 
 @api.get("/analyses/{uid}/download", auth=None)
 def download_analysis_file(request, uid: uuid.UUID):
     analysis = get_object_or_404(MedicalAnalysis, uid=uid)
-    
-    user = None
-    auth_header = request.headers.get('Authorization')
-    if auth_header and auth_header.startswith('Bearer '):
-        token_str = auth_header.split(' ')[1]
-        try:
-            access_token = AccessToken(token_str)
-            user = User.objects.get(id=access_token['user_id'])
-        except (TokenError, User.DoesNotExist):
-            pass
-
-    # Защита от чужих глаз
-    if analysis.user is not None:
-        if user is None or not user.is_authenticated or analysis.user != user:
-            raise Http404("Файл не найден")
 
     if not analysis.file:
         raise Http404("Файл не найден")
 
+    # Доступ к файлу по UUID также открыт
     response = FileResponse(analysis.file.open('rb'))
     fname = analysis.file.name.split("/")[-1]
     response['Content-Disposition'] = f'inline; filename="{fname}"'

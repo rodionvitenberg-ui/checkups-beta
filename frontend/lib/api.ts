@@ -73,6 +73,7 @@ export interface PatientMetadata {
     extracted_name?: string;
     extracted_birth_date?: string;
     extracted_gender?: string;
+    extracted_date?: string;
 }
 
 export interface AIIndicator {
@@ -346,3 +347,4 @@ export const getLegalDocuments = async (): Promise<LegalDocument[]> => {
     const response = await api.get<LegalDocument[]>('/cms/legal');
     return response.data;
 };
+

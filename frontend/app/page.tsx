@@ -38,7 +38,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen bg-white">
+    <div className="min-h-screen">
       {/* ИЗМЕНЕНО: Добавили pt-24 для мобилки и pt-32 для десктопа */}
       <div className="max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-12 md:pt-32 md:pb-20">
         

@@ -10,42 +10,25 @@ export function FileUploader() {
   const router = useRouter();
   const [isDragging, setIsDragging] = useState(false);
   
-  // Новые состояния загрузки
   const [uploadStatus, setUploadStatus] = useState<'idle' | 'uploading' | 'success' | 'error'>('idle');
   const [error, setError] = useState<string | null>(null);
   
-  // Храним ID созданного анализа и имя файла
   const [analysisId, setAnalysisId] = useState<string | null>(null);
   const [fileName, setFileName] = useState<string | null>(null);
   
   const fileInputRef = useRef<HTMLInputElement>(null);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(true);
-  };
-
-  const handleDragLeave = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-  };
-
+  const handleDragOver = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(true); };
+  const handleDragLeave = (e: React.DragEvent) => { e.preventDefault(); setIsDragging(false); };
   const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    if (e.dataTransfer.files?.[0]) {
-      handleUpload(e.dataTransfer.files[0]);
-    }
+    e.preventDefault(); setIsDragging(false);
+    if (e.dataTransfer.files?.[0]) handleUpload(e.dataTransfer.files[0]);
   };
-
   const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files?.[0]) {
-      handleUpload(e.target.files[0]);
-    }
+    if (e.target.files?.[0]) handleUpload(e.target.files[0]);
   };
 
   const handleUpload = async (file: File) => {
-    // Валидация
     if (!['application/pdf', 'image/jpeg', 'image/png', 'image/heic'].includes(file.type)) {
       setError('Пожалуйста, загрузите PDF или изображение (JPG, PNG)');
       setUploadStatus('error');
@@ -63,12 +46,8 @@ export function FileUploader() {
 
     try {
       const response = await uploadAnalysis(file);
-      
-      if (!response.uid) {
-        throw new Error('ID анализа не получен от сервера');
-      }
+      if (!response.uid) throw new Error('ID анализа не получен от сервера');
 
-      // Сохраняем ID и показываем промежуточный экран успеха
       setAnalysisId(response.uid);
       setUploadStatus('success');
       
@@ -79,21 +58,20 @@ export function FileUploader() {
     }
   };
 
-  // Логика перехода по кнопке "Получить результат"
   const handleGetResult = () => {
       if (!analysisId) return;
       
       const token = localStorage.getItem('token');
       if (token) {
-          // Если авторизован - на страницу анализа
+          // Если юзер УЖЕ авторизован, ему не нужна форма сбора email.
+          // Перекидываем его сразу на страницу анализа (там лоадер отработает и покажет результат).
           router.push(`/analysis/${analysisId}`);
       } else {
-          // Если аноним - на страницу псевдо-регистрации
+          // Если аноним - отправляем на страницу сбора лидов (лоадер + форма)
           router.push(`/claim/${analysisId}`);
       }
   };
 
-  // Если файл успешно загружен, показываем промежуточный экран
   if (uploadStatus === 'success') {
       return (
           <div className="w-full max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
@@ -118,27 +96,23 @@ export function FileUploader() {
       );
   }
 
-  // Стандартный экран загрузки
   return (
     <div className="w-full">
       <div
-        onDragOver={handleDragOver}
-        onDragLeave={handleDragLeave}
-        onDrop={handleDrop}
-        onClick={() => uploadStatus !== 'uploading' && fileInputRef.current?.click()}
+        onDragOver={handleDragOver} onDragLeave={handleDragLeave} onDrop={handleDrop}
+        onClick={() => {
+            if (uploadStatus !== 'uploading') {
+                if (fileInputRef.current) fileInputRef.current.value = '';
+                fileInputRef.current?.click();
+            }
+        }}
         className={clsx(
           "relative flex flex-col items-center justify-center w-full min-h-[240px] rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer group",
           isDragging ? "border-blue-500 bg-blue-50 scale-[1.01]" : "border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white",
           uploadStatus === 'uploading' && "opacity-80 pointer-events-none border-blue-200 bg-blue-50/50"
         )}
       >
-        <input 
-          type="file" 
-          className="hidden" 
-          ref={fileInputRef} 
-          onChange={handleFileSelect}
-          accept=".pdf,.jpg,.jpeg,.png,.heic"
-        />
+        <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} accept=".pdf,.jpg,.jpeg,.png,.heic" />
 
         {uploadStatus === 'uploading' ? (
           <div className="flex flex-col items-center">

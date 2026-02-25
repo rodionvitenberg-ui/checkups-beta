@@ -100,7 +100,13 @@ function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisRespons
                 </div>
                 <div>
                     <h4 className="text-sm font-semibold text-slate-900 group-hover:text-blue-600 transition-colors">
-                        Анализ от {analysis.created_at ? format(new Date(analysis.created_at), 'd MMMM yyyy', { locale: ru }) : 'Неизвестная дата'}
+                        {analysis.ai_result?.patient_info?.extracted_name 
+                            ? `${analysis.ai_result.patient_info.extracted_name} от ` 
+                            : 'Анализ от '}
+                        {analysis.ai_result?.patient_info?.extracted_date 
+                            ? format(new Date(analysis.ai_result.patient_info.extracted_date), 'd MMMM yyyy', { locale: ru }) 
+                            : (analysis.created_at ? format(new Date(analysis.created_at), 'd MMMM yyyy', { locale: ru }) : 'Неизвестная дата')
+                        }
                     </h4>
                     <span className={clsx(
                         "text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block",

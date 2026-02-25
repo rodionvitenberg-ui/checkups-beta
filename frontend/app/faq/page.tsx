@@ -26,7 +26,7 @@ export default function FAQPage() {
   };
 
   return (
-    <section className="min-h-[calc(100vh-64px)] bg-slate-50 pt-28 pb-16 px-4 sm:px-6 lg:px-8 md:pt-36 md:pb-24">
+    <section className="min-h-[calc(100vh-64px)] pt-28 pb-16 px-4 sm:px-6 lg:px-8 md:pt-36 md:pb-24">
       <div className="w-full max-w-7xl mx-auto">
           
           <div className="mb-12 md:mb-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -82,17 +82,6 @@ export default function FAQPage() {
                               
                               {/* Легкое затемнение снизу для читаемости текста */}
                               <div className="absolute inset-0 bg-gradient-to-t from-slate-900/80 via-transparent to-transparent opacity-80 pointer-events-none" />
-
-                              {/* Декор */}
-                              <div className="absolute bottom-10 left-10 max-w-[250px] z-10 pointer-events-none">
-                                  <p className="text-white/90 font-medium text-sm leading-relaxed">
-                                     Остались вопросы? 
-                                     <br/>
-                                     <span className="text-blue-300 cursor-pointer hover:text-blue-200 hover:underline mt-2 block pointer-events-auto transition-colors">
-                                        Свяжитесь с нами
-                                     </span>
-                                  </p>
-                              </div>
 
                           </div>
                       </motion.div>

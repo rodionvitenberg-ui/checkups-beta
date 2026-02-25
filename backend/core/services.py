@@ -53,6 +53,14 @@ def save_atomic_indicators(analysis: MedicalAnalysis, ai_result: dict):
     
     # Защита от ошибок даты
     analysis_date = analysis.created_at.date() if analysis.created_at else datetime.date.today()
+    extracted_date_str = ai_result.get('patient_info', {}).get('extracted_date')
+    
+    if extracted_date_str:
+        try:
+            # ИИ должен вернуть YYYY-MM-DD
+            analysis_date = datetime.datetime.strptime(extracted_date_str, "%Y-%m-%d").date()
+        except ValueError:
+            pass # Если формат кривой, оставляем дату загрузки файла
     
     new_records = []
     

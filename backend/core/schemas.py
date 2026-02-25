@@ -6,7 +6,8 @@ from datetime import date, datetime
 class PatientMetadataSchema(Schema):
     extracted_name: Optional[str] = None
     extracted_birth_date: Optional[str] = None
-    extracted_gender: Optional[str] = None 
+    extracted_gender: Optional[str] = None
+    extracted_date: Optional[str] = None 
 
 class SummarySchema(Schema):
     is_critical: bool

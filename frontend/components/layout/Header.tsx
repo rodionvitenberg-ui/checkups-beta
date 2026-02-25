@@ -55,7 +55,7 @@ export function Header() {
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 bg-background backdrop-blur-md transition-transform duration-300 ease-in-out transform-gpu antialiased [backface-visibility:hidden]",
+        "fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 backdrop-blur-md transition-transform duration-300 ease-in-out transform-gpu antialiased [backface-visibility:hidden]",
         isVisible ? "translate-y-0" : "-translate-y-full"
       )}
     >
@@ -69,9 +69,9 @@ export function Header() {
             <Image 
                 src="/logo.png" 
                 alt="Checkups Logo" 
-                width={140} 
+                width={100} 
                 height={40} 
-                className="h-15 w-auto object-contain" 
+                className="h-12 w-auto object-contain" 
                 priority 
                 unoptimized 
             />
