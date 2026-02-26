@@ -6,6 +6,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getBlocks, ContentBlock } from '@/lib/api';
 import { FileUploader } from '@/components/home/FileUploader';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
+import { TestimonialsAlt } from '@/components/home/TestimonialsAlt';
 import { Activity, Brain, ShieldCheck, FileClock, ArrowRight, Image as ImageIcon, Loader2 } from 'lucide-react';
 
 // ШАГ 1: Импортируем наш компонент-обертку
@@ -177,6 +178,9 @@ export default function Home() {
         {/* 5. ОТЗЫВЫ */}
         <section>
           <TestimonialsSection />
+        </section>
+        <section>
+          <TestimonialsAlt />
         </section>
 
       </div>
