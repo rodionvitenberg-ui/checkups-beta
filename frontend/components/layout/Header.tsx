@@ -3,18 +3,52 @@
 import Link from "next/link";
 import Image from "next/image"; 
 import { useEffect, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { MorphyButton } from "@/components/ui/morphy-button";
+import { MorphyButton } from "@/components/ui/morphy-button"; // Возвращаем импорт MorphyButton
+
+// --- Вспомогательный компонент только для десктопных кнопок ---
+interface NavButtonProps {
+  text: string;
+  isActive: boolean;
+  onClick: () => void;
+}
+
+function NavButton({ text, isActive, onClick }: NavButtonProps) {
+  return (
+    <button 
+      onClick={onClick} 
+      className="relative flex items-center justify-center group focus:outline-none"
+    >
+      <Image 
+        src="/buttons/smallbutton.png" 
+        alt={`Фон кнопки ${text}`} 
+        width={130} 
+        height={40} 
+        className={cn(
+          "w-auto h-10 object-contain transition-opacity duration-300 ease-in-out",
+          // На десктопе фон скрыт (opacity-0), если страница не активна, 
+          // и появляется при наведении (group-hover:opacity-100).
+          isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"
+        )} 
+      />
+      {/* Текст всегда остается 100% видимым */}
+      <span className="absolute z-10 font-bold text-medium">
+        {text}
+      </span>
+    </button>
+  );
+}
+// --------------------------------------------------------
 
 export function Header() {
   const [isAuth, setIsAuth] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
-  // Добавляем флаг монтирования компонента на клиенте
   const [isMounted, setIsMounted] = useState(false); 
   const router = useRouter();
+  const pathname = usePathname();
 
   useEffect(() => {
     const checkAuth = () => {
@@ -23,7 +57,7 @@ export function Header() {
     };
 
     checkAuth();
-    setIsMounted(true); // Указываем, что клиент отрендерился и localStorage прочитан
+    setIsMounted(true);
 
     window.addEventListener('auth-change', checkAuth);
     return () => window.removeEventListener('auth-change', checkAuth);
@@ -52,6 +86,8 @@ export function Header() {
     router.push(path);
   };
 
+  const authPath = isAuth ? "/dashboard" : "/auth";
+
   return (
     <header 
       className={cn(
@@ -78,29 +114,27 @@ export function Header() {
           </Link>
         </div>
 
-        {/* Десктопная версия */}
+        {/* Десктопная версия (кастомные кнопки-картинки) */}
         <div className="hidden md:flex items-center gap-3 sm:gap-5">
-          <MorphyButton 
-            size="default" 
-            onClick={() => handleNavigation('/faq')}
-          >
-            FAQ
-          </MorphyButton>
+          <NavButton 
+            text="Главная" 
+            isActive={pathname === '/'} 
+            onClick={() => handleNavigation('/')} 
+          />
+          
+          <NavButton 
+            text="FAQ" 
+            isActive={pathname === '/faq'} 
+            onClick={() => handleNavigation('/faq')} 
+          />
 
-          <MorphyButton 
-            size="default" 
-            className="w-[130px] flex justify-center"
-            onClick={() => handleNavigation(isAuth ? "/dashboard" : "/auth")}
-            disabled={!isMounted} 
-          >
-            {!isMounted ? (
-              <span className="opacity-0">Кабинет</span> 
-            ) : isAuth ? (
-              "Кабинет"
-            ) : (
-              "Войти"
-            )}
-          </MorphyButton>
+          <div className={cn("transition-opacity duration-300", !isMounted ? "opacity-0" : "opacity-100")}>
+            <NavButton 
+              text={isAuth ? "Кабинет" : "Войти"} 
+              isActive={pathname === authPath} 
+              onClick={() => handleNavigation(authPath)} 
+            />
+          </div>
         </div>
 
         {/* Мобильная кнопка-бургер */}
@@ -111,27 +145,9 @@ export function Header() {
             aria-label={isMobileMenuOpen ? "Закрыть меню" : "Открыть меню"}
           >
             <div className="relative flex h-[14px] w-[22px] flex-col items-center justify-between overflow-visible">
-              {/* Верхняя линия */}
-              <span
-                className={cn(
-                  "absolute left-0 h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out",
-                  isMobileMenuOpen ? "top-[6px] rotate-45" : "top-0"
-                )}
-              />
-              {/* Средняя линия */}
-              <span
-                className={cn(
-                  "absolute left-0 top-[6px] h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out",
-                  isMobileMenuOpen ? "translate-x-3 opacity-0" : "translate-x-0 opacity-100"
-                )}
-              />
-              {/* Нижняя линия */}
-              <span
-                className={cn(
-                  "absolute left-0 h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out",
-                  isMobileMenuOpen ? "top-[6px] -rotate-45" : "bottom-0"
-                )}
-              />
+              <span className={cn("absolute left-0 h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out", isMobileMenuOpen ? "top-[6px] rotate-45" : "top-0")} />
+              <span className={cn("absolute left-0 top-[6px] h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out", isMobileMenuOpen ? "translate-x-3 opacity-0" : "translate-x-0 opacity-100")} />
+              <span className={cn("absolute left-0 h-[2px] w-full transform rounded-full bg-secondary transition-all duration-300 ease-in-out", isMobileMenuOpen ? "top-[6px] -rotate-45" : "bottom-0")} />
             </div>
           </button>
         </div>
@@ -140,11 +156,21 @@ export function Header() {
       {/* Выдвижное мобильное меню */}
       <div 
         className={cn(
-          "absolute top-16 left-0 right-0 w-full bg-white/95 backdrop-blur-md border-b border-gray-200 shadow-lg md:hidden transition-all duration-300 origin-top overflow-hidden",
+          "absolute top-16 left-0 right-0 w-full md:hidden transition-all duration-300 origin-top overflow-hidden",
+          // Убрали белый фон, добавили прозрачность (bg-transparent) и блюр (backdrop-blur-md)
+          "bg-border backdrop-blur-md",
           isMobileMenuOpen ? "scale-y-100 opacity-100 h-auto py-4" : "scale-y-0 opacity-0 h-0 py-0"
         )}
       >
         <div className="flex flex-col gap-3 px-4">
+          <MorphyButton 
+            size="default" 
+            className="w-full"
+            onClick={() => handleNavigation('/')}
+          >
+            Главная
+          </MorphyButton>
+
           <MorphyButton 
             size="default" 
             className="w-full"
@@ -156,7 +182,7 @@ export function Header() {
           <MorphyButton 
             size="default" 
             className="w-full"
-            onClick={() => handleNavigation(isAuth ? "/dashboard" : "/auth")}
+            onClick={() => handleNavigation(authPath)}
             disabled={!isMounted}
           >
              {!isMounted ? <span className="opacity-0">Кабинет</span> : (isAuth ? "Кабинет" : "Войти")}

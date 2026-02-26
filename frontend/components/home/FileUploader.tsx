@@ -74,8 +74,8 @@ export function FileUploader() {
       return (
           <div className="w-full max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
               {/* ИЗМЕНЕНИЕ: bg-white -> bg-white/40 backdrop-blur-md, добавили легкую тень */}
-              <div className="bg-transparent backdrop-blur-md rounded-3xl border border-white/20 shadow-xl shadow-slate-200/50 p-8 flex flex-col items-center text-center">
-                  <div className="w-20 h-20 bg-green-50/80 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 border border-green-100/50 shadow-inner">
+              <div className="bg-transparent backdrop-blur-md rounded-3xl shadow-xl transition-shadow p-8 flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-transparent backdrop-blur-sm rounded-full flex items-center justify-center mb-6 border border-green-100/50 shadow-inner">
                       <FileCheck2 className="w-10 h-10 text-green-500" />
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-2">Загружено успешно</h3>
@@ -85,7 +85,7 @@ export function FileUploader() {
                   
                   <button 
                       onClick={handleGetResult}
-                      className="group flex items-center gap-3 bg-green-500 hover:bg-green-600 text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-lg shadow-green-200 hover:-translate-y-1 w-full sm:w-auto justify-center"
+                      className="group flex items-center gap-3 bg-accent/80 hover:bg-accent text-white px-8 py-4 rounded-2xl font-bold text-lg transition-all shadow-lg shadow-green-200 hover:-translate-y-1 w-full sm:w-auto justify-center"
                   >
                       Получить результат
                       <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" />

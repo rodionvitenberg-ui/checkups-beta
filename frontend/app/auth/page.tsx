@@ -8,6 +8,9 @@ import Link from 'next/link';
 import { clsx } from 'clsx';
 import { useToast } from '@/components/ui/toast';
 
+// Импортируем наш фон
+import StaticBackground from '@/components/background/StaticBackground';
+
 export default function AuthPage() {
     const router = useRouter();
     const { toast } = useToast();
@@ -56,8 +59,7 @@ export default function AuthPage() {
                     variant: "success",
                 });
                 
-                // МАГИЯ: Читаем callbackUrl из адресной строки (например ?callbackUrl=/analysis/123)
-                // Если параметра нет, отправляем в дефолтный дашборд
+                // МАГИЯ: Читаем callbackUrl из адресной строки
                 const searchParams = new URLSearchParams(window.location.search);
                 const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
                 
@@ -68,7 +70,7 @@ export default function AuthPage() {
             const status = err.response?.status;
             const msg = err.response?.data?.message || 'Произошла ошибка. Проверьте данные.';
             
-            // СПЕЦИАЛЬНАЯ ОБРАБОТКА: Пользователь уже существует (400 при регистрации)
+            // СПЕЦИАЛЬНАЯ ОБРАБОТКА: Пользователь уже существует
             if (mode === 'register' && status === 400) {
                 toast({
                     title: "Аккаунт уже существует",
@@ -93,11 +95,17 @@ export default function AuthPage() {
     };
 
     return (
-        <div className="min-h-[calc(100vh-64px)] bg-slate-50 flex items-center justify-center p-4">
-            <div className="bg-white w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-slate-100">
+        // ПРАВИЛО 1: Убрали bg-slate-50, добавили relative
+        <main className="relative min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
+            
+            {/* ПРАВИЛО 2: Вставляем фон */}
+            <StaticBackground imageUrl="/background/test.png" />
+
+            {/* ПРАВИЛО 3: z-10 и матовое стекло для карточки */}
+            <div className="relative z-10 bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-white/40">
                 
                 {/* Заголовок */}
-                <div className="bg-slate-900 p-6 text-center">
+                <div className="bg-slate-900/95 p-6 text-center">
                     <h2 className="text-2xl font-bold text-white mb-2">
                         {mode === 'register' ? 'Создать аккаунт' : 'С возвращением'}
                     </h2>
@@ -109,18 +117,18 @@ export default function AuthPage() {
                 </div>
 
                 {/* Переключатель */}
-                <div className="flex border-b border-slate-100">
+                <div className="flex border-b border-slate-200/50 bg-white/50">
                     <button 
                         onClick={() => setMode('register')}
                         className={clsx("flex-1 py-3 text-sm font-medium transition-colors", 
-                            mode === 'register' ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500 hover:text-slate-700")}
+                            mode === 'register' ? "text-blue-600 border-b-2 border-blue-600 bg-white/80" : "text-slate-500 hover:text-slate-700")}
                     >
                         Регистрация
                     </button>
                     <button 
                         onClick={() => setMode('login')}
                         className={clsx("flex-1 py-3 text-sm font-medium transition-colors", 
-                            mode === 'login' ? "text-blue-600 border-b-2 border-blue-600" : "text-slate-500 hover:text-slate-700")}
+                            mode === 'login' ? "text-blue-600 border-b-2 border-blue-600 bg-white/80" : "text-slate-500 hover:text-slate-700")}
                     >
                         Вход
                     </button>
@@ -139,7 +147,7 @@ export default function AuthPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                className="w-full pl-10 pr-4 py-2 bg-white/80 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                 placeholder="name@example.com"
                             />
                         </div>
@@ -156,7 +164,7 @@ export default function AuthPage() {
                                     required
                                     value={phone}
                                     onChange={(e) => setPhone(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    className="w-full pl-10 pr-4 py-2 bg-white/80 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                     placeholder="+7 (999) 000-00-00"
                                 />
                             </div>
@@ -179,7 +187,7 @@ export default function AuthPage() {
                                     required
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
-                                    className="w-full pl-10 pr-4 py-2 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                    className="w-full pl-10 pr-4 py-2 bg-white/80 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                     placeholder="••••••••"
                                 />
                             </div>
@@ -196,13 +204,13 @@ export default function AuthPage() {
                     </button>
                     
                     {mode === 'register' && (
-                         <p className="text-xs text-slate-400 text-center leading-relaxed">
+                         <p className="text-xs text-slate-500 text-center leading-relaxed font-medium">
                             Нажимая кнопку, вы соглашаетесь с правилами обработки персональных данных. 
                             Пароль будет выслан на указанный Email.
                         </p>
                     )}
                 </form>
             </div>
-        </div>
+        </main>
     );
 }

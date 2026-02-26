@@ -96,7 +96,7 @@ export default function Home() {
         <section className="grid grid-cols-1 sm:grid-cols-2 gap-6 mb-16">
           {/* ... карточки преимуществ остаются без изменений ... */}
           <div className="bg-transparent backdrop-blur-md p-6 rounded-2xl shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center mb-4 text-blue-600">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 text-blue-600">
               <Activity className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-lg text-slate-900 mb-2">
@@ -108,7 +108,7 @@ export default function Home() {
           </div>
           {/* ... остальные карточки аналогично ... */}
           <div className="bg-transparent backdrop-blur-md p-6 rounded-2xl shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-indigo-100 rounded-lg flex items-center justify-center mb-4 text-indigo-600">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 text-indigo-600">
               <Brain className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-lg text-slate-900 mb-2">
@@ -119,7 +119,7 @@ export default function Home() {
             </p>
           </div>
           <div className="bg-transparent backdrop-blur-md p-6 rounded-2xl shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-emerald-100 rounded-lg flex items-center justify-center mb-4 text-emerald-600">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 text-emerald-600">
               <FileClock className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-lg text-slate-900 mb-2">
@@ -130,7 +130,7 @@ export default function Home() {
             </p>
           </div>
           <div className="bg-transparent backdrop-blur-md p-6 rounded-2xl shadow-md transition-shadow">
-            <div className="w-10 h-10 bg-rose-100 rounded-lg flex items-center justify-center mb-4 text-rose-600">
+            <div className="w-10 h-10 rounded-lg flex items-center justify-center mb-4 text-rose-600">
               <ShieldCheck className="w-6 h-6" />
             </div>
             <h3 className="font-bold text-lg text-slate-900 mb-2">
