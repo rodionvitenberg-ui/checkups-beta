@@ -74,7 +74,7 @@ export function FileUploader() {
       return (
           <div className="w-full max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
               {/* ИЗМЕНЕНИЕ: bg-white -> bg-white/40 backdrop-blur-md, добавили легкую тень */}
-              <div className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 shadow-xl shadow-slate-200/50 p-8 flex flex-col items-center text-center">
+              <div className="bg-transparent backdrop-blur-md rounded-3xl border border-white/20 shadow-xl shadow-slate-200/50 p-8 flex flex-col items-center text-center">
                   <div className="w-20 h-20 bg-green-50/80 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 border border-green-100/50 shadow-inner">
                       <FileCheck2 className="w-10 h-10 text-green-500" />
                   </div>
