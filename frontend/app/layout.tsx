@@ -4,7 +4,6 @@ import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import Providers from "@/components/Providers";
 import { Footer } from '@/components/layout/Footer';
-import BallpitBackground from '@/components/background/BallpitBackground';
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -31,7 +30,6 @@ export default function RootLayout({
       <body className="antialiased min-h-screen flex flex-col relative">
         
         {/* Закидываем шарики на фон */}
-        <BallpitBackground />
 
         <Providers>
           {/* Оборачиваем контент и поднимаем его по z-index */}

@@ -63,25 +63,24 @@ export function FileUploader() {
       
       const token = localStorage.getItem('token');
       if (token) {
-          // Если юзер УЖЕ авторизован, ему не нужна форма сбора email.
-          // Перекидываем его сразу на страницу анализа (там лоадер отработает и покажет результат).
           router.push(`/analysis/${analysisId}`);
       } else {
-          // Если аноним - отправляем на страницу сбора лидов (лоадер + форма)
           router.push(`/claim/${analysisId}`);
       }
   };
 
+  // ЭКРАН УСПЕШНОЙ ЗАГРУЗКИ
   if (uploadStatus === 'success') {
       return (
           <div className="w-full max-w-xl mx-auto animate-in fade-in zoom-in-95 duration-300">
-              <div className="bg-white rounded-3xl border border-slate-200 shadow-sm p-8 flex flex-col items-center text-center">
-                  <div className="w-20 h-20 bg-green-50 rounded-full flex items-center justify-center mb-6">
+              {/* ИЗМЕНЕНИЕ: bg-white -> bg-white/40 backdrop-blur-md, добавили легкую тень */}
+              <div className="bg-white/40 backdrop-blur-md rounded-3xl border border-white/60 shadow-xl shadow-slate-200/50 p-8 flex flex-col items-center text-center">
+                  <div className="w-20 h-20 bg-green-50/80 backdrop-blur-sm rounded-full flex items-center justify-center mb-6 border border-green-100/50 shadow-inner">
                       <FileCheck2 className="w-10 h-10 text-green-500" />
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-2">Загружено успешно</h3>
-                  <p className="text-slate-500 mb-8 max-w-sm">
-                      Документ <span className="font-semibold text-slate-700">{fileName}</span> сохранен и готов к обработке искусственным интеллектом.
+                  <p className="text-slate-700 font-medium mb-8 max-w-sm">
+                      Документ <span className="font-bold text-slate-900">{fileName}</span> сохранен и готов к обработке искусственным интеллектом.
                   </p>
                   
                   <button 
@@ -96,6 +95,7 @@ export function FileUploader() {
       );
   }
 
+  // ЭКРАН ЗАГРУЗКИ / ОЖИДАНИЯ
   return (
     <div className="w-full">
       <div
@@ -107,9 +107,10 @@ export function FileUploader() {
             }
         }}
         className={clsx(
-          "relative flex flex-col items-center justify-center w-full min-h-[240px] rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer group",
-          isDragging ? "border-blue-500 bg-blue-50 scale-[1.01]" : "border-slate-200 hover:border-blue-400 bg-slate-50 hover:bg-white",
-          uploadStatus === 'uploading' && "opacity-80 pointer-events-none border-blue-200 bg-blue-50/50"
+          "relative flex flex-col items-center justify-center w-full min-h-[240px] rounded-3xl border-2 border-dashed transition-all duration-300 cursor-pointer group backdrop-blur-md", // ИЗМЕНЕНИЕ: добавили backdrop-blur-md
+          // ИЗМЕНЕНИЕ: bg-slate-50 -> bg-white/30, bg-blue-50 -> bg-blue-50/50
+          isDragging ? "border-blue-500 bg-blue-50/50 scale-[1.01]" : "border-slate-300/80 hover:border-blue-400 bg-white/30 hover:bg-white/50 shadow-lg shadow-slate-200/20",
+          uploadStatus === 'uploading' && "opacity-80 pointer-events-none border-blue-300 bg-blue-50/40"
         )}
       >
         <input type="file" className="hidden" ref={fileInputRef} onChange={handleFileSelect} accept=".pdf,.jpg,.jpeg,.png,.heic" />
@@ -117,29 +118,30 @@ export function FileUploader() {
         {uploadStatus === 'uploading' ? (
           <div className="flex flex-col items-center">
             <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
-            <p className="text-blue-600 font-semibold animate-pulse">Загружаем документ на сервер...</p>
-            {fileName && <p className="text-slate-400 text-sm mt-2">{fileName}</p>}
+            <p className="text-blue-800 font-bold animate-pulse">Загружаем документ на сервер...</p>
+            {fileName && <p className="text-slate-500 font-medium text-sm mt-2">{fileName}</p>}
           </div>
         ) : (
           <div className="text-center p-6">
             <div className={clsx(
-              "mx-auto w-16 h-16 mb-4 rounded-full flex items-center justify-center transition-colors",
-              isDragging ? "bg-blue-100 text-blue-600" : "bg-white text-slate-400 group-hover:text-blue-500 group-hover:bg-blue-50 shadow-sm"
+              "mx-auto w-16 h-16 mb-4 rounded-full flex items-center justify-center transition-colors backdrop-blur-sm border border-white/50", // ИЗМЕНЕНИЕ: добавили прозрачность и легкую границу иконке
+              isDragging ? "bg-blue-100/70 text-blue-600" : "bg-white/60 text-slate-500 group-hover:text-blue-600 group-hover:bg-white/90 shadow-sm"
             )}>
                {isDragging ? <FileText className="w-8 h-8" /> : <UploadCloud className="w-8 h-8" />}
             </div>
-            <h3 className="text-lg font-semibold text-slate-900 mb-2">
+            <h3 className="text-lg font-bold text-slate-900 mb-2">
               {isDragging ? 'Отпустите файл здесь' : 'Загрузить анализы'}
             </h3>
-            <p className="text-slate-500 text-sm max-w-xs mx-auto">
+            <p className="text-slate-600 font-medium text-sm max-w-xs mx-auto">
               Нажмите или перетащите PDF, JPG, PNG (до 10MB)
             </p>
           </div>
         )}
       </div>
 
+      {/* ОШИБКА */}
       {uploadStatus === 'error' && error && (
-        <div className="mt-4 p-4 flex items-center justify-center gap-2 bg-red-50 text-red-600 rounded-xl text-sm font-medium animate-in fade-in slide-in-from-top-2">
+        <div className="mt-4 p-4 flex items-center justify-center gap-2 bg-red-50/80 backdrop-blur-md border border-red-100 text-red-700 rounded-xl text-sm font-bold animate-in fade-in slide-in-from-top-2 shadow-sm">
           <AlertCircle className="w-5 h-5" />
           {error}
         </div>

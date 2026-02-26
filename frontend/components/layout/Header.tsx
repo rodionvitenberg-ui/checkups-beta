@@ -55,7 +55,7 @@ export function Header() {
   return (
     <header 
       className={cn(
-        "fixed top-0 left-0 right-0 z-50 w-full border-b border-gray-200 backdrop-blur-md transition-transform duration-300 ease-in-out transform-gpu antialiased [backface-visibility:hidden]",
+        "fixed top-0 left-0 right-0 z-50 w-full backdrop-blur-md transition-transform duration-300 ease-in-out transform-gpu antialiased [backface-visibility:hidden]",
         isVisible ? "translate-y-0" : "-translate-y-full"
       )}
     >
