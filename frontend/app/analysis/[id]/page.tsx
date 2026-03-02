@@ -100,11 +100,29 @@ export default function AnalysisPage() {
   };
 
   const handleViewOriginal = async () => {
+    // 1. САМЫЙ ВАЖНЫЙ ТРЮК: Открываем окно МГНОВЕННО, до любых await.
+    // Safari видит, что это сделал юзер кликом, и не блокирует.
+    const newWindow = window.open('', '_blank');
+    
     setIsViewingOriginal(true);
     try {
-      await viewOriginalFile(id);
+      // 2. Ждем генерацию Blob URL от нашего обновленного api.ts
+      const fileUrl = await viewOriginalFile(id); 
+      
+      // 3. Подменяем адрес в уже открытой пустой вкладке
+      if (newWindow) {
+        newWindow.location.href = fileUrl; 
+      } else {
+        // Если браузер всё же умудрился заблокировать окно, открываем в текущем
+        window.location.href = fileUrl; 
+      }
+      
+      // Очищаем память через 10 секунд (чтобы новая вкладка успела отрендерить файл)
+      setTimeout(() => URL.revokeObjectURL(fileUrl), 10000);
+      
     } catch (error) {
       console.error("Ошибка открытия оригинала:", error);
+      if (newWindow) newWindow.close(); // Если произошла ошибка, закрываем пустую вкладку
       alert("Не удалось загрузить исходный файл.");
     } finally {
       setIsViewingOriginal(false);

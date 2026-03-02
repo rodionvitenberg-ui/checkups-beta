@@ -8,6 +8,7 @@ import { FileUploader } from '@/components/home/FileUploader';
 import { TestimonialsSection } from '@/components/home/TestimonialsSection';
 import { TestimonialsAlt } from '@/components/home/TestimonialsAlt';
 import { Activity, Brain, ShieldCheck, FileClock, ArrowRight, Image as ImageIcon, Loader2 } from 'lucide-react';
+import FAQSection from '@/components/home/FAQ';
 
 // ШАГ 1: Импортируем наш компонент-обертку
 import StaticBackground from '@/components/background/StaticBackground';
@@ -147,10 +148,10 @@ export default function Home() {
         <section className="mb-24 relative">
           <Link 
             href="/example-analysis"
-            className="group relative block w-full max-w-2xl mx-auto transition-all duration-300 transform hover:-translate-y-1"
+            className="group relative block w-full max-w-2xl mx-auto transition-all duration-300 transform hover:-translate-y-1 will-change-filter"
           >
             {/* Сама картинка кнопки */}
-            <div className="relative w-full aspect-[672/128] drop-shadow-xl group-hover:drop-shadow-2xl transition-all">
+            <div className="relative w-full aspect-[672/128] drop-shadow-xl group-hover:drop-shadow-2xl transition-all will-change-filter">
                 <Image 
                     src="/buttons/bigbutton.png" 
                     alt="Посмотреть пример" 
@@ -177,7 +178,13 @@ export default function Home() {
 
         {/* 5. ОТЗЫВЫ */}
         <section>
+          <FAQSection />
+        </section>
+        <section>
           <TestimonialsSection />
+        </section>
+        <section>
+          <TestimonialsAlt />
         </section>
         <section>
           <TestimonialsAlt />

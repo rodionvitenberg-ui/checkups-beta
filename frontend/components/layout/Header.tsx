@@ -18,7 +18,7 @@ function NavButton({ text, isActive, onClick }: NavButtonProps) {
   return (
     <button 
       onClick={onClick} 
-      className="relative flex items-center justify-center group focus:outline-none"
+      className="relative flex items-center justify-center group focus:outline-none transform-gpu"
     >
       <Image 
         src="/buttons/smallbutton.png" 
@@ -26,7 +26,8 @@ function NavButton({ text, isActive, onClick }: NavButtonProps) {
         width={130} 
         height={40} 
         className={cn(
-          "w-auto h-10 object-contain transition-opacity duration-300 ease-in-out",
+          "w-auto h-10 drop-shadow object-contain transition-opacity duration-300 ease-in-out will-change-filter",
+          "filter drop-shadow-[0_4px_4px_rgba(0,0,0,0.25)]",
           // На десктопе фон скрыт (opacity-0), если страница не активна, 
           // и появляется при наведении (group-hover:opacity-100).
           isActive ? "opacity-100" : "opacity-0 group-hover:opacity-100"

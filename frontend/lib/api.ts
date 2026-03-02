@@ -241,17 +241,21 @@ export const downloadFile = async (uid: string, filename: string) => {
         responseType: 'blob', // Важно для файлов
     });
     
-    // Создаем ссылку в памяти браузера
     const url = window.URL.createObjectURL(new Blob([response.data]));
     const link = document.createElement('a');
     link.href = url;
     link.setAttribute('download', filename);
+    
+    // Safari fix: убеждаемся, что элемент в DOM, но невидим
+    link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     
-    // Чистим память
-    link.remove();
-    window.URL.revokeObjectURL(url);
+    // Safari fix: задержка перед удалением, чтобы браузер успел подхватить файл
+    setTimeout(() => {
+        document.body.removeChild(link);
+        window.URL.revokeObjectURL(url);
+    }, 1000);
 };
 
 // 7. Удаление анализа
@@ -270,7 +274,7 @@ export const deleteProfile = async (profileId: number): Promise<void> => {
 };
 
 // 10. Просмотр оригинала (открывает в новой вкладке)
-export const viewOriginalFile = async (uid: string) => {
+export const viewOriginalFile = async (uid: string): Promise<string> => {
     const response = await api.get(`/analyses/${uid}/download`, {
         responseType: 'blob',
     });
@@ -279,12 +283,8 @@ export const viewOriginalFile = async (uid: string) => {
     const contentType = response.headers['content-type'];
     const blob = new Blob([response.data], { type: contentType });
     
-    // Создаем ссылку и открываем
-    const url = window.URL.createObjectURL(blob);
-    window.open(url, '_blank');
-    
-    // Подчищаем память через 10 секунд (чтобы новая вкладка успела загрузить файл)
-    setTimeout(() => window.URL.revokeObjectURL(url), 10000);
+    // Возвращаем Blob URL, а НЕ открываем окно здесь
+    return window.URL.createObjectURL(blob);
 };
 
 export const updateProfile = async (profileId: number, newName: string): Promise<PatientProfile> => {
