@@ -96,7 +96,7 @@ export const AnalysisPDF = ({ data }: { data: AnalysisResponse }) => {
         {/* Цветная шапка на всю ширину */}
         <View style={styles.headerSection} fixed>
           <View>
-            <Text style={styles.headerTitle}>Результаты анализа Biocheck.pro</Text>
+            <Text style={styles.headerTitle}>Результаты анализа DataDoctor.pro</Text>
           </View>
           <View>
             <Text style={styles.headerRightText}>ID: {data.uid.slice(0, 8).toUpperCase()}</Text>

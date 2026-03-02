@@ -156,8 +156,8 @@ CORS_ALLOWED_ORIGINS = [
     "http://127.0.0.1:3000",
     "http://92.113.146.158:3000",
     "http://92.113.146.158",
-    "https://biocheck.pro",
-    "https://www.biocheck.pro",
+    "https://datadoctor.pro",
+    "https://www.datadoctor.pro",
 ]
 if os.getenv('CORS_ALLOWED_ORIGIN'):
     CORS_ALLOWED_ORIGINS.append(os.getenv('CORS_ALLOWED_ORIGIN'))
@@ -181,8 +181,8 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://biocheck.pro",
-    "https://www.biocheck.pro",
+    "https://datadoctor.pro",
+    "https://www.datadoctor.pro",
     "http://92.113.146.158",
     "http://localhost:3000",
     "http://127.0.0.1:3000",

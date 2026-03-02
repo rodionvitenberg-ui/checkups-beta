@@ -53,6 +53,10 @@ export default function AuthPage() {
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('user_email', response.data.user_email);
                 
+                // 🔥 ДОБАВЛЯЕМ ВОТ ЭТУ СТРОЧКУ 🔥
+                // Она подает сигнал хедеру: "Эй, пользователь авторизовался, обнови кнопку!"
+                window.dispatchEvent(new Event('auth-change'));
+                
                 toast({
                     title: "Добро пожаловать!",
                     description: "Вход выполнен успешно.",
@@ -78,7 +82,7 @@ export default function AuthPage() {
                     variant: "warning",
                     action: {
                         label: "Сбросить пароль",
-                        onClick: () => router.push('/auth/reset-password-request')
+                        onClick: () => router.push('/auth/reset-password')
                     }
                 });
             } else {
@@ -102,14 +106,14 @@ export default function AuthPage() {
             <StaticBackground imageUrl="/background/test.png" />
 
             {/* ПРАВИЛО 3: z-10 и матовое стекло для карточки */}
-            <div className="relative z-10 bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-white/40">
+            <div className="relative z-10 bg-white/80 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-white/40">
                 
                 {/* Заголовок */}
-                <div className="bg-slate-900/95 p-6 text-center">
+                <div className="bg-secondary p-6 text-center">
                     <h2 className="text-2xl font-bold text-white mb-2">
                         {mode === 'register' ? 'Создать аккаунт' : 'С возвращением'}
                     </h2>
-                    <p className="text-slate-400 text-sm">
+                    <p className="text-white text-md">
                         {mode === 'register' 
                             ? 'Введите данные для получения доступа' 
                             : 'Введите email и пароль для входа'}
@@ -121,14 +125,14 @@ export default function AuthPage() {
                     <button 
                         onClick={() => setMode('register')}
                         className={clsx("flex-1 py-3 text-sm font-medium transition-colors", 
-                            mode === 'register' ? "text-blue-600 border-b-2 border-blue-600 bg-white/80" : "text-slate-500 hover:text-slate-700")}
+                            mode === 'register' ? "text-secondary border-b-2 border-secondary bg-white/80" : "text-slate-500 hover:text-slate-700")}
                     >
                         Регистрация
                     </button>
                     <button 
                         onClick={() => setMode('login')}
                         className={clsx("flex-1 py-3 text-sm font-medium transition-colors", 
-                            mode === 'login' ? "text-blue-600 border-b-2 border-blue-600 bg-white/80" : "text-slate-500 hover:text-slate-700")}
+                            mode === 'login' ? "text-secondary border-b-2 border-secondary bg-white/80" : "text-slate-500 hover:text-slate-700")}
                     >
                         Вход
                     </button>
@@ -176,7 +180,7 @@ export default function AuthPage() {
                          <div className="space-y-1 animate-in fade-in slide-in-from-top-2 duration-300">
                             <div className="flex justify-between items-center">
                                 <label className="text-xs font-bold text-slate-700 uppercase">Пароль</label>
-                                <Link href="/auth/reset-password-request" className="text-xs text-blue-600 hover:underline">
+                                <Link href="/auth/reset-password" className="text-xs text-secondary hover:underline">
                                     Забыли пароль?
                                 </Link>
                             </div>
@@ -197,7 +201,7 @@ export default function AuthPage() {
                     <button 
                         type="submit" 
                         disabled={isLoading}
-                        className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                        className="w-full bg-secondary/70 text-white font-bold py-2.5 rounded-lg hover:bg-secondary transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                     >
                         {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                         {mode === 'register' ? 'Получить пароль' : 'Войти'}

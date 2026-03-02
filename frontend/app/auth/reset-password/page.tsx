@@ -126,10 +126,10 @@ function ResetPasswordContent() {
     return (
         // Добавлено стекло и relative z-10
         <div className="relative z-10 bg-white/90 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-white/40">
-            <div className="bg-slate-900/95 p-6 text-center relative">
+            <div className="bg-secondary p-6 text-center relative">
                 {/* Кнопка назад (только если мы не в режиме подтверждения) */}
                 {mode === 'request' && (
-                    <Link href="/auth" className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors">
+                    <Link href="/auth" className="absolute left-4 top-1/2 -translate-y-1/2 text-white hover:text-white transition-colors">
                         <ArrowLeft className="w-5 h-5" />
                     </Link>
                 )}
@@ -137,7 +137,7 @@ function ResetPasswordContent() {
                 <h2 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
                     {mode === 'request' ? 'Сброс пароля' : 'Новый пароль'}
                 </h2>
-                <p className="text-slate-400 text-xs">
+                <p className="text-white text-xs">
                     {mode === 'request' 
                         ? 'Введите email, чтобы получить ссылку' 
                         : 'Придумайте надежный пароль'}
@@ -199,7 +199,7 @@ function ResetPasswordContent() {
                 <button 
                     type="submit" 
                     disabled={isLoading}
-                    className="w-full bg-blue-600 text-white font-bold py-2.5 rounded-lg hover:bg-blue-700 transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
+                    className="w-full bg-secondary text-white font-bold py-2.5 rounded-lg hover:secondary transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
                     {mode === 'request' ? 'Отправить ссылку' : 'Сохранить пароль'}

@@ -122,12 +122,6 @@ export function Header() {
             isActive={pathname === '/'} 
             onClick={() => handleNavigation('/')} 
           />
-          
-          <NavButton 
-            text="FAQ" 
-            isActive={pathname === '/faq'} 
-            onClick={() => handleNavigation('/faq')} 
-          />
 
           <div className={cn("transition-opacity duration-300", !isMounted ? "opacity-0" : "opacity-100")}>
             <NavButton 
@@ -170,14 +164,6 @@ export function Header() {
             onClick={() => handleNavigation('/')}
           >
             Главная
-          </MorphyButton>
-
-          <MorphyButton 
-            size="default" 
-            className="w-full"
-            onClick={() => handleNavigation('/faq')}
-          >
-            FAQ
           </MorphyButton>
 
           <MorphyButton 

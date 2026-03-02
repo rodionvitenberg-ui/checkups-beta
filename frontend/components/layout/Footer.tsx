@@ -22,7 +22,7 @@ export function Footer() {
               />
             </Link>
             <p className="text-sm text-slate-400">
-              © {currentYear} Biocheck. Все права защищены.
+              © {currentYear} DataDoctor. Все права защищены.
             </p>
           </div>
 

@@ -192,7 +192,7 @@ def claim_request(request, payload: ClaimRequestOTPSchema):
         try:
             send_mail(
                 subject='Ваши результаты анализов | Checkups',
-                message=f'Ваш анализ успешно обработан!\n\nМы автоматически создали для вас личный кабинет, чтобы история ваших результатов не потерялась.\n\nЛогин: {user.email}\nПароль: {password}\n\nВы можете войти в кабинет по ссылке: https://biocheck.pro/auth',
+                message=f'Ваш анализ успешно обработан!\n\nМы автоматически создали для вас личный кабинет, чтобы история ваших результатов не потерялась.\n\nЛогин: {user.email}\nПароль: {password}\n\nВы можете войти в кабинет по ссылке: https://datadoctor.pro/auth',
                 from_email=settings.DEFAULT_FROM_EMAIL,
                 recipient_list=[user.email],
                 fail_silently=True,
@@ -221,7 +221,7 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     
-    domain = "https://biocheck.pro" 
+    domain = "https://datadoctor.pro" 
     reset_link = f"{domain}/auth/reset-password?uid={uid}&token={token}"
     
     try:
