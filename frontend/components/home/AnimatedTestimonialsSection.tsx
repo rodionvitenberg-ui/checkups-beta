@@ -1,6 +1,6 @@
 'use client';
 
-import { AnimatedTestimonials, Testimonial } from '@/components/ui/animated-testimonials';
+import { AnimatedTestimonials, type Testimonial } from '@/components/ui/animated-testimonials';
 
 // Функция генерации заглушки-аватарки
 const generateAvatar = (name: string) => {
@@ -40,14 +40,13 @@ const defaultTestimonials: Testimonial[] = [
 export function AnimatedTestimonialsSection() {
     return (
         <section className="py-16 relative">
-            <div className="max-w-full mx-auto text-center overflow-hidden">
+            {/* ИЗМЕНЕНО: overflow-hidden заменен на overflow-x-hidden, чтобы не резать тени */}
+            <div className="max-w-full mx-auto text-center overflow-x-hidden py-4">
                 <h2 className="text-3xl font-bold text-slate-900 mb-12 px-4">
                     Что говорят пользователи
                 </h2>
                 
-                {/* Отправляем моковые данные. 
-                  Позже, если понадобится, сюда легко можно прикрутить useQuery для загрузки из БД.
-                */}
+                {/* Отправляем моковые данные в нашу новую "бегущую строку" */}
                 <AnimatedTestimonials data={defaultTestimonials} />
             </div>
         </section>

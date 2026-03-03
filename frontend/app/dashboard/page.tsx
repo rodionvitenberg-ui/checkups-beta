@@ -63,11 +63,26 @@ function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisRespons
     };
 
     const handleViewOriginal = async (e: React.MouseEvent) => {
-        e.preventDefault(); e.stopPropagation();
+        // 1. Открываем окно САМЫМ ПЕРВЫМ действием! 
+        // До любых preventDefault() и stopPropagation(), иначе Safari блокирует окно.
+        const newWindow = window.open('', '_blank');
+        
+        e.preventDefault(); 
+        e.stopPropagation();
+        
         setViewing(true);
         try {
-            await viewOriginalFile(analysis.uid);
+            const fileUrl = await viewOriginalFile(analysis.uid);
+            
+            if (newWindow) {
+                newWindow.location.href = fileUrl;
+            } else {
+                window.location.href = fileUrl;
+            }
+            
+            setTimeout(() => URL.revokeObjectURL(fileUrl), 10000);
         } catch (error) {
+            if (newWindow) newWindow.close();
             toast({ title: "Ошибка", description: "Не удалось открыть оригинал", variant: "destructive" });
         } finally {
             setViewing(false);
@@ -126,7 +141,13 @@ function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisRespons
                         <ArrowRight className="w-5 h-5" />
                     </Link>
                 )}
-                <button onClick={handleViewOriginal} disabled={viewing} className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100/50 rounded-xl transition-colors" title="Посмотреть оригинал">
+                <button 
+                    type="button" // <--- ДОБАВИТЬ ЭТО
+                    onClick={handleViewOriginal} 
+                    disabled={viewing} 
+                    className="p-2 text-slate-400 hover:text-slate-700 hover:bg-slate-100/50 rounded-xl transition-colors" 
+                    title="Посмотреть оригинал"
+                >
                     {viewing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Eye className="w-5 h-5" />}
                 </button>
                 {analysis.status === 'completed' && (
@@ -174,8 +195,18 @@ function ProfileCard({ profile, isExpanded, onToggle }: { profile: PatientProfil
         onError: () => toast({ title: "Ошибка", description: "Не удалось переименовать", variant: "destructive" })
     });
 
+    const handleSaveName = (e: React.MouseEvent | React.KeyboardEvent) => {
+        e.stopPropagation();
+        if (editName.trim() && editName !== profile.full_name) {
+            updateNameMutation.mutate(editName.trim());
+        } else {
+            setIsEditing(false); // Если ничего не изменилось, просто закрываем редактирование
+        }
+    };
+
     const deleteProfileMutation = useMutation({
-        mutationFn: () => deleteProfile(profile.id),
+        // 1. Явно указываем, что мутация принимает параметр id (число)
+        mutationFn: (id: number) => deleteProfile(id),
         onSuccess: () => {
             queryClient.invalidateQueries({ queryKey: ['profiles'] });
             toast({ title: "Удалено", description: "Профиль удален", variant: "success" });
@@ -183,19 +214,9 @@ function ProfileCard({ profile, isExpanded, onToggle }: { profile: PatientProfil
         onError: () => toast({ title: "Ошибка", description: "Не удалось удалить профиль", variant: "destructive" })
     });
 
-    const handleSaveName = (e: React.MouseEvent | React.KeyboardEvent) => {
-        e.stopPropagation();
-        if (editName.trim() && editName !== profile.full_name) {
-            updateNameMutation.mutate(editName.trim());
-        } else {
-            setIsEditing(false);
-        }
-    };
-
     const isLoadingData = isLoadingAnalyses || isLoadingHistory;
 
     return (
-        // Добавлено стекло: bg-white/70 backdrop-blur-md
         <div className={clsx(
             "bg-white/70 backdrop-blur-md rounded-3xl transition-all duration-500 overflow-hidden",
             isExpanded 
@@ -204,50 +225,90 @@ function ProfileCard({ profile, isExpanded, onToggle }: { profile: PatientProfil
         )}>
             {/* ШАПКА КАРТОЧКИ */}
             <div 
+                // Тап по всей шапке (в т.ч. по имени) разворачивает карточку
                 onClick={() => { if (!isEditing) onToggle(); setActiveTab('history'); }}
                 className={clsx(
-                    "w-full flex items-center justify-between p-5 sm:p-6 text-left group cursor-pointer transition-colors",
+                    "w-full flex items-center justify-between p-6 sm:p-6 text-left group cursor-pointer transition-colors",
                     isExpanded ? "bg-[#3f94ca]/5" : "bg-transparent"
                 )}
                 role="button"
             >
-                <div className="flex items-center gap-4 sm:gap-5">
+                <div className="flex items-center gap-4 sm:gap-5 w-full overflow-hidden">
+                    
+                    {/* ИКОНКА / КНОПКА РЕДАКТИРОВАНИЯ */}
                     <div className={clsx(
-                        "w-12 h-12 sm:w-14 sm:h-14 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 shrink-0",
+                        "w-10 h-10 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 shrink-0",
                         isExpanded 
-                            ? "bg-gradient-to-br from-[#3f94ca] to-blue-600 text-white shadow-lg shadow-[#3f94ca]/20 scale-105" 
-                            : "bg-white/60 text-slate-500 group-hover:bg-[#3f94ca]/10 group-hover:text-[#3f94ca]"
+                            ? "bg-gradient-to-br from-[#3f94ca] to-blue-600 text-white shadow-lg scale-100" 
+                            : "bg-white/60 text-slate-500 group-hover:bg-[#3f94ca]/10 group-hover:text-[#3f94ca]",
+                        // Перекрашиваем квадрат в зеленый цвет на мобилке, если включен режим редактирования (для галочки)
+                        isEditing && !isDefaultProfile && "max-sm:!bg-gradient-to-br max-sm:!from-[#00be64] max-sm:!to-[#00a859] max-sm:!text-white max-sm:!shadow-lg max-sm:!shadow-[#00be64]/30 max-sm:!scale-100"
                     )}>
-                        {isDefaultProfile ? <FolderOpen className="w-6 h-6 sm:w-7 sm:h-7" /> : <User className="w-6 h-6 sm:w-7 sm:h-7" />}
+                        {isDefaultProfile ? (
+                            <FolderOpen className="w-6 h-6 sm:w-7 sm:h-7" />
+                        ) : (
+                            <>
+                                {/* ДЕСКТОП: Обычная иконка пользователя */}
+                                <User className="hidden sm:block w-6 h-6 sm:w-7 sm:h-7" />
+                                
+                                {/* МОБИЛКА: Интерактивная кнопка карандаш -> галочка */}
+                                <div 
+                                    className="sm:hidden w-full h-full flex items-center justify-center"
+                                    onClick={(e) => {
+                                        e.stopPropagation(); // Не даем карточке развернуться при тапе на иконку
+                                        if (isEditing) {
+                                            handleSaveName(e);
+                                        } else {
+                                            setIsEditing(true);
+                                            setEditName(profile.full_name);
+                                        }
+                                    }}
+                                >
+                                    {updateNameMutation.isPending ? (
+                                        <Loader2 className="w-5 h-5 animate-spin" />
+                                    ) : isEditing ? (
+                                        <Check className="w-5 h-5" />
+                                    ) : (
+                                        <Edit2 className="w-5 h-5" />
+                                    )}
+                                </div>
+                            </>
+                        )}
                     </div>
-                    <div>
+                    
+                    {/* ТЕКСТ / ПОЛЕ ВВОДА */}
+                    <div className="flex-1 overflow-hidden">
                         {isEditing ? (
-                            <div className="flex items-center gap-2" onClick={e => e.stopPropagation()}>
+                            <div className="flex items-center gap-2 w-full" onClick={e => e.stopPropagation()}>
                                 <input 
                                     type="text" value={editName} onChange={(e) => setEditName(e.target.value)}
-                                    className="border-b-2 border-[#3f94ca] bg-white/50 text-lg font-bold text-slate-900 focus:outline-none py-1 px-2 min-w-[200px] rounded-t-md"
+                                    className="border-b-2 border-[#3f94ca] bg-white/50 text-base sm:text-lg font-bold text-slate-900 focus:outline-none py-1 px-2 w-full sm:min-w-[200px] rounded-t-md"
                                     autoFocus
                                     onKeyDown={(e) => {
                                         if (e.key === 'Enter') handleSaveName(e);
                                         if (e.key === 'Escape') setIsEditing(false);
                                     }}
                                 />
-                                <button onClick={handleSaveName} className="p-1.5 bg-[#00be64]/20 text-[#00be64] rounded-lg hover:bg-[#00be64]/30 transition-colors">
-                                    {updateNameMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                                </button>
-                                <button onClick={() => setIsEditing(false)} className="p-1.5 bg-slate-200/50 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
-                                    <X className="w-4 h-4" />
-                                </button>
+                                {/* ДЕСКТОП: Кнопки сохранения и отмены (скрыты на мобилках) */}
+                                <div className="hidden sm:flex items-center gap-1 shrink-0">
+                                    <button onClick={handleSaveName} className="p-1.5 bg-[#00be64]/20 text-[#00be64] rounded-lg hover:bg-[#00be64]/30 transition-colors">
+                                        {updateNameMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                    </button>
+                                    <button onClick={() => setIsEditing(false)} className="p-1.5 bg-slate-200/50 text-slate-500 rounded-lg hover:bg-slate-200 transition-colors">
+                                        <X className="w-4 h-4" />
+                                    </button>
+                                </div>
                             </div>
                         ) : (
                             <div className="flex items-center gap-2">
-                                <h3 className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight">
+                                <h3 className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight truncate">
                                     {isDefaultProfile ? 'Анализы (Без привязки)' : profile.full_name}
                                 </h3>
+                                {/* ДЕСКТОП: Кнопка карандаша (скрыта на мобилках) */}
                                 {!isDefaultProfile && (
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setIsEditing(true); setEditName(profile.full_name); }}
-                                        className="p-1.5 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-[#3f94ca] hover:bg-[#3f94ca]/10 rounded-xl transition-all"
+                                        className="hidden sm:block p-1.5 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-[#3f94ca] hover:bg-[#3f94ca]/10 rounded-xl transition-all shrink-0"
                                         title="Переименовать"
                                     >
                                         <Edit2 className="w-4 h-4" />
@@ -255,14 +316,16 @@ function ProfileCard({ profile, isExpanded, onToggle }: { profile: PatientProfil
                                 )}
                             </div>
                         )}
-                        <div className="text-xs sm:text-sm text-slate-500 mt-1 font-medium">
+                        <div className="text-xs sm:text-sm text-slate-500 mt-1 font-medium truncate">
                             {isDefaultProfile ? "Анализы документов без имени" : "Анализы по данному пациенту"}
                         </div>
                     </div>
                 </div>
+
+                {/* СТРЕЛОЧКА РАЗВОРОТА (Скрывается во время редактирования) */}
                 {!isEditing && (
                     <div className={clsx(
-                        "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300",
+                        "w-8 h-8 rounded-full flex items-center justify-center transition-all duration-300 shrink-0 ml-2",
                         isExpanded ? "bg-white shadow-sm" : "bg-white/50 group-hover:bg-white"
                     )}>
                         <ChevronDown className={clsx("w-5 h-5 text-slate-400 transition-transform duration-300", isExpanded && "rotate-180 text-[#3f94ca]")} />
@@ -323,12 +386,18 @@ function ProfileCard({ profile, isExpanded, onToggle }: { profile: PatientProfil
                     {!isDefaultProfile && (
                         <div className="mt-8 pt-5 border-t border-white/60 flex justify-end">
                             <button 
-                                onClick={() => { if (confirm('Удалить пациента и все его анализы?')) deleteProfileMutation.mutate(); }}
-                                disabled={deleteProfileMutation.isPending}
-                                className="text-xs sm:text-sm text-slate-400 hover:text-red-500 font-medium flex items-center gap-1.5 hover:bg-red-50/50 px-4 py-2 rounded-xl transition-all"
-                            >
-                                {deleteProfileMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Удалить профиль
-                            </button>
+        type="button" // Заодно добавим type, чтобы TS не ругался на саму кнопку
+        onClick={() => { 
+            if (confirm('Удалить пациента и все его анализы?')) {
+                // 2. Передаем profile.id прямо сюда
+                deleteProfileMutation.mutate(profile.id); 
+            }
+        }}
+        disabled={deleteProfileMutation.isPending}
+        className="text-xs sm:text-sm text-slate-400 hover:text-red-500 font-medium flex items-center gap-1.5 hover:bg-red-50/50 px-4 py-2 rounded-xl transition-all"
+    >
+        {deleteProfileMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Удалить профиль
+    </button>
                         </div>
                     )}
                 </div>

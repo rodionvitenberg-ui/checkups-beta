@@ -115,7 +115,7 @@ export default function Home() {
     {/* МОБИЛЬНАЯ ВЕРСИЯ: Используем MorphyButton, как в хедере */}
     <div className="md:hidden">
       <MorphyButton 
-        className="w-full py-8 text-md uppercase font-bold tracking-tight shadow-lg"
+        className="w-full py-8 text-white text-md font-bold tracking-tight shadow-lg"
       >
         <div className="flex flex-col items-center gap-1">
           <div className="flex items-center gap-2">

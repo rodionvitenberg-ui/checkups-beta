@@ -9,54 +9,40 @@ export interface Testimonial {
 }
 
 interface AnimatedCanopyProps extends React.HTMLAttributes<HTMLDivElement> {
-  vertical?: boolean;
   repeat?: number;
   reverse?: boolean;
   pauseOnHover?: boolean;
-  applyMask?: boolean;
 }
 
 const AnimatedCanopy = ({
   children,
-  vertical = false,
   repeat = 4,
-  pauseOnHover = false,
+  pauseOnHover = true,
   reverse = false,
   className,
-  applyMask = true,
   ...props
 }: AnimatedCanopyProps) => (
   <div
     {...props}
     className={cn(
-      'group relative flex h-full w-full overflow-hidden p-4 [--duration:30s] [--gap:24px] gap-[var(--gap)]', // Немного увеличил отступы и замедлил скорость
-      vertical ? 'flex-col' : 'flex-row',
+      // Класс group нужен, чтобы отслеживать наведение на весь ряд
+      'group relative flex w-full overflow-hidden p-4 gap-[var(--gap)] [--gap:24px]',
       className,
     )}
   >
     {Array.from({ length: repeat }).map((_, index) => (
       <div
         key={`item-${index}`}
-        className={cn('flex shrink-0 gap-[var(--gap)]', {
-          'group-hover:[animation-play-state:paused]': pauseOnHover,
-          '[animation-direction:reverse]': reverse,
-          'animate-canopy-horizontal flex-row': !vertical,
-          'animate-canopy-vertical flex-col': vertical,
-        })}
+        className={cn(
+          'flex shrink-0 gap-[var(--gap)] flex-row animate-canopy-horizontal',
+          // Добавляем наши кастомные классы (они описаны в <style> ниже)
+          reverse && 'direction-reverse',
+          pauseOnHover && 'pause-on-hover'
+        )}
       >
         {children}
       </div>
     ))}
-    {applyMask && (
-      <div
-        className={cn(
-          'pointer-events-none absolute inset-0 z-10',
-          vertical
-            ? 'bg-gradient-to-b from-background via-transparent to-background'
-            : 'bg-gradient-to-r from-background via-transparent to-background',
-        )}
-      />
-    )}
   </div>
 );
 
@@ -67,16 +53,14 @@ const TestimonialCard = ({
   testimonial: Testimonial;
   className?: string;
 }) => (
-  // --- ИЗМЕНЕНИЯ ЗДЕСЬ: Убрали белый фон, добавили стекло, тени и скругление ---
   <div
     className={cn(
-      'flex h-full w-[28rem] shrink-0 flex-col justify-between rounded-[2rem] p-8 transition-all duration-300',
+      'flex h-full w-[28rem] shrink-0 flex-col justify-between rounded-[2rem] p-8 transition-all duration-300 cursor-pointer',
       'bg-white/40 backdrop-blur-md border border-white/60 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-1',
       className,
     )}
   >
     <div className='flex items-start gap-4'>
-      {/* Аватарка */}
       <div className='relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm'>
         <img
           src={testimonial.image}
@@ -110,8 +94,8 @@ export const AnimatedTestimonials = ({
   className?: string;
   cardClassName?: string;
 }) => (
-  <div className={cn('w-full overflow-x-hidden py-4', className)}>
-    {/* Добавил инлайн-стили для анимации, чтобы не пришлось лезть в tailwind.config */}
+  <div className={cn('w-full overflow-x-hidden py-4 flex flex-col gap-6', className)}>
+    {/* Вшиваем CSS-правила прямо сюда. Это гарантирует 100% работу реверса и паузы */}
     <style dangerouslySetInnerHTML={{__html: `
       @keyframes canopy-horizontal {
         0% { transform: translateX(0); }
@@ -120,21 +104,30 @@ export const AnimatedTestimonials = ({
       .animate-canopy-horizontal {
         animation: canopy-horizontal var(--duration) linear infinite;
       }
+      .direction-reverse {
+        animation-direction: reverse;
+      }
+      .group:hover .pause-on-hover {
+        animation-play-state: paused;
+      }
     `}} />
     
-    {/* Две линии: одна едет влево, другая вправо */}
+    {/* Создаем два ряда: первый едет влево (false), второй вправо (true) */}
     {[false, true].map((reverse, index) => (
       <AnimatedCanopy
         key={`Canopy-${index}`}
         reverse={reverse}
-        className='[--duration:40s]' // Скорость прокрутки
-        pauseOnHover
-        applyMask={false} // Отключили градиентные маски по бокам, так как фон прозрачный
-        repeat={4}
+        className={cn(
+          // Делаем разные скорости для первого и второго ряда, чтобы не было синхронности
+          index === 0 ? '[--duration:55s]' : '[--duration:60s]'
+        )}
+        pauseOnHover={true}
+        repeat={6}
       >
-        {data.map((testimonial, idx) => (
+        {/* Если ряд реверсивный, то и карточки в нем меняем местами */}
+        {(reverse ? [...data].reverse() : data).map((testimonial, idx) => (
           <TestimonialCard
-            key={`testimonial-${idx}`}
+            key={`testimonial-${index}-${idx}`}
             testimonial={testimonial}
             className={cardClassName}
           />
