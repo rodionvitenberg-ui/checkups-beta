@@ -12,6 +12,7 @@ import FAQSection from '@/components/home/FAQ';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { MorphyButton } from "@/components/ui/morphy-button";
 import { AnimatedTestimonialsSection } from '@/components/home/AnimatedTestimonialsSection';
+import { clsx } from 'clsx';
 
 // ШАГ 1: Импортируем наш компонент-обертку
 import StaticBackground from '@/components/background/StaticBackground';
@@ -106,61 +107,60 @@ export default function Home() {
         />
 
         {/* 4. Кнопка "Посмотреть пример" */}
-        {/* 4. Кнопка "Посмотреть пример" */}
-<section className="mb-24 relative px-4">
-  <Link 
-    href="/example-analysis"
-    className="block w-full max-w-2xl mx-auto"
-  >
-    {/* МОБИЛЬНАЯ ВЕРСИЯ: Используем MorphyButton, как в хедере */}
-    <div className="md:hidden">
-      <MorphyButton 
-        className="w-full py-8 text-white text-md font-bold tracking-tight shadow-lg"
-      >
-        <div className="flex flex-col items-center gap-1">
-          <div className="flex items-center gap-2">
-            <span>Посмотреть пример разбора</span>
-            <ArrowRight className="w-3 h-3" />
-          </div>
-          <span className="text-[10px] opacity-80 font-sm normal-case">
-            Отчет с графиками и рекомендациями
-          </span>
-        </div>
-      </MorphyButton>
-    </div>
+        <section className="mb-24 relative px-4">
+          <Link 
+            href="/example-analysis"
+            className="block w-full max-w-2xl mx-auto"
+          >
+            {/* МОБИЛЬНАЯ ВЕРСИЯ: MorphyButton */}
+            <div className="md:hidden">
+              <MorphyButton 
+                className="w-full py-8 text-white text-md font-bold tracking-tight shadow-lg"
+              >
+                <div className="flex flex-col items-center gap-1">
+                  <div className="flex items-center gap-2">
+                    <span>Посмотреть пример разбора</span>
+                    <ArrowRight className="w-3 h-3" />
+                  </div>
+                  <span className="text-[10px] opacity-80 font-sm normal-case">
+                    Отчет с графиками и рекомендациями
+                  </span>
+                </div>
+              </MorphyButton>
+            </div>
 
-    {/* ДЕСКТОПНАЯ ВЕРСИЯ: Исправлено для Safari */}
-<div className="hidden md:block group relative transition-all duration-500">
-  
-  <div className={clsx(
-    "relative w-full aspect-[672/128] transition-all duration-500 transform",
-    "group-hover:-translate-y-1.5",
-    // Используем обычные тени, которые Safari переваривает лучше
-    "shadow-xl shadow-slate-200/50 group-hover:shadow-2xl group-hover:shadow-blue-200/40 rounded-[2rem]"
-  )}>
-      {/* Сама картинка кнопки */}
-      <Image 
-          src="/buttons/bigbutton.png" 
-          alt="Посмотреть пример" 
-          fill
-          className="object-contain"
-          priority
-      />
+            {/* ДЕСКТОПНАЯ ВЕРСИЯ: Фикс теней для Safari */}
+            <div className="hidden md:block group relative transition-all duration-500">
+              <div className={clsx(
+                "relative w-full aspect-[672/128] transition-all duration-500 transform",
+                "group-hover:-translate-y-1.5",
+                // Вместо drop-shadow используем классический shadow с мягким цветом
+                "shadow-xl shadow-slate-200/50 group-hover:shadow-2xl group-hover:shadow-blue-200/40 rounded-[2rem]"
+              )}>
+                  <Image 
+                      src="/buttons/bigbutton.png" 
+                      alt="Посмотреть пример" 
+                      fill
+                      className="object-contain"
+                      priority
+                  />
 
-      {/* Текст поверх кнопки — выносим внутрь контейнера с трансформацией */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-10">
-        <div className="flex items-center justify-center gap-2">
-          <span className="text-lg font-bold text-slate-800 uppercase tracking-tight">
-              Посмотреть пример разбора
-          </span>
-          <ArrowRight className="w-5 h-5 text-slate-800 group-hover:translate-x-1 transition-transform duration-300" />
-        </div>
-        <p className="text-slate-700 text-sm font-medium mt-0.5 opacity-90">
-          Узнайте, как выглядит готовый отчет с графиками и рекомендациями
-        </p>
-      </div>
-  </div>
-</div>
+                  {/* Текст внутри контейнера трансформации для стабильности в Safari */}
+                  <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-10">
+                    <div className="flex items-center justify-center gap-2">
+                      <span className="text-lg font-bold text-slate-800 uppercase tracking-tight">
+                          Посмотреть пример разбора
+                      </span>
+                      <ArrowRight className="w-5 h-5 text-slate-800 group-hover:translate-x-1 transition-transform duration-300" />
+                    </div>
+                    <p className="text-slate-700 text-sm font-medium mt-0.5 opacity-90">
+                      Узнайте, как выглядит готовый отчет с графиками и рекомендациями
+                    </p>
+                  </div>
+              </div>
+            </div>
+          </Link>
+        </section>
 
         {/* 5. ОТЗЫВЫ */}
         <section>
