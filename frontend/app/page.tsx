@@ -129,34 +129,38 @@ export default function Home() {
       </MorphyButton>
     </div>
 
-    {/* ДЕСКТОПНАЯ ВЕРСИЯ: Оставляем твою картинку-кнопку */}
-    <div className="hidden md:block group relative transition-all duration-300 transform hover:-translate-y-1 will-change-filter">
+    {/* ДЕСКТОПНАЯ ВЕРСИЯ: Исправлено для Safari */}
+<div className="hidden md:block group relative transition-all duration-500">
+  
+  <div className={clsx(
+    "relative w-full aspect-[672/128] transition-all duration-500 transform",
+    "group-hover:-translate-y-1.5",
+    // Используем обычные тени, которые Safari переваривает лучше
+    "shadow-xl shadow-slate-200/50 group-hover:shadow-2xl group-hover:shadow-blue-200/40 rounded-[2rem]"
+  )}>
       {/* Сама картинка кнопки */}
-      <div className="relative w-full aspect-[672/128] drop-shadow-xl group-hover:drop-shadow-2xl transition-all will-change-filter">
-          <Image 
-              src="/buttons/bigbutton.png" 
-              alt="Посмотреть пример" 
-              fill
-              className="object-contain"
-              priority
-          />
-      </div>
+      <Image 
+          src="/buttons/bigbutton.png" 
+          alt="Посмотреть пример" 
+          fill
+          className="object-contain"
+          priority
+      />
 
-      {/* Текст поверх кнопки */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8">
+      {/* Текст поверх кнопки — выносим внутрь контейнера с трансформацией */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-10">
         <div className="flex items-center justify-center gap-2">
           <span className="text-lg font-bold text-slate-800 uppercase tracking-tight">
               Посмотреть пример разбора
           </span>
-          <ArrowRight className="w-5 h-5 text-slate-800 group-hover:translate-x-1 transition-transform" />
+          <ArrowRight className="w-5 h-5 text-slate-800 group-hover:translate-x-1 transition-transform duration-300" />
         </div>
         <p className="text-slate-700 text-sm font-medium mt-0.5 opacity-90">
           Узнайте, как выглядит готовый отчет с графиками и рекомендациями
         </p>
       </div>
-    </div>
-  </Link>
-</section>
+  </div>
+</div>
 
         {/* 5. ОТЗЫВЫ */}
         <section>
