@@ -38,11 +38,8 @@ export default function Home() {
 
   if (isLoading) {
       return (
-          // ШАГ 2: Главный контейнер должен иметь класс relative
           <main className="relative min-h-screen flex items-center justify-center">
-              {/* ШАГ 3: Вызываем фон (даже для состояния загрузки) */}
               <StaticBackground imageUrl="/background/main-page.png" />
-              {/* ШАГ 4: Оборачиваем лоадер в z-10, чтобы он был поверх фона */}
               <div className="relative z-10">
                   <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
               </div>
@@ -51,47 +48,43 @@ export default function Home() {
   }
 
   return (
-    // ШАГ 2: Главный контейнер заменяем на main с классом relative
     <main className="relative min-h-screen">
       
-      {/* ШАГ 3: Вставляем сам фон. Путь указывается от корня папки public/ */}
       <StaticBackground imageUrl="/background/main-page.png" />
 
-      {/* ШАГ 4: Поднимаем весь контент над фоном. Для этого нужны классы relative и z-10 */}
+      {/* ОГРАНИЧЕННЫЙ КОНТЕЙНЕР (С ОТСТУПАМИ И MAX-W) ДЛЯ ОСНОВНОГО КОНТЕНТА */}
       <div className="relative z-10 max-w-6xl mx-auto px-4 sm:px-6 pt-24 pb-12 md:pt-32 md:pb-20">
         
         {/* 1. ГЛАВНЫЙ БЛОК (О ПРОЕКТЕ) */}
-<section className="flex flex-col md:flex-row-reverse gap-12 lg:gap-20 items-center mb-24 md:mb-32">
-  {/* Текст справа: Увеличиваем шрифты и межстрочный интервал */}
-  <div className="w-full md:w-3/5 space-y-8 text-left">
-    <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-slate-900 uppercase leading-[0.9]">
-      {heroBlock?.title || "О ПРОЕКТЕ"}
-    </h1>
-    <div className="prose prose-xl text-slate-700 leading-relaxed font-medium">
-      <p className="whitespace-pre-wrap text-md md:text-md lg:text-xl opacity-90">
-        {heroBlock?.content || "Checkups — бесплатный интеллектуальный AI-сервис по интерпретации медицинских анализов..."}
-      </p>
-    </div>
-  </div>
-
-  {/* Изображение слева: Уменьшаем контейнер и добавляем легкую левитацию */}
-  <div className="w-full md:w-2/5 flex justify-center items-center">
-    <div className="relative w-full max-w-[320px] md:max-w-[400px] lg:max-w-[450px] group">
-        {heroBlock?.image ? (
-            <img 
-                src={`${BACKEND_URL}${heroBlock.image}`} 
-                alt={heroBlock?.title || "О проекте"} 
-                className="w-full h-auto object-contain transition-all duration-1000 group-hover:scale-105 group-hover:rotate-1"
-            />
-        ) : (
-            <div className="text-center text-slate-400 p-12 border-2 border-dashed border-slate-200 rounded-[3rem] bg-white/5">
-                <ImageIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
-                <span className="text-sm font-medium">Главное изображение</span>
+        <section className="flex flex-col md:flex-row-reverse gap-12 lg:gap-20 items-center mb-24 md:mb-32">
+          <div className="w-full md:w-3/5 space-y-8 text-left">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-slate-900 uppercase leading-[0.9]">
+              {heroBlock?.title || "О ПРОЕКТЕ"}
+            </h1>
+            <div className="prose prose-xl text-slate-700 leading-relaxed font-medium">
+              <p className="whitespace-pre-wrap text-md md:text-md lg:text-xl opacity-90">
+                {heroBlock?.content || "Checkups — бесплатный интеллектуальный AI-сервис по интерпретации медицинских анализов..."}
+              </p>
             </div>
-        )}
-    </div>
-  </div>
-</section>
+          </div>
+
+          <div className="w-full md:w-2/5 flex justify-center items-center">
+            <div className="relative w-full max-w-[320px] md:max-w-[400px] lg:max-w-[450px] group">
+                {heroBlock?.image ? (
+                    <img 
+                        src={`${BACKEND_URL}${heroBlock.image}`} 
+                        alt={heroBlock?.title || "О проекте"} 
+                        className="w-full h-auto object-contain transition-all duration-1000 group-hover:scale-105 group-hover:rotate-1"
+                    />
+                ) : (
+                    <div className="text-center text-slate-400 p-12 border-2 border-dashed border-slate-200 rounded-[3rem] bg-white/5">
+                        <ImageIcon className="w-16 h-16 mx-auto mb-4 opacity-50" />
+                        <span className="text-sm font-medium">Главное изображение</span>
+                    </div>
+                )}
+            </div>
+          </div>
+        </section>
 
         {/* 2. ЗАГРУЗКА ФАЙЛОВ */}
         <section className="mb-24">
@@ -112,7 +105,6 @@ export default function Home() {
             href="/example-analysis"
             className="block w-full max-w-2xl mx-auto"
           >
-            {/* МОБИЛЬНАЯ ВЕРСИЯ: MorphyButton */}
             <div className="md:hidden">
               <MorphyButton 
                 className="w-full py-8 text-white text-md font-bold tracking-tight shadow-lg"
@@ -129,13 +121,11 @@ export default function Home() {
               </MorphyButton>
             </div>
 
-            {/* ДЕСКТОПНАЯ ВЕРСИЯ: Фикс теней для Safari */}
             <div className="hidden md:block group relative transition-all duration-500">
               <div className={clsx(
-                "relative w-full aspect-[672/128] transition-all duration-500 transform",
-                "group-hover:-translate-y-1.5",
-                // Вместо drop-shadow используем классический shadow с мягким цветом
-                "shadow-xl shadow-slate-200/50 group-hover:shadow-2xl group-hover:shadow-blue-200/40 rounded-[2rem]"
+                "relative w-full aspect-[672/128] transition-all duration-500",
+                "drop-shadow-[0_10px_15px_rgba(226,232,240,0.8)] group-hover:drop-shadow-[0_20px_25px_rgba(191,219,254,0.8)]",
+                "transform-gpu group-hover:-translate-y-1.5 will-change-transform"
               )}>
                   <Image 
                       src="/buttons/bigbutton.png" 
@@ -144,14 +134,12 @@ export default function Home() {
                       className="object-contain"
                       priority
                   />
-
-                  {/* Текст внутри контейнера трансформации для стабильности в Safari */}
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-10">
                     <div className="flex items-center justify-center gap-2">
                       <span className="text-lg font-bold text-slate-800 uppercase tracking-tight">
                           Посмотреть пример разбора
                       </span>
-                      <ArrowRight className="w-5 h-5 text-slate-800 group-hover:translate-x-1 transition-transform duration-300" />
+                      <ArrowRight className="w-5 h-5 text-slate-800 group-hover:translate-x-1 transition-transform duration-300 transform-gpu" />
                     </div>
                     <p className="text-slate-700 text-sm font-medium mt-0.5 opacity-90">
                       Узнайте, как выглядит готовый отчет с графиками и рекомендациями
@@ -162,21 +150,19 @@ export default function Home() {
           </Link>
         </section>
 
-        {/* 5. ОТЗЫВЫ */}
+        {/* 5. FAQ */}
         <section>
           <FAQSection />
         </section>
-        <section>
-          <TestimonialsSection />
-        </section>
-        <section>
-          <TestimonialsAlt />
-        </section>
-        <section>
-          <AnimatedTestimonialsSection />
-        </section>
 
-      </div>
+      </div> {/* ЗАКРЫВАЕМ ОГРАНИЧЕННЫЙ КОНТЕЙНЕР ЗДЕСЬ */}
+
+      {/* 6. ОТЗЫВЫ (FULL-WIDTH КОНТЕЙНЕР) */}
+      {/* Этот блок вынесен наружу и занимает 100% ширины экрана, игнорируя px-4 и max-w-6xl */}
+      <section className="relative z-10 w-full overflow-hidden pb-20">
+        <AnimatedTestimonialsSection />
+      </section>
+
     </main>
   );
 }

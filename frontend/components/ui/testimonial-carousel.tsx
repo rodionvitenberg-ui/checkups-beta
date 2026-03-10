@@ -288,7 +288,8 @@ export default function TestimonialCarousel({
   React.useEffect(() => {
     if (!api) return;
 
-    const duration = 5000;
+    // ИЗМЕНЕНО: Скорость снижена вдвое (было 5000, стало 10000 миллисекунд)
+    const duration = 10000;
     const interval = 50;
     const increment = (interval / duration) * 100;
     let localProgress = 0;
@@ -312,7 +313,8 @@ export default function TestimonialCarousel({
           <TestimonialCardContent>
             {data.map((testimonial, index) => (
               <TestimonialCardItem key={index} className="basis-full">
-                <Card className="bg-transparent backdrop-blur-md h-full">
+                {/* ИЗМЕНЕНО: Убраны backdrop-blur-md, добавлены border-none и shadow-none */}
+                <Card className="bg-transparent border-none shadow-none h-full">
                   <CardContent className="p-4 sm:p-6 md:p-8 h-full flex items-center">
                     <div className="flex flex-col sm:flex-row items-start gap-4 sm:gap-6 w-full">
                       <AnimatedAvatarBorder

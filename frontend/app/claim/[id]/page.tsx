@@ -26,6 +26,62 @@ export default function ClaimPage() {
     const [phone, setPhone] = useState('');
     const [isSubmitting, setIsSubmitting] = useState(false);
 
+    // --- УМНАЯ МАСКА ДЛЯ ТЕЛЕФОНА (СНГ) ---
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        // Очищаем строку от всего, кроме цифр
+        let input = e.target.value.replace(/\D/g, '');
+
+        if (!input) {
+            setPhone('');
+            return;
+        }
+
+        // Если пользователь начинает ввод с 8 (как привыкли в РФ/КЗ), меняем на 7
+        if (input[0] === '8') input = '7' + input.slice(1);
+        
+        // Если первая цифра не из разрешенных кодов стран (7, 3, 9), жестко ставим 7 (РФ/КЗ по умолчанию)
+        if (!['7', '3', '9'].includes(input[0])) {
+            input = '7' + input;
+        }
+
+        let formatted = '+';
+
+        // Применяем разные маски в зависимости от кода страны
+        if (input.startsWith('7')) {
+            // Россия / Казахстан (+7)
+            formatted += '7';
+            if (input.length > 1) formatted += ` (${input.substring(1, 4)}`;
+            if (input.length > 4) formatted += `) ${input.substring(4, 7)}`;
+            if (input.length > 7) formatted += `-${input.substring(7, 9)}`;
+            if (input.length > 9) formatted += `-${input.substring(9, 11)}`;
+        } else if (input.startsWith('375')) {
+            // Беларусь (+375)
+            formatted += '375';
+            if (input.length > 3) formatted += ` (${input.substring(3, 5)}`;
+            if (input.length > 5) formatted += `) ${input.substring(5, 8)}`;
+            if (input.length > 8) formatted += `-${input.substring(8, 10)}`;
+            if (input.length > 10) formatted += `-${input.substring(10, 12)}`;
+        } else if (input.startsWith('996')) {
+            // Кыргызстан (+996)
+            formatted += '996';
+            if (input.length > 3) formatted += ` (${input.substring(3, 6)}`;
+            if (input.length > 6) formatted += `) ${input.substring(6, 9)}`;
+            if (input.length > 9) formatted += `-${input.substring(9, 12)}`;
+        } else if (input.startsWith('998')) {
+            // Узбекистан (+998)
+            formatted += '998';
+            if (input.length > 3) formatted += ` (${input.substring(3, 5)}`;
+            if (input.length > 5) formatted += `) ${input.substring(5, 8)}`;
+            if (input.length > 8) formatted += `-${input.substring(8, 10)}`;
+            if (input.length > 10) formatted += `-${input.substring(10, 12)}`;
+        } else {
+            // Позволяем вводить код, если он еще не совпал полностью (например, ввели только '37')
+            formatted += input.substring(0, 3);
+        }
+
+        setPhone(formatted);
+    };
+
     // 1. Поллинг и анимация прогресс-бара
     useEffect(() => {
         if (status !== 'loading') return;
@@ -80,8 +136,12 @@ export default function ClaimPage() {
     // 2. Отправка формы и переход к результату
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!email || !phone) {
-            toast({ title: "Ошибка", description: "Заполните все поля", variant: "destructive" });
+        
+        // Валидация длины телефона (минимум 11 цифр для всех наших стран)
+        const phoneDigits = phone.replace(/\D/g, '');
+        
+        if (!email || phoneDigits.length < 11) {
+            toast({ title: "Ошибка", description: "Введите корректный email и номер телефона полностью", variant: "destructive" });
             return;
         }
 
@@ -100,15 +160,12 @@ export default function ClaimPage() {
     };
 
     return (
-        // ПРАВИЛО 1: Убрали bg-slate-50, добавили relative и поменяли div на main
         <main className="relative min-h-screen flex flex-col items-center justify-center pt-20 px-4">
             
-            {/* ПРАВИЛО 2: Вызываем фон (путь от папки public) */}
             <StaticBackground imageUrl="/background/claim.png" />
 
             {status === 'loading' ? (
                 /* --- ЭКРАН ЛОАДЕРА --- */
-                /* ПРАВИЛО 3: relative z-10 + стекло (bg-white/80 backdrop-blur-md border-white/40) */
                 <div className="relative z-10 bg-white/80 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-slate-200/20 p-8 sm:p-12 flex flex-col items-center max-w-md w-full animate-in zoom-in-95 duration-500">
                     <div className="relative w-40 h-40 mb-8 flex items-center justify-center">
                         <svg className="absolute inset-0 w-full h-full transform -rotate-90">
@@ -135,7 +192,6 @@ export default function ClaimPage() {
                 </div>
             ) : (
                 /* --- ЭКРАН ФОРМЫ --- */
-                /* ПРАВИЛО 3: relative z-10 + стекло */
                 <div className="relative z-10 bg-transparent backdrop-blur-md rounded-3xl shadow-xl transition-shadow p-6 sm:p-10 overflow-hidden max-w-xl w-full animate-in fade-in zoom-in-95 duration-500">
                     <div className="absolute top-0 right-0 w-40 h-40 g-[#0b0be64]/10 ounded-full blur-3xl -mr-10 -mt-10 pointer-events-none" />
                     
@@ -165,9 +221,10 @@ export default function ClaimPage() {
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">Номер телефона <span className="text-red-500">*</span></label>
                             <div className="relative">
                                 <Phone className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
+                                {/* ИЗМЕНЕНИЕ: Подключили handlePhoneChange к onChange */}
                                 <input 
                                     required type="tel" placeholder="+7 (999) 000-00-00" 
-                                    value={phone} onChange={e => setPhone(e.target.value)}
+                                    value={phone} onChange={handlePhoneChange}
                                     className="w-full pl-12 pr-4 py-3 backdrop-blur-md shadow-md transition-shadow rounded-xl focus:ring-2 focus:ring-[#00be64]/20 focus:border-accent outline-none transition-all font-medium placeholder:text-slate-400" 
                                 />
                             </div>

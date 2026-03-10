@@ -22,8 +22,76 @@ export default function AuthPage() {
     const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
 
+    // --- УМНАЯ МАСКА ДЛЯ ТЕЛЕФОНА (СНГ) ---
+    const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        let input = e.target.value.replace(/\D/g, '');
+
+        if (!input) {
+            setPhone('');
+            return;
+        }
+
+        // Автозамена 8 на 7
+        if (input[0] === '8') input = '7' + input.slice(1);
+        
+        // Жесткая привязка к СНГ
+        if (!['7', '3', '9'].includes(input[0])) {
+            input = '7' + input;
+        }
+
+        let formatted = '+';
+
+        // Применяем разные маски в зависимости от кода страны
+        if (input.startsWith('7')) {
+            // Россия / Казахстан (+7)
+            formatted += '7';
+            if (input.length > 1) formatted += ` (${input.substring(1, 4)}`;
+            if (input.length > 4) formatted += `) ${input.substring(4, 7)}`;
+            if (input.length > 7) formatted += `-${input.substring(7, 9)}`;
+            if (input.length > 9) formatted += `-${input.substring(9, 11)}`;
+        } else if (input.startsWith('375')) {
+            // Беларусь (+375)
+            formatted += '375';
+            if (input.length > 3) formatted += ` (${input.substring(3, 5)}`;
+            if (input.length > 5) formatted += `) ${input.substring(5, 8)}`;
+            if (input.length > 8) formatted += `-${input.substring(8, 10)}`;
+            if (input.length > 10) formatted += `-${input.substring(10, 12)}`;
+        } else if (input.startsWith('996')) {
+            // Кыргызстан (+996)
+            formatted += '996';
+            if (input.length > 3) formatted += ` (${input.substring(3, 6)}`;
+            if (input.length > 6) formatted += `) ${input.substring(6, 9)}`;
+            if (input.length > 9) formatted += `-${input.substring(9, 12)}`;
+        } else if (input.startsWith('998')) {
+            // Узбекистан (+998)
+            formatted += '998';
+            if (input.length > 3) formatted += ` (${input.substring(3, 5)}`;
+            if (input.length > 5) formatted += `) ${input.substring(5, 8)}`;
+            if (input.length > 8) formatted += `-${input.substring(8, 10)}`;
+            if (input.length > 10) formatted += `-${input.substring(10, 12)}`;
+        } else {
+            formatted += input.substring(0, 3);
+        }
+
+        setPhone(formatted);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Валидация телефона при регистрации
+        if (mode === 'register') {
+            const phoneDigits = phone.replace(/\D/g, '');
+            if (phoneDigits.length < 11) {
+                toast({
+                    title: "Ошибка",
+                    description: "Введите корректный номер телефона полностью",
+                    variant: "destructive",
+                });
+                return;
+            }
+        }
+
         setIsLoading(true);
 
         const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
@@ -53,8 +121,7 @@ export default function AuthPage() {
                 localStorage.setItem('token', response.data.token);
                 localStorage.setItem('user_email', response.data.user_email);
                 
-                // 🔥 ДОБАВЛЯЕМ ВОТ ЭТУ СТРОЧКУ 🔥
-                // Она подает сигнал хедеру: "Эй, пользователь авторизовался, обнови кнопку!"
+                // Сигнал хедеру обновить кнопку
                 window.dispatchEvent(new Event('auth-change'));
                 
                 toast({
@@ -63,7 +130,7 @@ export default function AuthPage() {
                     variant: "success",
                 });
                 
-                // МАГИЯ: Читаем callbackUrl из адресной строки
+                // Читаем callbackUrl из адресной строки
                 const searchParams = new URLSearchParams(window.location.search);
                 const callbackUrl = searchParams.get('callbackUrl') || '/dashboard';
                 
@@ -99,13 +166,10 @@ export default function AuthPage() {
     };
 
     return (
-        // ПРАВИЛО 1: Убрали bg-slate-50, добавили relative
         <main className="relative min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
             
-            {/* ПРАВИЛО 2: Вставляем фон */}
             <StaticBackground imageUrl="/background/test.png" />
 
-            {/* ПРАВИЛО 3: z-10 и матовое стекло для карточки */}
             <div className="relative z-10 bg-white/80 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-white/40">
                 
                 {/* Заголовок */}
@@ -163,11 +227,12 @@ export default function AuthPage() {
                             <label className="text-xs font-bold text-slate-700 uppercase">Телефон</label>
                             <div className="relative">
                                 <Phone className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                                {/* ИЗМЕНЕНИЕ: Заменили onChange на handlePhoneChange */}
                                 <input 
                                     type="tel" 
                                     required
                                     value={phone}
-                                    onChange={(e) => setPhone(e.target.value)}
+                                    onChange={handlePhoneChange}
                                     className="w-full pl-10 pr-4 py-2 bg-white/80 border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
                                     placeholder="+7 (999) 000-00-00"
                                 />
