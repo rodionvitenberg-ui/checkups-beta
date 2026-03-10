@@ -195,4 +195,4 @@ ANYMAIL = {
 
 # Говорим Django использовать API вместо стандартного SMTP
 
-DEFAULT_FROM_EMAIL = "noreply@тbimark.org"
+DEFAULT_FROM_EMAIL = 'noreply@bimark.org'
