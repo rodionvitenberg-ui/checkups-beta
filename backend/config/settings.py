@@ -47,6 +47,7 @@ INSTALLED_APPS = [
     'core',
     'analysis',
     'cms',
+    "anymail",
 ]
 
 MIDDLEWARE = [
@@ -172,7 +173,7 @@ NINJA_JWT = {
 }
 
 # Email Settings
-EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_BACKEND = "anymail.backends.resend.EmailBackend"
 EMAIL_HOST = os.getenv('EMAIL_HOST')
 EMAIL_PORT = int(os.getenv('EMAIL_PORT', 587))
 EMAIL_USE_TLS = True
@@ -187,3 +188,11 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]
+
+ANYMAIL = {
+    "RESEND_API_KEY": "re_h7MhmX8c_919WAWjZh9efAZ7hCmrvYp7S",
+}
+
+# Говорим Django использовать API вместо стандартного SMTP
+
+DEFAULT_FROM_EMAIL = "noreply@тbimark.org"
