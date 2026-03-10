@@ -84,11 +84,13 @@ export interface AIIndicator {
     ref_range?: string;
     status: 'normal' | 'low' | 'high' | 'critical';
     comment?: string;
+    category?: string;
 }
 
 export interface AICause {
     title: string;
     description: string;
+    severity?: 'green' | 'yellow' | 'red';
 }
 
 export interface AIRecommendation {
@@ -174,20 +176,19 @@ export const requestPasswordReset = async (email: string): Promise<void> => {
 };
 
 // 1. Загрузка
-export const uploadAnalysis = async (file: File): Promise<AnalysisResponse> => {
+export const uploadAnalysis = async (file: File, isFirst: boolean = true): Promise<AnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    // Для загрузки файла Content-Type должен быть multipart/form-data
-    // Axios сам выставит boundary, если не задавать Content-Type вручную жестко, 
-    // но лучше удалить дефолтный заголовок JSON
+    // Добавляем флаг, чтобы бэкенд знал, нужно ли запускать ИИ сразу
+    formData.append('is_first', isFirst.toString()); 
+
     const response = await api.post<AnalysisResponse>('/analyses/upload', formData, {
-        headers: { 
-            'Content-Type': 'multipart/form-data' 
+        headers: {
+            'Content-Type': 'multipart/form-data',
         },
     });
     return response.data;
 };
-
 // 2. Получение результата
 export const getAnalysisResult = async (uid: string): Promise<AnalysisResponse> => {
     const response = await api.get<AnalysisResponse>(`/analyses/${uid}`);
@@ -195,9 +196,9 @@ export const getAnalysisResult = async (uid: string): Promise<AnalysisResponse> 
 };
 
 // 3. Claim (Привязка/Регистрация)
-export const claimRequest = async (analysisUid: string, email: string, phone?: string) => {
+export const claimRequest = async (analysisUids: string[], email: string, phone?: string) => {
     const response = await api.post('/auth/claim-request', {
-        analysis_uid: analysisUid,
+        analysis_uids: analysisUids,
         email,
         phone
     });
@@ -205,21 +206,26 @@ export const claimRequest = async (analysisUid: string, email: string, phone?: s
 };
 
 export const claimVerify = async (
-    analysisUid: string, 
+    analysisUids: string[], 
     email: string, 
     code: string, 
     password: string, 
     phone?: string
 ): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/claim-verify', {
-        analysis_uid: analysisUid,
+        analysis_uids: analysisUids,
         email,
         phone,
         code,
         password
     });
-    // При успешной проверке кода бэкенд возвращает токены, сохраняем их!
     setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
+    
+    // МЕТКА NEW: Сохраняем новые ID в локальное хранилище для сайдбара
+    if (typeof window !== 'undefined') {
+        localStorage.setItem('new_analysis_ids', JSON.stringify(analysisUids));
+    }
+    
     return response.data;
 };
 

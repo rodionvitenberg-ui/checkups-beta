@@ -21,20 +21,20 @@ export function Footer() {
                 unoptimized // ДОБАВЛЕНО: отключаем сжатие для максимальной четкости
               />
             </Link>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-accent">
               © {currentYear} DataDoctor. Все права защищены.
             </p>
           </div>
 
           {/* Правая часть: Ссылки */}
-          <div className="flex flex-wrap justify-center md:justify-end gap-6 text-sm font-bold text-slate-500 tracking-wide">
+          <div className="flex flex-wrap justify-center md:justify-end gap-6 text-sm font-bold text-secondary tracking-wide">
             {/* Я поставил ссылку на главную страницу, но ты можешь заменить на нужную */}
-            <Link href="/" className="hover:text-blue-600 transition-colors uppercase">
+            <Link href="/" className="hover:text-accent transition-colors uppercase">
               О проекте
             </Link>
             
             {/* Ссылку /legal нужно будет потом создать, или указать свой путь */}
-            <Link href="/legal" className="hover:text-blue-600 transition-colors uppercase">
+            <Link href="/legal" className="hover:text-accent transition-colors uppercase">
               Юридическая информация
             </Link>
           </div>

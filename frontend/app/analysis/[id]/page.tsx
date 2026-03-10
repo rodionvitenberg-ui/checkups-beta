@@ -11,7 +11,7 @@ import { ru } from 'date-fns/locale';
 import { FileUploader } from '@/components/home/FileUploader';
 
 import { 
-  Activity, CheckCircle2, FileText, Loader2, User, Download, Eye, BrainCircuit, Plus, X // <--- ДОБАВЛЕН X
+  Activity, CheckCircle2, FileText, Loader2, Download, Eye, BrainCircuit, Plus, X, AlertTriangle, Info, CheckCircle
 } from 'lucide-react';
 import { clsx } from 'clsx';
 
@@ -28,7 +28,7 @@ export default function AnalysisPage() {
   const [isGeneratingPDF, setIsGeneratingPDF] = useState(false);
   const [isViewingOriginal, setIsViewingOriginal] = useState(false);
   
-  // ДОБАВЛЕНО: Состояние для модального окна загрузки
+  // Состояние для модального окна загрузки
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
   // --- Состояния для интерактивного лоадера ---
@@ -61,10 +61,10 @@ export default function AnalysisPage() {
     const texts = [
         "Распознавание документа...",
         "Извлечение медицинских показателей...",
+        "Оценка динамики по истории...",
         "Анализ полученных данных ИИ...",
         "Поиск возможных причин...",
-        "Формируются выводы и рекомендации...",
-        "Почти готово..."
+        "Формируются выводы и рекомендации..."
     ];
 
     let currentProgress = 0;
@@ -74,10 +74,10 @@ export default function AnalysisPage() {
         setProgress(currentProgress);
 
         if (currentProgress < 15) setLoadingText(texts[0]);
-        else if (currentProgress < 35) setLoadingText(texts[1]);
-        else if (currentProgress < 55) setLoadingText(texts[2]);
-        else if (currentProgress < 75) setLoadingText(texts[3]);
-        else if (currentProgress < 90) setLoadingText(texts[4]);
+        else if (currentProgress < 30) setLoadingText(texts[1]);
+        else if (currentProgress < 45) setLoadingText(texts[2]);
+        else if (currentProgress < 65) setLoadingText(texts[3]);
+        else if (currentProgress < 85) setLoadingText(texts[4]);
         else setLoadingText(texts[5]);
 
     }, 1500);
@@ -171,24 +171,31 @@ export default function AnalysisPage() {
   const patientInfo = result.patient_info;
   const analysisDate = data.created_at ? format(new Date(data.created_at), 'd MMMM yyyy', { locale: ru }) : 'Неизвестная дата';
 
+  // --- МАГИЯ ГРУППИРОВКИ ПОКАЗАТЕЛЕЙ ПО КАТЕГОРИЯМ ---
+  const groupedIndicators = result.indicators.reduce((acc, current) => {
+      const category = current.category || 'Общие показатели';
+      if (!acc[category]) acc[category] = [];
+      acc[category].push(current);
+      return acc;
+  }, {} as Record<string, AIIndicator[]>);
+
   return (
     <main className="relative min-h-screen pt-28 pb-16 px-4 sm:px-8 md:pt-36 md:pb-24 font-sans animate-in fade-in duration-700">
       
       <StaticBackground imageUrl="/background/analisis.png" />
 
-      {/* ОБНОВЛЕННАЯ СЕТКА: flex flex-col lg:flex-row */}
       <div className="relative z-10 max-w-7xl mx-auto flex flex-col lg:flex-row gap-6 lg:gap-8 items-start">
         
-        {/* ЛЕВАЯ КОЛОНКА: Дерево папок (На мобилке опускается вниз через order-2) */}
+        {/* ЛЕВАЯ КОЛОНКА */}
         <div className="w-full lg:w-[320px] shrink-0 order-2 lg:order-1 lg:sticky lg:top-36">
             <AnalysisTreeSidebar currentId={id} />
         </div>
 
-        {/* ПРАВАЯ КОЛОНКА: Основной контент */}
+        {/* ПРАВАЯ КОЛОНКА */}
         <div className="flex-1 w-full space-y-6 order-1 lg:order-2">
             
             {/* --- ШАПКА АНАЛИЗА --- */}
-            <div className="bg-transparent backdrop-blur-md rounded-2xl p-6 border border-white/40 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
+            <div className="bg-white/40 backdrop-blur-md rounded-2xl p-6 border border-white/60 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
                 <div className="absolute top-0 right-0 w-32 h-32 bg-[#3f94ca]/10 rounded-full blur-3xl -mr-10 -mt-10 opacity-50 pointer-events-none" />
                 
                 <div className="z-10 flex-1">
@@ -207,7 +214,7 @@ export default function AnalysisPage() {
                             </span>
                         )}
                     </div>
-                    <p className="text-sm text-slate-600 max-w-3xl leading-relaxed">
+                    <p className="text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
                         {result.summary.general_comment}
                     </p>
                 </div>
@@ -215,16 +222,16 @@ export default function AnalysisPage() {
                 <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto z-10">
                     <button 
                         onClick={() => setIsUploadModalOpen(true)} 
-                        className="group flex items-center justify-center gap-2 bg-gradient-to-r from-[#3f94ca] to-[#00be64] text-white px-6 py-3 rounded-2xl hover:opacity-90 transition-all shadow-[0_0_20px_rgba(63,148,202,0.3)] hover:shadow-[0_0_25px_rgba(0,190,100,0.4)] hover:-translate-y-0.5 font-semibold w-full sm:w-auto"
+                        className="group flex items-center justify-center gap-2 bg-gradient-to-r from-[#3f94ca] to-[#00be64] text-white px-6 py-3 rounded-2xl hover:opacity-90 transition-all shadow-lg hover:-translate-y-0.5 font-semibold w-full sm:w-auto"
                     >
                         <Plus className="w-5 h-5 group-hover:rotate-90 transition-transform duration-300" />
-                        <span>Загрузить анализ</span>
+                        <span>Добавить анализ</span>
                     </button>
                     
                     <button 
                         onClick={handleViewOriginal}
                         disabled={isViewingOriginal}
-                        className="flex cursor-pointer items-center justify-center gap-2 px-4 py-2.5 hover:bg-secondary/10 border border-secondary text-slate-700 font-medium rounded-xl transition-colors w-full sm:w-auto"
+                        className="flex cursor-pointer items-center justify-center gap-2 px-4 py-2.5 bg-white hover:bg-slate-50 border border-slate-200 text-slate-700 font-medium rounded-xl transition-colors w-full sm:w-auto shadow-sm"
                     >
                         {isViewingOriginal ? <Loader2 className="w-4 h-4 animate-spin text-[#3f94ca]" /> : <Eye className="w-4 h-4 text-[#3f94ca]" />}
                         <span className="hidden sm:inline">Оригинал</span>
@@ -241,7 +248,7 @@ export default function AnalysisPage() {
                 </div>
             </div>
 
-            {/* --- КОНТЕНТ (ЛОГИКА ИИ) --- */}
+            {/* --- КОНТЕНТ (ЛОГИКА ИИ И ДИНАМИКА) --- */}
             {result.reasoning && (
                 <ReasoningBlock text={result.reasoning} />
             )}
@@ -249,49 +256,82 @@ export default function AnalysisPage() {
             {/* --- СЕТКА ДАННЫХ --- */}
             <div className="grid grid-cols-1 xl:grid-cols-12 gap-6">
                 
-                {/* ТАБЛИЦА ПОКАЗАТЕЛЕЙ */}
-                <div className="xl:col-span-7 rounded-xl shadow-sm overflow-hidden">
-                    <div className="px-4 py-3 bg-transparent backdrop-blur-md flex justify-between items-center">
-                        <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">
-                            Показатели
+                {/* ТАБЛИЦА ПОКАЗАТЕЛЕЙ (Сгруппированная) */}
+                <div className="xl:col-span-7 rounded-xl shadow-xl shadow-slate-200/30 overflow-hidden bg-white/40 backdrop-blur-md border border-white/60">
+                    <div className="px-5 py-4 bg-white/60 border-b border-white/40 flex justify-between items-center backdrop-blur-sm">
+                        <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">
+                            Показатели по системам
                         </h2>
-                        <span className="text-xs text-slate-500 font-medium">{result.indicators.length} значений</span>
+                        <span className="text-xs text-slate-500 font-semibold bg-white px-2 py-1 rounded-md shadow-sm">
+                            {result.indicators.length} значений
+                        </span>
                     </div>
-                    <div className="divide-y divide-white/40">
-                        {result.indicators.map((item, idx) => (
-                            <IndicatorRow key={idx} item={item} />
+                    
+                    <div className="flex flex-col">
+                        {Object.entries(groupedIndicators).map(([category, items]) => (
+                            <div key={category} className="border-b border-slate-200/50 last:border-b-0">
+                                {/* Заголовок категории */}
+                                <div className="bg-slate-50/60 px-5 py-2.5 backdrop-blur-sm flex items-center gap-2">
+                                    <div className="w-1.5 h-4 bg-[#3f94ca] rounded-full"></div>
+                                    <h3 className="text-sm font-bold text-slate-700">{category}</h3>
+                                </div>
+                                {/* Элементы категории */}
+                                <div className="divide-y divide-slate-100/50">
+                                    {items.map((item, idx) => (
+                                        <IndicatorRow key={idx} item={item} />
+                                    ))}
+                                </div>
+                            </div>
                         ))}
                     </div>
                 </div>
 
                 {/* ПРИЧИНЫ И РЕКОМЕНДАЦИИ */}
                 <div className="xl:col-span-5 space-y-6">
-                    <div className="bg-transparent backdrop-blur-md rounded-xl shadow-sm p-4 sm:p-5">
+                    {/* Светофор причин */}
+                    <div className="bg-white/40 backdrop-blur-md rounded-xl shadow-xl shadow-slate-200/30 border border-white/60 p-5">
                         <div className="flex items-center gap-2 mb-4">
-                            <Activity className="w-5 h-5 text-amber-500" />
-                            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Причины отклонений</h2>
+                            <Activity className="w-5 h-5 text-slate-700" />
+                            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Возможные причины</h2>
                         </div>
                         <div className="space-y-3">
-                            {result.causes.length > 0 ? result.causes.map((cause, idx) => (
-                                <div key={idx} className="bg-amber-50/40 p-3 rounded-xl border border-amber-100/40">
-                                    <h3 className="text-sm font-semibold text-slate-900 mb-1">{cause.title}</h3>
-                                    <p className="text-xs text-slate-700 leading-relaxed">{cause.description}</p>
-                                </div>
-                            )) : (
-                                <p className="text-sm text-slate-500 italic py-2">Явных патологий не выявлено.</p>
+                            {result.causes.length > 0 ? result.causes.map((cause, idx) => {
+                                // Определяем стили "Светофора"
+                                const severityClass = 
+                                    cause.severity === 'red' ? 'bg-red-50/80 border-red-200/60' :
+                                    cause.severity === 'yellow' ? 'bg-amber-50/80 border-amber-200/60' :
+                                    'bg-emerald-50/80 border-emerald-200/60';
+                                
+                                const iconClass = 
+                                    cause.severity === 'red' ? <AlertTriangle className="w-4 h-4 text-red-500" /> :
+                                    cause.severity === 'yellow' ? <Info className="w-4 h-4 text-amber-500" /> :
+                                    <CheckCircle className="w-4 h-4 text-emerald-500" />;
+
+                                return (
+                                    <div key={idx} className={clsx("p-3 rounded-xl border backdrop-blur-sm transition-colors", severityClass)}>
+                                        <div className="flex items-start gap-2 mb-1">
+                                            <div className="mt-0.5">{iconClass}</div>
+                                            <h3 className="text-sm font-bold text-slate-900 leading-tight">{cause.title}</h3>
+                                        </div>
+                                        <p className="text-xs text-slate-700 leading-relaxed font-medium pl-6">{cause.description}</p>
+                                    </div>
+                                );
+                            }) : (
+                                <p className="text-sm text-slate-500 italic py-2">Явных отклонений не выявлено.</p>
                             )}
                         </div>
                     </div>
 
-                    <div className="bg-transparent backdrop-blur-md rounded-xl shadow-sm p-4 sm:p-5">
+                    {/* Рекомендации */}
+                    <div className="bg-white/40 backdrop-blur-md rounded-xl shadow-xl shadow-slate-200/30 border border-white/60 p-5">
                         <div className="flex items-center gap-2 mb-4">
                             <CheckCircle2 className="w-5 h-5 text-[#00be64]" />
-                            <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wider">Рекомендации</h2>
+                            <h2 className="text-sm font-bold text-slate-800 uppercase tracking-wider">Рекомендации</h2>
                         </div>
                         <ul className="space-y-3">
                             {result.recommendations.map((rec, idx) => (
-                                <li key={idx} className="flex gap-3 text-sm text-slate-700">
-                                    <span className="flex-shrink-0 w-5 h-5 flex items-center justify-center bg-[#3f94ca]/10 text-[#3f94ca] rounded-full text-[10px] font-bold mt-0.5">
+                                <li key={idx} className="flex gap-3 text-sm text-slate-800">
+                                    <span className="flex-shrink-0 w-6 h-6 flex items-center justify-center bg-white shadow-sm border border-slate-100 text-[#3f94ca] rounded-full text-xs font-bold mt-0.5">
                                         {idx + 1}
                                     </span>
                                     <span className="leading-relaxed font-medium">{rec.text}</span>
@@ -339,27 +379,27 @@ function IndicatorRow({ item }: { item: AIIndicator }) {
     const isNormal = item.status === 'normal';
     
     return (
-      <div className="p-4 sm:p-5 hover:bg-white/50 transition-colors group flex justify-between items-start gap-4">
+      <div className="p-4 sm:p-5 hover:bg-white/60 transition-colors group flex justify-between items-start gap-4">
         <div>
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="font-semibold text-slate-900 text-sm">{item.name}</span>
+            <span className="font-bold text-slate-800 text-sm">{item.name}</span>
             {!isNormal && (
               <span className={clsx(
-                "px-1.5 py-0.5 rounded text-[10px] font-bold uppercase tracking-wider",
-                item.status === 'critical' ? "bg-red-100 text-red-700" :
-                item.status === 'high' ? "bg-amber-100 text-amber-700" :
-                "bg-[#3f94ca]/10 text-[#3f94ca]"
+                "px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider shadow-sm",
+                item.status === 'critical' ? "bg-red-100 text-red-700 border border-red-200" :
+                item.status === 'high' ? "bg-amber-100 text-amber-700 border border-amber-200" :
+                "bg-[#3f94ca]/10 text-[#3f94ca] border border-[#3f94ca]/20"
               )}>
                 {item.status === 'critical' ? "Критично" : item.status === 'high' ? "Выше нормы" : "Ниже нормы"}
               </span>
             )}
           </div>
           {item.comment && !isNormal && (
-              <p className="text-xs text-amber-700/90 mt-1.5 leading-snug max-w-sm font-medium">
+              <p className="text-xs text-slate-700 mt-1.5 leading-snug max-w-sm font-medium border-l-2 border-amber-300 pl-2">
                   {item.comment}
               </p>
           )}
-          <p className="text-[10px] text-slate-500 mt-1.5 font-medium">
+          <p className="text-[10px] text-slate-500 mt-1.5 font-semibold">
              Референс: {item.ref_range || "—"}
           </p>
         </div>
@@ -371,7 +411,7 @@ function IndicatorRow({ item }: { item: AIIndicator }) {
             )}>
               {item.value}
             </span>
-            <span className="text-[10px] text-slate-500 font-semibold">{item.unit}</span>
+            <span className="text-[10px] text-slate-500 font-bold">{item.unit}</span>
         </div>
       </div>
     );

@@ -116,14 +116,14 @@ export function Header() {
         </div>
 
         {/* Десктопная версия (кастомные кнопки-картинки) */}
-        <div className="hidden md:flex items-center gap-3 sm:gap-5">
+        <div className="hidden md:flex items-center text-secondary gap-3 sm:gap-5">
           <NavButton 
             text="Главная" 
             isActive={pathname === '/'} 
             onClick={() => handleNavigation('/')} 
           />
 
-          <div className={cn("transition-opacity duration-300", !isMounted ? "opacity-0" : "opacity-100")}>
+          <div className={cn("transition-opacity text-secondary duration-300", !isMounted ? "opacity-0" : "opacity-100")}>
             <NavButton 
               text={isAuth ? "Кабинет" : "Войти"} 
               isActive={pathname === authPath} 

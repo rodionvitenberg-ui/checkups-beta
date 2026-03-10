@@ -1,18 +1,20 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Arimo, Montserrat } from "next/font/google";
 import "./globals.css";
 import { Header } from "@/components/layout/Header";
 import Providers from "@/components/Providers";
 import { Footer } from '@/components/layout/Footer';
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
+// Шрифт для крупных заголовков (поменяли на Arimo)
+const arimo = Arimo({
+  variable: "--font-arimo",
+  subsets: ["cyrillic", "latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+// Шрифт для всего остального (мелкий текст)
+const montserrat = Montserrat({
+  variable: "--font-montserrat",
+  subsets: ["cyrillic", "latin"],
 });
 
 export const metadata: Metadata = {
@@ -27,7 +29,8 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ru">
-      <body className="antialiased min-h-screen flex flex-col relative">
+      {/* Прокидываем новые переменные шрифтов */}
+      <body className={`${arimo.variable} ${montserrat.variable} font-sans antialiased min-h-screen flex flex-col relative`}>
         
         {/* Закидываем шарики на фон */}
 

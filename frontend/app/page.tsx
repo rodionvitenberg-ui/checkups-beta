@@ -58,10 +58,10 @@ export default function Home() {
         {/* 1. ГЛАВНЫЙ БЛОК (О ПРОЕКТЕ) */}
         <section className="flex flex-col md:flex-row-reverse gap-12 lg:gap-20 items-center mb-24 md:mb-32">
           <div className="w-full md:w-3/5 space-y-8 text-left">
-            <h1 className="text-5xl md:text-6xl lg:text-7xl font-black tracking-tighter text-slate-900 uppercase leading-[0.9]">
+            <h1 className="text-5xl md:text-6xl lg:text-7xl font-bold tracking-tighter text-secondary uppercase leading-[0.9]">
               {heroBlock?.title || "О ПРОЕКТЕ"}
             </h1>
-            <div className="prose prose-xl text-slate-700 leading-relaxed font-medium">
+            <div className="prose prose-xl text-accent leading-relaxed font-medium">
               <p className="whitespace-pre-wrap text-md md:text-md lg:text-xl opacity-90">
                 {heroBlock?.content || "Checkups — бесплатный интеллектуальный AI-сервис по интерпретации медицинских анализов..."}
               </p>
@@ -107,7 +107,7 @@ export default function Home() {
           >
             <div className="md:hidden">
               <MorphyButton 
-                className="w-full py-8 text-white text-md font-bold tracking-tight shadow-lg"
+                className="w-full py-8 text-white text-md tracking-tight shadow-lg"
               >
                 <div className="flex flex-col items-center gap-1">
                   <div className="flex items-center gap-2">
@@ -136,12 +136,12 @@ export default function Home() {
                   />
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-10">
                     <div className="flex items-center justify-center gap-2">
-                      <span className="text-lg font-bold text-slate-800 uppercase tracking-tight">
+                      <span className="text-lg font-bold text-accent uppercase tracking-tight">
                           Посмотреть пример разбора
                       </span>
-                      <ArrowRight className="w-5 h-5 text-slate-800 group-hover:translate-x-1 transition-transform duration-300 transform-gpu" />
+                      <ArrowRight className="w-5 h-5 text-accent group-hover:translate-x-1 transition-transform duration-300 transform-gpu" />
                     </div>
-                    <p className="text-slate-700 text-sm font-medium mt-0.5 opacity-90">
+                    <p className="text-accent text-sm font-medium mt-0.5 opacity-90">
                       Узнайте, как выглядит готовый отчет с графиками и рекомендациями
                     </p>
                   </div>

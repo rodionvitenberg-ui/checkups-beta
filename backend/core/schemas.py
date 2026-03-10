@@ -21,10 +21,14 @@ class IndicatorSchema(Schema):
     ref_range: Optional[str] = None
     status: str 
     comment: Optional[str] = None
+    # НОВОЕ ПОЛЕ: Категория для группировки (например, "Печень", "Кроветворение")
+    category: Optional[str] = "Общие показатели"
 
 class CauseSchema(Schema):
     title: str
     description: str
+    # НОВОЕ ПОЛЕ: Степень серьезности (green, yellow, red)
+    severity: Optional[str] = "yellow"
 
 class RecommendationSchema(Schema):
     type: str
@@ -54,16 +58,18 @@ class AssignProfileRequest(Schema):
     profile_id: int
 
 class ClaimRequestOTPSchema(Schema):
-    analysis_uid: uuid.UUID
+    # Теперь принимаем список ID
+    analysis_uids: List[uuid.UUID]
     email: str
     phone: Optional[str] = None
 
 class ClaimVerifyOTPSchema(Schema):
-    analysis_uid: uuid.UUID
+    # И здесь тоже список ID
+    analysis_uids: List[uuid.UUID]
     email: str
     phone: Optional[str] = None
-    code: str
-    password: str
+    code: Optional[str] = None
+    password: Optional[str] = None
 
 class AuthResponseSchema(Schema):
     token: str
@@ -90,3 +96,10 @@ class ChartResponseSchema(Schema):
     slug: str
     name: str
     data: List[IndicatorHistoryPoint]
+
+class ClaimVerifyOTPSchema(Schema):
+    analysis_uid: str
+    email: str
+    code: Optional[str] = None
+    password: Optional[str] = None
+    phone: Optional[str] = None
