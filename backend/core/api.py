@@ -208,7 +208,7 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     
-    domain = "https://datadoctor.pro" 
+    domain = "https://bimark.org" 
     reset_link = f"{domain}/auth/reset-password?uid={uid}&token={token}"
     
     try:
