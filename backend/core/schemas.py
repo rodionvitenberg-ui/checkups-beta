@@ -96,10 +96,3 @@ class ChartResponseSchema(Schema):
     slug: str
     name: str
     data: List[IndicatorHistoryPoint]
-
-class ClaimVerifyOTPSchema(Schema):
-    analysis_uid: str
-    email: str
-    code: Optional[str] = None
-    password: Optional[str] = None
-    phone: Optional[str] = None

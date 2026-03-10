@@ -166,12 +166,18 @@ def claim_request(request, payload: ClaimRequestOTPSchema):
 
 @api.post("/auth/claim-verify", response=AuthResponseSchema)
 def claim_verify(request, payload: ClaimVerifyOTPSchema):
-    pwd = payload.password or payload.code
+    pwd = getattr(payload, 'password', None) or getattr(payload, 'code', None)
     user = authenticate(username=payload.email, password=pwd)
     if not user:
         return api.create_response(request, {"message": "Неверный код или пароль"}, status=401)
 
     analyses = MedicalAnalysis.objects.filter(uid__in=payload.analysis_uids)
+    
+    # Защита от двойной привязки
+    for analysis in analyses:
+        if analysis.user and analysis.user != user:
+            return api.create_response(request, {"message": "Один из анализов уже привязан к другому аккаунту"}, status=400)
+
     patient_profile = PatientProfile.objects.filter(user=user).first()
     
     with transaction.atomic():
@@ -182,12 +188,18 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
                 analysis.save(update_fields=['user', 'patient'])
                 AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
 
+    # ИЗМЕНЕНИЕ: Ищем только ПЕРВЫЙ анализ, который висит в PENDING, и пинаем его.
+    first_pending = analyses.filter(status=MedicalAnalysis.Status.PENDING).first()
+    if first_pending:
+        process_analysis_task.delay(first_pending.uid)
+
     refresh = RefreshToken.for_user(user)
     return {
         "token": str(refresh.access_token),
         "refresh_token": str(refresh),
         "user_email": user.email
     }
+
 
 @api.post("/auth/refresh")
 def refresh_token(request, payload: RefreshRequestSchema):
@@ -280,42 +292,6 @@ def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Fo
     return analysis
 
 # ---------------------------------------------------------
-
-@api.post("/auth/claim-verify", response=AuthResponseSchema)
-def claim_verify(request, payload: ClaimVerifyOTPSchema):
-    pwd = getattr(payload, 'password', None) or getattr(payload, 'code', None)
-    user = authenticate(username=payload.email, password=pwd)
-    if not user:
-        return api.create_response(request, {"message": "Неверный код или пароль"}, status=401)
-
-    analyses = MedicalAnalysis.objects.filter(uid__in=payload.analysis_uids)
-    
-    # Защита от двойной привязки
-    for analysis in analyses:
-        if analysis.user and analysis.user != user:
-            return api.create_response(request, {"message": "Один из анализов уже привязан к другому аккаунту"}, status=400)
-
-    patient_profile = PatientProfile.objects.filter(user=user).first()
-    
-    with transaction.atomic():
-        for analysis in analyses:
-            if not analysis.user:
-                analysis.user = user
-                analysis.patient = patient_profile
-                analysis.save(update_fields=['user', 'patient'])
-                AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
-
-    # ИЗМЕНЕНИЕ: Ищем только ПЕРВЫЙ анализ, который висит в PENDING, и пинаем его.
-    first_pending = analyses.filter(status=MedicalAnalysis.Status.PENDING).first()
-    if first_pending:
-        process_analysis_task.delay(first_pending.uid)
-
-    refresh = RefreshToken.for_user(user)
-    return {
-        "token": str(refresh.access_token),
-        "refresh_token": str(refresh),
-        "user_email": user.email
-    }
 
 @api.get("/analyses/{uid}", response=AnalysisResponseSchema, auth=None)
 def get_analysis_result(request, uid: uuid.UUID):
