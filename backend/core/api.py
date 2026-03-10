@@ -272,9 +272,9 @@ def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Fo
         status=MedicalAnalysis.Status.PENDING
     )
     
-    # МАГИЯ ЗДЕСЬ: Если юзер авторизован ИЛИ это первый файл — запускаем ИИ.
-    # Иначе — оставляем висеть в PENDING до ввода PIN-кода.
-    if (user and user.is_authenticated) or is_first:
+    # ИЗМЕНЕНИЕ: Независимо от авторизации, мы отправляем в Celery ТОЛЬКО первый файл.
+    # Остальные файлы лягут в БД со статусом PENDING и будут запущены по цепочке!
+    if is_first:
         transaction.on_commit(lambda: process_analysis_task.delay(analysis.uid))
         
     return analysis
@@ -283,12 +283,18 @@ def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Fo
 
 @api.post("/auth/claim-verify", response=AuthResponseSchema)
 def claim_verify(request, payload: ClaimVerifyOTPSchema):
-    pwd = payload.password or payload.code
+    pwd = getattr(payload, 'password', None) or getattr(payload, 'code', None)
     user = authenticate(username=payload.email, password=pwd)
     if not user:
         return api.create_response(request, {"message": "Неверный код или пароль"}, status=401)
 
     analyses = MedicalAnalysis.objects.filter(uid__in=payload.analysis_uids)
+    
+    # Защита от двойной привязки
+    for analysis in analyses:
+        if analysis.user and analysis.user != user:
+            return api.create_response(request, {"message": "Один из анализов уже привязан к другому аккаунту"}, status=400)
+
     patient_profile = PatientProfile.objects.filter(user=user).first()
     
     with transaction.atomic():
@@ -298,11 +304,11 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
                 analysis.patient = patient_profile
                 analysis.save(update_fields=['user', 'patient'])
                 AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
-                
-            # ДОСЫЛАЕМ В CELERY ОСТАНОВЛЕННЫЕ АНАЛИЗЫ
-            if analysis.status == MedicalAnalysis.Status.PENDING:
-                # Используем a_uid=analysis.uid, чтобы лямбда захватила правильный ID в цикле
-                transaction.on_commit(lambda a_uid=analysis.uid: process_analysis_task.delay(a_uid))
+
+    # ИЗМЕНЕНИЕ: Ищем только ПЕРВЫЙ анализ, который висит в PENDING, и пинаем его.
+    first_pending = analyses.filter(status=MedicalAnalysis.Status.PENDING).first()
+    if first_pending:
+        process_analysis_task.delay(first_pending.uid)
 
     refresh = RefreshToken.for_user(user)
     return {

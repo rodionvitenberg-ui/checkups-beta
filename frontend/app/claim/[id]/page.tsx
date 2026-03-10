@@ -149,18 +149,38 @@ export default function ClaimPage() {
     useEffect(() => {
         if (step !== 'results' || ids.length === 0) return;
 
-        const pollAll = async () => {
-            try {
-                const results = await Promise.all(ids.map(id => getAnalysisResult(id)));
-                const newStatuses: Record<string, string> = {};
-                results.forEach(r => newStatuses[r.uid] = r.status);
-                setStatuses(newStatuses);
-            } catch (error) { console.error(error); }
+        let isPolling = true;
+
+        const pollNext = async () => {
+            if (!isPolling) return;
+            
+            // Используем setStatuses чисто чтобы получить самый свежий state без добавления его в зависимости useEffect
+            setStatuses(prevStatuses => {
+                // Находим ПЕРВЫЙ файл, который еще не completed и не failed
+                const currentId = ids.find(id => prevStatuses[id] !== 'completed' && prevStatuses[id] !== 'failed');
+                
+                if (currentId) {
+                    // Опрашиваем только его!
+                    getAnalysisResult(currentId)
+                        .then(result => {
+                            if (isPolling) {
+                                setStatuses(s => ({ ...s, [currentId]: result.status }));
+                            }
+                        })
+                        .catch(console.error);
+                }
+                
+                return prevStatuses;
+            });
         };
 
-        const interval = setInterval(pollAll, 3000);
-        pollAll();
-        return () => clearInterval(interval);
+        const interval = setInterval(pollNext, 3000);
+        pollNext(); // первый вызов
+        
+        return () => {
+            isPolling = false;
+            clearInterval(interval);
+        };
     }, [step, ids]);
 
     // --- ОБРАБОТЧИКИ ФОРМ ---
