@@ -2,12 +2,12 @@
 
 import { AnimatedTestimonials, type Testimonial } from '@/components/ui/animated-testimonials';
 
-// Наши 14 моковых отзывов со сгенерированными аватарками (используем качественные лица с Unsplash)
+// Наши 24 моковых отзыва с реальными лицами с Unsplash
 const defaultTestimonials: Testimonial[] = [
     {
         name: "Анна С.",
         handle: "@anna_s",
-        description: "Checkups помог мне наконец-то разобраться в своих анализах. ИИ-расшифровка написана простым и понятным языком. Теперь я не паникую при виде красных значений!",
+        description: "Datadoctor помог мне наконец-то разобраться в своих анализах. ИИ-расшифровка написана простым и понятным языком. Теперь я не паникую при виде красных значений!",
         image: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?auto=format&fit=crop&q=80&w=150&h=150"
     },
     {
@@ -19,7 +19,7 @@ const defaultTestimonials: Testimonial[] = [
     {
         name: "Елена П.",
         handle: "@elena_p",
-        description: "Мне понравилось, как система выделяет отклонения от нормы и объясняет возможные причины. Сразу понятно, на что обратить внимание.",
+        description: "Мне понравилось, как Datadoctor выделяет отклонения от нормы и объясняет возможные причины. Сразу понятно, на что обратить внимание.",
         image: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?auto=format&fit=crop&q=80&w=150&h=150"
     },
     {
@@ -31,7 +31,7 @@ const defaultTestimonials: Testimonial[] = [
     {
         name: "Ольга Т.",
         handle: "@olya_fit",
-        description: "Я нутрициолог, и часто прошу клиентов прогонять свои анализы через этот сервис до нашей консультации. Это невероятно ускоряет сбор анамнеза!",
+        description: "Я нутрициолог, и часто прошу клиентов прогонять свои анализы через Datadoctor до нашей консультации. Это невероятно ускоряет сбор анамнеза!",
         image: "https://images.unsplash.com/photo-1544005313-94ddf0286df2?auto=format&fit=crop&q=80&w=150&h=150"
     },
     {
@@ -55,7 +55,7 @@ const defaultTestimonials: Testimonial[] = [
     {
         name: "Екатерина В.",
         handle: "@katya_v",
-        description: "Переживала за печеночные пробы мужа. Сервис не только подсветил красным критические значения, но и успокоил, объяснив вероятные причины.",
+        description: "Переживала за печеночные пробы мужа. Datadoctor не только подсветил красным критические значения, но и успокоил, объяснив вероятные причины.",
         image: "https://images.unsplash.com/photo-1554151228-14d9def656e4?auto=format&fit=crop&q=80&w=150&h=150"
     },
     {
@@ -79,7 +79,7 @@ const defaultTestimonials: Testimonial[] = [
     {
         name: "Надежда Л.",
         handle: "@nadya_l",
-        description: "Понятный интерфейс, ничего лишнего. Загрузил фотку бланка — получил результат. Даже моя мама легко разобралась, как пользоваться.",
+        description: "Понятный интерфейс, ничего лишнего. Загрузил фотку бланка — получил результат. Даже моя мама легко разобралась, как пользоваться Datadoctor.",
         image: "https://images.unsplash.com/photo-1508214751196-bfd14332e35b?auto=format&fit=crop&q=80&w=150&h=150"
     },
     {
@@ -87,20 +87,78 @@ const defaultTestimonials: Testimonial[] = [
         handle: "@victor_b",
         description: "Единственный сервис, который нормально распознал старый помятый бланк из государственной клиники. Идеально!",
         image: "https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    // ---- НОВЫЕ ОТЗЫВЫ ----
+    {
+        name: "Игорь Д.",
+        handle: "@igor_d",
+        description: "Datadoctor сэкономил мне кучу нервов. Быстро перевел медицинский язык на человеческий, и я перестал накручивать себя раньше времени.",
+        image: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Татьяна В.",
+        handle: "@tanya_v",
+        description: "Отличный помощник! Использовала Datadoctor для расшифровки анализов перед операцией. Врачи даже удивились, насколько я была в курсе своих показателей.",
+        image: "https://images.unsplash.com/photo-1548142813-c348350df52b?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Сергей М.",
+        handle: "@sergey_m",
+        description: "Очень круто! Datadoctor не просто показывает нормы, но и учитывает мой возраст и пол при анализе. Персонализация на высшем уровне.",
+        image: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Алина К.",
+        handle: "@alina_k",
+        description: "В восторге от сервиса. Datadoctor посоветовал обратить внимание на витамин D по косвенным признакам, и после сдачи он действительно оказался в дефиците.",
+        image: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Максим П.",
+        handle: "@maxim_p",
+        description: "Datadoctor — мастхэв для всех биохакеров и тех, кто следит за биомаркерами. Аналитика работает быстрее любой регистратуры.",
+        image: "https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Юлия С.",
+        handle: "@yulia_s",
+        description: "Быстро, четко, без лишней воды. Datadoctor заменил мне часы тревожного гугления симптомов и диагнозов.",
+        image: "https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Андрей Т.",
+        handle: "@andrey_t",
+        description: "Интерфейс супер: загрузил фото, попил кофе — получил раскладку. Datadoctor определенно лучший на рынке сейчас.",
+        image: "https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Валерия Н.",
+        handle: "@lera_n",
+        description: "Пользуюсь Datadoctor каждый раз после сдачи крови. Помогает задавать правильные и предметные вопросы моему лечащему врачу.",
+        image: "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Константин Л.",
+        handle: "@kostya_l",
+        description: "ИИ в медицине — это наше будущее. Datadoctor отлично справляется с базовой аналитикой и экономит кучу времени.",
+        image: "https://images.unsplash.com/photo-1504257432389-52343af06ae3?auto=format&fit=crop&q=80&w=150&h=150"
+    },
+    {
+        name: "Дарья Ф.",
+        handle: "@dasha_f",
+        description: "Огромное спасибо команде Datadoctor! Очень полезный, современный и интуитивно понятный инструмент.",
+        image: "https://images.unsplash.com/photo-1488426862026-3ee34a7d66df?auto=format&fit=crop&q=80&w=150&h=150"
     }
 ];
 
 export function AnimatedTestimonialsSection() {
     return (
         <section className="py-16 relative">
-            {/* overflow-hidden заменен на overflow-x-hidden, чтобы не резать тени */}
             <div className="max-w-full mx-auto text-center overflow-x-hidden py-4">
-                {/* Подтянули стили заголовка к нашему единому дизайн-коду */}
-                <h2 className="text-3xl font-bold text-secondary uppercase tracking-tighter mb-12 px-4">
+                <h2 className="text-3xl md:text-4xl font-bold text-secondary uppercase tracking-tighter mb-12 px-4">
                     Что говорят пользователи
                 </h2>
                 
-                {/* Отправляем моковые данные в "бегущую строку" */}
                 <AnimatedTestimonials data={defaultTestimonials} />
             </div>
         </section>

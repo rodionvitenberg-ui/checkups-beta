@@ -25,7 +25,6 @@ const AnimatedCanopy = ({
   <div
     {...props}
     className={cn(
-      // Класс group нужен, чтобы отслеживать наведение на весь ряд
       'group relative flex w-full overflow-hidden p-4 gap-[var(--gap)] [--gap:24px]',
       className,
     )}
@@ -35,7 +34,6 @@ const AnimatedCanopy = ({
         key={`item-${index}`}
         className={cn(
           'flex shrink-0 gap-[var(--gap)] flex-row animate-canopy-horizontal',
-          // Добавляем наши кастомные классы (они описаны в <style> ниже)
           reverse && 'direction-reverse',
           pauseOnHover && 'pause-on-hover'
         )}
@@ -55,47 +53,50 @@ const TestimonialCard = ({
 }) => (
   <div
     className={cn(
-      'flex h-full w-[28rem] shrink-0 flex-col justify-between rounded-[2rem] p-8 transition-all duration-300 cursor-pointer',
-      'bg-white/40 backdrop-blur-md border border-white/60 shadow-xl shadow-slate-200/50 hover:shadow-2xl hover:shadow-slate-300/50 hover:-translate-y-1',
-      className,
+      // Подложка в стиле остальных блоков (полупрозрачная, с блюром)
+      "relative flex h-full w-[22rem] md:w-[28rem] max-w-full flex-col justify-between overflow-hidden rounded-[2rem] border border-white/30 bg-white/15 backdrop-blur-md p-6 md:p-8 shadow-sm transition-all duration-300 hover:bg-white/20 hover:shadow-xl hover:scale-[1.02]",
+      className
     )}
   >
-    <div className='flex items-start gap-4'>
-      <div className='relative h-14 w-14 shrink-0 overflow-hidden rounded-full border-2 border-white shadow-sm'>
+    <div className="flex flex-col gap-4">
+      {/* Текст отзыва теперь accent (вместо черного) */}
+      <p className="text-base md:text-lg text-accent font-medium leading-relaxed opacity-90">
+        "{testimonial.description}"
+      </p>
+    </div>
+    <div className="mt-8 flex items-center gap-4">
+      {/* Обводка аватарки стала secondary (вместо синей) */}
+      <div className="relative h-12 w-12 md:h-14 md:w-14 shrink-0 overflow-hidden rounded-full border-2 border-secondary/50 shadow-sm bg-white/50">
+        {/* ИСПОЛЬЗУЕМ ОБЫЧНЫЙ img! Это решит проблему с отображением на проде */}
         <img
           src={testimonial.image}
           alt={testimonial.name}
-          className='h-full w-full object-cover'
+          className="h-full w-full object-cover"
+          loading="lazy"
         />
       </div>
-      <div className='flex-1 mt-1'>
-        <div className='flex flex-col'>
-          <span className='text-lg font-bold text-slate-900 leading-tight'>
-            {testimonial.name}
-          </span>
-          <span className='text-xs font-medium text-blue-600/80 mt-0.5'>
-            {testimonial.handle}
-          </span>
-        </div>
+      <div className="flex flex-col">
+        {/* Имя теперь secondary (вместо черного/синего) */}
+        <h3 className="text-lg font-bold text-secondary leading-tight">
+          {testimonial.name}
+        </h3>
+        {/* Никнейм теперь accent */}
+        <p className="text-sm text-accent font-medium opacity-70">
+          {testimonial.handle}
+        </p>
       </div>
     </div>
-    <p className='mt-5 text-sm sm:text-base leading-relaxed text-slate-700 font-medium italic'>
-      "{testimonial.description}"
-    </p>
   </div>
 );
 
 export const AnimatedTestimonials = ({
   data,
   className,
-  cardClassName,
 }: {
   data: Testimonial[];
   className?: string;
-  cardClassName?: string;
 }) => (
   <div className={cn('w-full overflow-x-hidden py-4 flex flex-col gap-6', className)}>
-    {/* Вшиваем CSS-правила прямо сюда. Это гарантирует 100% работу реверса и паузы */}
     <style dangerouslySetInnerHTML={{__html: `
       @keyframes canopy-horizontal {
         0% { transform: translateX(0); }
@@ -112,24 +113,20 @@ export const AnimatedTestimonials = ({
       }
     `}} />
     
-    {/* Создаем два ряда: первый едет влево (false), второй вправо (true) */}
     {[false, true].map((reverse, index) => (
       <AnimatedCanopy
         key={`Canopy-${index}`}
         reverse={reverse}
         className={cn(
-          // Делаем разные скорости для первого и второго ряда, чтобы не было синхронности
-          index === 0 ? '[--duration:55s]' : '[--duration:60s]'
+          index === 0 ? '[--duration:60s]' : '[--duration:65s]'
         )}
         pauseOnHover={true}
         repeat={6}
       >
-        {/* Если ряд реверсивный, то и карточки в нем меняем местами */}
         {(reverse ? [...data].reverse() : data).map((testimonial, idx) => (
-          <TestimonialCard
-            key={`testimonial-${index}-${idx}`}
-            testimonial={testimonial}
-            className={cardClassName}
+          <TestimonialCard 
+            key={`${testimonial.handle}-${idx}`} 
+            testimonial={testimonial} 
           />
         ))}
       </AnimatedCanopy>
