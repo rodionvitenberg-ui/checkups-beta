@@ -77,12 +77,6 @@ const defaultTestimonials: Testimonial[] = [
         image: "https://images.unsplash.com/photo-1615109398623-88346a601842?auto=format&fit=crop&q=80&w=150&h=150"
     },
     {
-        name: "Надежда Л.",
-        handle: "@nadya_l",
-        description: "Понятный интерфейс, ничего лишнего. Загрузил фотку бланка — получил результат. Даже моя мама легко разобралась, как пользоваться Datadoctor.",
-        image: "https://images.unsplash.com/photo-1508214751196-bfd14332e35b?auto=format&fit=crop&q=80&w=150&h=150"
-    },
-    {
         name: "Виктор Б.",
         handle: "@victor_b",
         description: "Единственный сервис, который нормально распознал старый помятый бланк из государственной клиники. Идеально!",
