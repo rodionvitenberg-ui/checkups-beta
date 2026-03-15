@@ -26,8 +26,11 @@ class AnalysisPipeline:
         self.model_name = "gemini-2.5-flash" 
 
     def _get_client(self):
-        """Создает клиента с ТЕКУЩИМ активным ключом"""
-        return genai.Client(api_key=self.api_keys[self.current_key_idx])
+        """Создает клиента с ТЕКУЩИМ активным ключом и Cloudflare прокси"""
+        return genai.Client(
+            api_key=self.api_keys[self.current_key_idx],
+            http_options={'base_url': 'https://gemini-proxy.rodionvitenberg.workers.dev/'} 
+        )
 
     def _switch_key(self):
         """Переключается на следующий ключ, если текущий иссяк"""
