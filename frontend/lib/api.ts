@@ -6,13 +6,11 @@ export interface AuthResponse {
     user_email: string;
 }
 
-// Создаем экземпляр axios
 const api = axios.create({
     baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
     headers: { 'Content-Type': 'application/json' },
 });
 
-// 1. Интерцептор запросов: автоматически прикрепляем access-токен ко всем запросам
 api.interceptors.request.use((config) => {
     if (typeof window !== 'undefined') {
         const token = localStorage.getItem('token');
@@ -23,13 +21,10 @@ api.interceptors.request.use((config) => {
     return config;
 });
 
-// 2. Интерцептор ответов: отлавливаем 401 ошибку и незаметно обновляем токен
 api.interceptors.response.use(
     (response) => response,
     async (error) => {
         const originalRequest = error.config;
-
-        // Если ошибка 401 (Unauthorized) и мы еще не пробовали рефрешнуть токен (_isRetry - наш кастомный флаг)
         if (error.response?.status === 401 && !originalRequest._isRetry) {
             originalRequest._isRetry = true;
 
@@ -37,27 +32,24 @@ api.interceptors.response.use(
                 const refreshToken = localStorage.getItem('refresh_token');
                 if (!refreshToken) throw new Error('Нет refresh токена');
 
-                // Делаем запрос за новым токеном (используем чистый axios, чтобы не зациклить интерцепторы!)
                 const response = await axios.post(`${api.defaults.baseURL}/auth/refresh`, {
                     refresh: refreshToken
                 });
 
                 const newAccessToken = response.data.access;
                 
-                // Сохраняем новый access-токен
                 localStorage.setItem('token', newAccessToken);
-                
-                // Повторяем оригинальный запрос уже с новым токеном
+
                 originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
                 return api(originalRequest);
                 
             } catch (refreshError) {
-                // Если refresh-токен тоже протух — разлогиниваем пользователя
+
                 if (typeof window !== 'undefined') {
                     localStorage.removeItem('token');
                     localStorage.removeItem('refresh_token');
                     localStorage.removeItem('user_email');
-                    window.location.href = '/auth'; // Принудительный редирект на логин
+                    window.location.href = '/auth';
                 }
                 return Promise.reject(refreshError);
             }
@@ -115,7 +107,7 @@ export interface AIResult {
 export interface AnalysisResponse {
     uid: string;
     status: 'pending' | 'processing' | 'completed' | 'failed';
-    created_at: string; // Дата создания
+    created_at: string;
     ai_result?: AIResult;
     patient_profile_id?: number;
 }
@@ -146,18 +138,15 @@ export interface ChartData {
 }
 
 
-// ДОБАВЛЯЕМ ФУНКЦИЮ-ХЕЛПЕР
 const setAuthTokens = (token: string, refresh: string, email: string) => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('token', token);
         localStorage.setItem('refresh_token', refresh);
         localStorage.setItem('user_email', email);
-        // Запускаем событие, чтобы Header моментально перерисовался
         window.dispatchEvent(new Event('auth-change'));
     }
 };
 
-// ОБНОВЛЯЕМ МЕТОДЫ АВТОРИЗАЦИИ
 export const login = async (data: any): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/login', data);
     setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
@@ -170,16 +159,22 @@ export const register = async (data: any): Promise<AuthResponse> => {
     return response.data;
 };
 
-// ВОТ ОНА — НАША НОВАЯ ФУНКЦИЯ ДЛЯ СМЕНЫ ПАРОЛЯ
 export const requestPasswordReset = async (email: string): Promise<void> => {
     await api.post('/auth/reset-password-request', { email });
+};
+
+export const changePassword = async (oldPassword: string, newPassword: string) => {
+    const response = await api.post('/auth/change-password', {
+        old_password: oldPassword,
+        new_password: newPassword
+    });
+    return response.data;
 };
 
 // 1. Загрузка
 export const uploadAnalysis = async (file: File, isFirst: boolean = true): Promise<AnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);
-    // Добавляем флаг, чтобы бэкенд знал, нужно ли запускать ИИ сразу
     formData.append('is_first', isFirst.toString()); 
 
     const response = await api.post<AnalysisResponse>('/analyses/upload', formData, {
@@ -220,8 +215,6 @@ export const claimVerify = async (
         password
     });
     setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
-    
-    // МЕТКА NEW: Сохраняем новые ID в локальное хранилище для сайдбара
     if (typeof window !== 'undefined') {
         localStorage.setItem('new_analysis_ids', JSON.stringify(analysisUids));
     }
@@ -244,7 +237,7 @@ export const getPatientAnalyses = async (patientId: number): Promise<AnalysisRes
 // 6. Скачивание файла
 export const downloadFile = async (uid: string, filename: string) => {
     const response = await api.get(`/analyses/${uid}/download`, {
-        responseType: 'blob', // Важно для файлов
+        responseType: 'blob',
     });
     
     const url = window.URL.createObjectURL(new Blob([response.data]));
@@ -252,12 +245,10 @@ export const downloadFile = async (uid: string, filename: string) => {
     link.href = url;
     link.setAttribute('download', filename);
     
-    // Safari fix: убеждаемся, что элемент в DOM, но невидим
     link.style.display = 'none';
     document.body.appendChild(link);
     link.click();
     
-    // Safari fix: задержка перед удалением, чтобы браузер успел подхватить файл
     setTimeout(() => {
         document.body.removeChild(link);
         window.URL.revokeObjectURL(url);
@@ -285,11 +276,9 @@ export const viewOriginalFile = async (uid: string): Promise<string> => {
         responseType: 'blob',
     });
     
-    // Получаем реальный тип файла (например, image/jpeg или application/pdf)
     const contentType = response.headers['content-type'];
     const blob = new Blob([response.data], { type: contentType });
     
-    // Возвращаем Blob URL, а НЕ открываем окно здесь
     return window.URL.createObjectURL(blob);
 };
 
@@ -304,9 +293,7 @@ export interface FAQItem {
     answer: string;
 }
 
-// Получение списка вопросов из нашей новой CMS
 export const getFaqs = async (): Promise<FAQItem[]> => {
-    // Обращаемся к роутеру CMS, который мы добавили в Django
     const response = await api.get<FAQItem[]>('/cms/faq');
     return response.data;
 };

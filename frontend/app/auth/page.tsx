@@ -166,11 +166,12 @@ export default function AuthPage() {
     };
 
     return (
-        <main className="relative min-h-[calc(100vh-64px)] flex items-center justify-center p-4">
+        // ИЗМЕНЕНО: Добавлены pt-28 pb-12 для мобилок, а для десктопов оставлено простое выравнивание
+        <main className="relative min-h-screen flex items-center justify-center px-4 pt-28 pb-12 sm:pt-20 sm:pb-20">
             
             <StaticBackground imageUrl="/background/test.png" />
 
-            <div className="relative z-10 bg-white/80 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-white/40">
+            <div className="relative z-10 bg-white/80 backdrop-blur-md w-full max-w-md rounded-2xl shadow-xl overflow-hidden border border-white/40 my-auto">
                 
                 {/* Заголовок */}
                 <div className="bg-secondary p-6 text-center">
@@ -227,7 +228,6 @@ export default function AuthPage() {
                             <label className="text-xs font-bold text-slate-700 uppercase">Телефон</label>
                             <div className="relative">
                                 <Phone className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-                                {/* ИЗМЕНЕНИЕ: Заменили onChange на handlePhoneChange */}
                                 <input 
                                     type="tel" 
                                     required

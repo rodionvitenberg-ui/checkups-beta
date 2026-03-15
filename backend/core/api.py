@@ -64,6 +64,10 @@ class ResetPasswordConfirmSchema(Schema):
 class UpdateProfileSchema(Schema):
     full_name: str
 
+class ChangePasswordSchema(Schema):
+    old_password: str
+    new_password: str   
+
 # --- Инициализация API ---
 
 api = NinjaAPI()
@@ -251,6 +255,19 @@ def reset_password_confirm(request, payload: ResetPasswordConfirmSchema):
     user.save()
     return {"message": "Пароль успешно изменен. Теперь вы можете войти."}
 
+@api.post("/auth/change-password", auth=JWTAuth())
+def change_password(request, payload: ChangePasswordSchema):
+    user = request.user
+    
+    # Проверяем, совпадает ли старый пароль
+    if not user.check_password(payload.old_password):
+        return api.create_response(request, {"message": "Неверный текущий пароль"}, status=400)
+    
+    # Хэшируем и сохраняем новый пароль
+    user.set_password(payload.new_password)
+    user.save()
+    
+    return {"message": "Пароль успешно изменен"}
 
 # ==========================================
 # 2. РАБОТА С АНАЛИЗАМИ (Гибридный доступ)

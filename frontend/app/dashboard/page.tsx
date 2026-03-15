@@ -28,9 +28,8 @@ import { pdf } from '@react-pdf/renderer';
 import { AnalysisPDF } from '@/components/analysis/AnalysisPDF';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { FileUploader } from '@/components/home/FileUploader';
-
-// ИМПОРТИРУЕМ ФОН
 import StaticBackground from '@/components/background/StaticBackground';
+import { ChangePasswordModal } from '@/components/dashboard/ChangePasswordModal';
 
 // --- Компонент Элемента Списка (Анализа) ---
 function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisResponse, onDeleteSuccess: () => void }) {
@@ -105,7 +104,7 @@ function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: AnalysisRespons
 
     return (
         // Добавлено стекло: bg-white/80 backdrop-blur-md border-white/40
-        <div className="flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl hover:border-blue-300 hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 mb-3 group">
+        <div className="flex items-center justify-between p-4 bg-white/80 backdrop-blur-md border border-white/40 rounded-2xl hover:border-secondary hover:shadow-lg hover:-translate-y-0.5 transition-all duration-300 mb-3 group">
             
             <Link href={`/analysis/${analysis.uid}`} className="flex items-center gap-4 flex-1 cursor-pointer">
                 <div className={clsx(
@@ -252,7 +251,7 @@ function ProfileCard({ profile, isExpanded, onToggle }: { profile: PatientProfil
                     <div className={clsx(
                         "w-10 h-10 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 shrink-0",
                         isExpanded 
-                            ? "bg-gradient-to-br from-[#3f94ca] to-blue-600 text-white shadow-lg scale-100" 
+                            ? "bg-gradient-to-br from-[#3f94ca] to-secondary text-white scale-100" 
                             : "bg-white/60 text-slate-500 group-hover:bg-[#3f94ca]/10 group-hover:text-[#3f94ca]",
                         // Перекрашиваем квадрат в зеленый цвет на мобилке, если включен режим редактирования (для галочки)
                         isEditing && !isDefaultProfile && "max-sm:!bg-gradient-to-br max-sm:!from-[#00be64] max-sm:!to-[#00a859] max-sm:!text-white max-sm:!shadow-lg max-sm:!shadow-[#00be64]/30 max-sm:!scale-100"
@@ -424,9 +423,10 @@ export default function DashboardPage() {
     const router = useRouter();
     const { toast } = useToast();
     const [expandedProfileId, setExpandedProfileId] = useState<number | null>(null);
-    const [isResetting, setIsResetting] = useState(false);
     
+    // Наши стейты для модальных окон
     const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
+    const [isPasswordModalOpen, setIsPasswordModalOpen] = useState(false); // <--- ДОБАВИЛИ
 
     const { data: profiles = [], isLoading } = useQuery({
         queryKey: ['profiles'],
@@ -452,32 +452,6 @@ export default function DashboardPage() {
         router.push('/'); 
     };
 
-    const handleChangePassword = async () => {
-        const email = localStorage.getItem('user_email');
-        if (!email) {
-            toast({ title: 'Ошибка', description: 'Не удалось найти email пользователя.', variant: 'destructive' });
-            return;
-        }
-
-        setIsResetting(true);
-        try {
-            await requestPasswordReset(email);
-            toast({ 
-                title: 'Ссылка отправлена!', 
-                description: 'Мы отправили инструкцию по смене пароля на вашу почту.' 
-            });
-        } catch (error) {
-            toast({ 
-                title: 'Ошибка', 
-                description: 'Не удалось отправить запрос. Попробуйте позже.', 
-                variant: 'destructive' 
-            });
-        } finally {
-            setIsResetting(false);
-        }
-    };
-
-    // ПРАВИЛО 1 & 2: Оборачиваем лоадер для фона
     if (isLoading) {
         return (
             <main className="relative min-h-screen flex items-center justify-center">
@@ -491,13 +465,9 @@ export default function DashboardPage() {
     }
 
     return (
-        // ПРАВИЛО 1: relative у главного контейнера, убрал непрозрачный фон (bg-gradient-to-b)
         <main className="relative min-h-screen pt-24 pb-12 px-4 sm:px-6 lg:px-8">
-            
-            {/* ПРАВИЛО 2: Вставляем фон */}
             <StaticBackground imageUrl="/background/legal.png" />
 
-            {/* ПРАВИЛО 3: Оборачиваем весь контент в relative z-10 */}
             <div className="relative z-10 max-w-4xl mx-auto">
                 
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 mb-10">
@@ -534,11 +504,11 @@ export default function DashboardPage() {
                     <h2 className="text-xl font-bold text-slate-900 mb-6 drop-shadow-sm">Настройки аккаунта</h2>
                     <div className="flex flex-col sm:flex-row gap-4">
                         <button 
-                            onClick={handleChangePassword}
-                            disabled={isResetting}
-                            className="flex flex-1 sm:flex-none items-center justify-center gap-2 px-6 py-3 bg-white/70 backdrop-blur-md border border-white/40 text-slate-800 font-semibold rounded-xl hover:bg-white/90 transition-colors shadow-sm disabled:opacity-70"
+                            // <--- ТЕПЕРЬ ОТКРЫВАЕМ МОДАЛКУ ВМЕСТО ОТПРАВКИ ПИСЬМА
+                            onClick={() => setIsPasswordModalOpen(true)}
+                            className="flex flex-1 sm:flex-none items-center justify-center gap-2 px-6 py-3 bg-white/70 backdrop-blur-md border border-white/40 text-slate-800 font-semibold rounded-xl hover:bg-white/90 transition-colors shadow-sm"
                         >
-                            {isResetting ? <Loader2 className="w-5 h-5 animate-spin" /> : <Key className="w-5 h-5 text-slate-500" />}
+                            <Key className="w-5 h-5 text-slate-500" />
                             Сменить пароль
                         </button>
                         
@@ -552,7 +522,14 @@ export default function DashboardPage() {
                     </div>
                 </div>
 
-                {/* --- МОДАЛЬНОЕ ОКНО ЗАГРУЗКИ --- */}
+                {/* --- МОДАЛЬНЫЕ ОКНА --- */}
+                
+                {/* Окно смены пароля */}
+                {isPasswordModalOpen && (
+                    <ChangePasswordModal onClose={() => setIsPasswordModalOpen(false)} />
+                )}
+
+                {/* Окно загрузки анализа */}
                 {isUploadModalOpen && (
                     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm transition-opacity">
                         <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-xl overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative border border-white/20">
