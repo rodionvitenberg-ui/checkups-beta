@@ -375,7 +375,7 @@ export default function ClaimPage() {
                     {allCompleted && (
                         <button 
                             onClick={() => router.push('/dashboard')} 
-                            className="w-full bg-slate-900 text-white font-bold text-lg py-4 rounded-xl hover:bg-slate-800 transition-colors shadow-lg"
+                            className="w-full bg-secondary text-white font-bold text-lg py-4 rounded-xl hover:bg-accent transition-colors shadow-lg"
                         >
                             Перейти в Личный Кабинет
                         </button>
