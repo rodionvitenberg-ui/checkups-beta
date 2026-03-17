@@ -105,13 +105,73 @@ def register(request, payload: RegisterSchema):
         PatientProfile.objects.create(user=user, full_name="Основной профиль")
         
         if not payload.password:
+            # --- КРАСИВЫЙ HTML ШАБЛОН ПИСЬМА ---
+            html_content = f"""
+            <!DOCTYPE html>
+            <html>
+            <head>
+            <meta charset="utf-8">
+            <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; background-color: #f4f4f5;">
+                <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f4f4f5; padding: 40px 20px;">
+                    <tr>
+                        <td align="center">
+                            <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);">
+                                <tr>
+    <td style="background-color: #0f0f0f; padding: 30px; text-align: center;">
+        <img src="https://datadoctor.pro/logo.png" alt="DataDoctor.pro" style="max-height: 40px; width: auto; display: block; margin: 0 auto; border: 0;">
+    </td>
+</tr>
+                                <tr>
+                                    <td style="padding: 40px 30px;">
+                                        <h2 style="color: #1e293b; margin-top: 0; font-size: 20px;">Добро пожаловать!</h2>
+                                        <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 25px;">
+                                            Ваш аккаунт в системе <strong>DataDoctor.pro</strong> успешно создан. Мы сгенерировали для вас надежный временный пароль для входа в личный кабинет.
+                                        </p>
+                                        
+                                        <table width="100%" cellpadding="0" cellspacing="0" style="background-color: #f8fafc; border: 1px solid #e2e8f0; border-radius: 12px; margin-bottom: 25px;">
+                                            <tr>
+                                                <td style="padding: 20px;">
+                                                    <p style="margin: 0 0 5px 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Логин (Email)</p>
+                                                    <p style="margin: 0 0 20px 0; font-size: 16px; color: #0f172a; font-weight: bold; word-break: break-all;">{user.email}</p>
+                                                    
+                                                    <p style="margin: 0 0 5px 0; font-size: 12px; color: #64748b; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px;">Временный пароль</p>
+                                                    <p style="margin: 0; font-size: 20px; color: #3f94ca; font-family: monospace; font-weight: bold; letter-spacing: 2px;">{password}</p>
+                                                </td>
+                                            </tr>
+                                        </table>
+
+                                        <p style="color: #64748b; font-size: 14px; line-height: 1.5; margin: 0; font-style: italic;">
+                                            * Рекомендуем сменить этот пароль на собственный сразу после первого входа в разделе "Настройки аккаунта".
+                                        </p>
+                                    </td>
+                                </tr>
+                                <tr>
+                                    <td style="background-color: #f8fafc; padding: 20px; text-align: center; border-top: 1px solid #e2e8f0;">
+                                        <p style="color: #94a3b8; font-size: 12px; margin: 0;">
+                                            © 2026 DataDoctor.pro. Все права защищены.<br>
+                                            Это автоматическое письмо, пожалуйста, не отвечайте на него.
+                                        </p>
+                                    </td>
+                                </tr>
+                            </table>
+                        </td>
+                    </tr>
+                </table>
+            </body>
+            </html>
+            """
+
             try:
                 send_mail(
                     subject='Регистрация в DataDoctor.pro',
+                    # Оставляем plain-text для старых почтовиков
                     message=f'Добро пожаловать в DataDoctor.pro!\n\nВаши данные для входа:\nЛогин: {user.email}\nВаш пароль: {password}\n\nПожалуйста, сохраните эти данные или смените пароль в личном кабинете.',
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=True, 
+                    html_message=html_content, # <--- ДОБАВИЛИ HTML-ВЕРСИЮ
                 )
             except Exception as e:
                 print(f"❌ Ошибка отправки письма при регистрации: {e}")
