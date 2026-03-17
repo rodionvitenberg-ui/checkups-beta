@@ -169,7 +169,23 @@ export default function AnalysisPage() {
 
   const result = data.ai_result!;
   const patientInfo = result.patient_info;
-  const analysisDate = data.created_at ? format(new Date(data.created_at), 'd MMMM yyyy', { locale: ru }) : 'Неизвестная дата';
+  const analysisDate = (() => {
+      const extDate = data.ai_result?.patient_info?.extracted_date;
+      let d = data.created_at ? new Date(data.created_at) : new Date();
+      if (extDate) {
+          const parsed = new Date(extDate);
+          if (!isNaN(parsed.getTime())) {
+              d = parsed;
+          } else if (extDate.includes('.')) {
+              const parts = extDate.split('.');
+              if (parts.length === 3) {
+                  const parsed2 = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
+                  if (!isNaN(parsed2.getTime())) d = parsed2;
+              }
+          }
+      }
+      return format(d, 'd MMMM yyyy', { locale: ru });
+  })();
 
   // --- МАГИЯ ГРУППИРОВКИ ПОКАЗАТЕЛЕЙ ПО КАТЕГОРИЯМ ---
   const groupedIndicators = result.indicators.reduce((acc, current) => {
