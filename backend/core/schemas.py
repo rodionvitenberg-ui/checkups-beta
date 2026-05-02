@@ -4,7 +4,6 @@ import uuid
 from datetime import date, datetime
 
 class PatientMetadataSchema(Schema):
-    extracted_name: Optional[str] = None
     extracted_birth_date: Optional[str] = None
     extracted_gender: Optional[str] = None
     extracted_date: Optional[str] = None 
@@ -48,11 +47,28 @@ class PatientProfileSchema(Schema):
     full_name: str
     birth_date: Optional[date] = None
     gender: Optional[str] = None
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    lifestyle: Optional[str] = None
+    chronic_diseases: Optional[str] = None
 
 class CreateProfileSchema(Schema):
     full_name: str
     birth_date: Optional[date] = None
     gender: Optional[str] = None 
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    lifestyle: Optional[str] = None
+    chronic_diseases: Optional[str] = None
+
+class UpdateProfileSchema(Schema):
+    full_name: str
+    birth_date: Optional[date] = None
+    gender: Optional[str] = None
+    weight: Optional[float] = None
+    height: Optional[float] = None
+    lifestyle: Optional[str] = None
+    chronic_diseases: Optional[str] = None
 
 class AssignProfileRequest(Schema):
     profile_id: int
@@ -85,6 +101,9 @@ class AnalysisResponseSchema(Schema):
     created_at: datetime
     ai_result: Optional[AIResultSchema] = None
     patient_profile_id: Optional[int] = None
+    @staticmethod
+    def resolve_patient_profile_id(obj):
+        return obj.patient_id
 
 class IndicatorHistoryPoint(Schema):
     date: date  # <--- ИСПРАВЛЕНО: было datetime.date, стало просто date

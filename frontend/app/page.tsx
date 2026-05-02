@@ -41,7 +41,7 @@ export default function Home() {
           <main className="relative min-h-screen flex items-center justify-center">
               <StaticBackground imageUrl="/background/main-page.png" />
               <div className="relative z-10">
-                  <Loader2 className="w-10 h-10 animate-spin text-blue-600" />
+                  <Loader2 className="w-10 h-10 animate-spin text-secondary" />
               </div>
           </main>
       );

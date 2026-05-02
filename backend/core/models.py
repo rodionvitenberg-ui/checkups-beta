@@ -39,17 +39,21 @@ class PatientProfile(models.Model):
     к которому привязываются анализы.
     """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patients')
-    
-    # Как пользователь называет пациента (например: "Сынок", "Мама", "Василий")
     full_name = models.CharField(max_length=255)
     
-    # Данные для медицинской логики
+    # Базовые данные
     birth_date = models.DateField(null=True, blank=True)
     gender = models.CharField(
         max_length=10, 
         choices=[('M', 'Male'), ('F', 'Female')],
         null=True, blank=True
     )
+    
+    # --- НОВЫЕ ПОЛЯ (АНКЕТА) ---
+    weight = models.FloatField(null=True, blank=True, help_text="Вес в кг")
+    height = models.FloatField(null=True, blank=True, help_text="Рост в см")
+    lifestyle = models.TextField(null=True, blank=True, help_text="Вредные привычки, диета, активность")
+    chronic_diseases = models.TextField(null=True, blank=True, help_text="Хронические заболевания")
     
     created_at = models.DateTimeField(auto_now_add=True)
 

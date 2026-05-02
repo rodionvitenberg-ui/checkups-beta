@@ -1,12 +1,23 @@
+import fitz # PyMuPDF
 from celery import shared_task
+from presidio_analyzer import AnalyzerEngine
+from presidio_anonymizer import AnonymizerEngine
+from django.utils import timezone
+from datetime import timedelta
 from .models import MedicalAnalysis, AnalysisIndicator, PatientProfile
 from analysis.services import AnalysisPipeline 
 from core.services import save_atomic_indicators
-from django.utils import timezone
-from datetime import timedelta
-import time
+from django.utils import translation
 
-def trigger_next_analysis(analysis):
+analyzer = AnalyzerEngine()
+anonymizer = AnonymizerEngine()
+
+def extract_text_from_pdf(file_path):
+    doc = fitz.open(file_path)
+    text = "\n".join([page.get_text("text") for page in doc])
+    return text
+
+def trigger_next_analysis(analysis, language_code='en'):
     """
     Ищет следующий анализ в очереди для этого пользователя и запускает его.
     Это создает последовательную цепную реакцию (один за другим).
@@ -18,13 +29,17 @@ def trigger_next_analysis(analysis):
         ).exclude(uid=analysis.uid).order_by('created_at').first()
         
         if next_pending:
-            print(f"🔗 Цепная реакция: Запускаем следующий анализ ({next_pending.uid})")
-            process_analysis_task.delay(next_pending.uid)
+            print(f"🔗 Цепная реакция: Запускаем следующий анализ ({next_pending.uid}) на языке {language_code}")
+            # Обязательно прокидываем язык дальше!
+            process_analysis_task.delay(next_pending.uid, language_code)
 
 
 @shared_task(bind=True, max_retries=5)
-def process_analysis_task(self, analysis_id):
-    print(f"🔄 Pipeline started for Analysis ID: {analysis_id}")
+def process_analysis_task(self, analysis_id, language_code='en'): 
+    # Временно переключаем локаль воркера, чтобы django-modeltranslation 
+    # подтянул правильные поля из БД
+    translation.activate(language_code)
+    print(f"🔄 Pipeline started for Analysis ID: {analysis_id} (Lang: {language_code})")
     
     try:
         analysis = MedicalAnalysis.objects.select_related('patient', 'user').get(uid=analysis_id)
@@ -33,6 +48,42 @@ def process_analysis_task(self, analysis_id):
             analysis.status = MedicalAnalysis.Status.PROCESSING
             analysis.save(update_fields=['status'])
         
+        # --- ШАГ 1: Извлекаем сырой текст ---
+        raw_text = extract_text_from_pdf(analysis.file.path)
+        
+        # --- ШАГ 2: Ищем имя (NER) и привязываем профиль ---
+        # Подключаем русский и английский для поиска
+        results_ru = analyzer.analyze(text=raw_text, entities=["PERSON"], language='ru')
+        results_en = analyzer.analyze(text=raw_text, entities=["PERSON"], language='en')
+        all_results = results_ru + results_en
+        
+        extracted_name = None
+        if all_results:
+            # Берем сущность PERSON с наибольшим весом (score)
+            best_match = max(all_results, key=lambda x: x.score)
+            extracted_name = raw_text[best_match.start:best_match.end].strip()
+
+        if extracted_name and analysis.user:
+            profile, created = PatientProfile.objects.get_or_create(
+                user=analysis.user, full_name=extracted_name
+            )
+            analysis.patient = profile
+            analysis.save(update_fields=['patient'])
+        elif not analysis.patient and analysis.user:
+            # Дефолтный профиль
+            profile, _ = PatientProfile.objects.get_or_create(
+                user=analysis.user, full_name="Я (Основной профиль)"
+            )
+            analysis.patient = profile
+            analysis.save(update_fields=['patient'])
+
+        # --- ШАГ 3: АНОНИМИЗАЦИЯ ---
+        # Ищем все PII (имена, телефоны, адреса, даты)
+        pii_results = analyzer.analyze(text=raw_text, language='ru')
+        anonymized_result = anonymizer.anonymize(text=raw_text, analyzer_results=pii_results)
+        safe_text = anonymized_result.text
+        
+        # --- ШАГ 4: Сборка контекста прогрессии ---
         patient_context = ""
         if analysis.patient:
             age_str = f", Дата рождения: {analysis.patient.birth_date}" if analysis.patient.birth_date else ""
@@ -40,7 +91,6 @@ def process_analysis_task(self, analysis_id):
             patient_context = f"{gender_str}{age_str}"
             
             six_months_ago = timezone.now().date() - timedelta(days=180)
-            
             past_indicators = AnalysisIndicator.objects.filter(
                 patient=analysis.patient, 
                 date__gte=six_months_ago,
@@ -59,39 +109,22 @@ def process_analysis_task(self, analysis_id):
                         history_str += f"- {name}: {val}\n"
                     patient_context += history_str
 
-        pipeline = AnalysisPipeline()
-        result = pipeline.run_pipeline(analysis.file.path, patient_context)
+        # --- ШАГ 5: Запуск пайплайна (передаем ТЕКСТ) ---
+        pipeline = AnalysisPipeline(language_code=language_code)
+        result = pipeline.run_pipeline(safe_text, patient_context)
         
         if result:
             analysis.refresh_from_db()
             analysis.ai_result = result
             analysis.status = MedicalAnalysis.Status.COMPLETED
-            
-            if analysis.user:
-                ext_name = None
-                if isinstance(result, dict) and 'patient_info' in result and result['patient_info']:
-                    ext_name = result['patient_info'].get('extracted_name')
-                elif hasattr(result, 'patient_info') and result.patient_info:
-                    ext_name = getattr(result.patient_info, 'extracted_name', None)
-                
-                if ext_name and str(ext_name).strip() and str(ext_name).lower() != 'null':
-                    name_str = str(ext_name).strip()
-                    profile = PatientProfile.objects.filter(user=analysis.user, full_name__iexact=name_str).first()
-                    if not profile:
-                        profile = PatientProfile.objects.create(user=analysis.user, full_name=name_str)
-                    analysis.patient = profile
-                    
-            analysis.save(update_fields=['ai_result', 'status', 'patient'])
+            analysis.save(update_fields=['ai_result', 'status'])
             
             try:
                 save_atomic_indicators(analysis, result)
             except Exception as db_err:
                 print(f"⚠️ Error saving atomic indicators: {db_err}")
             
-            print(f"✅ Pipeline finished for {analysis_id}")
-            
-            # ЗАПУСКАЕМ СЛЕДУЮЩИЙ
-            trigger_next_analysis(analysis)
+            trigger_next_analysis(analysis, language_code)
             return True
         else:
             analysis.refresh_from_db()
@@ -99,7 +132,7 @@ def process_analysis_task(self, analysis_id):
             analysis.save(update_fields=['status'])
             
             # ДАЖЕ ЕСЛИ ОШИБКА, ЗАПУСКАЕМ СЛЕДУЮЩИЙ
-            trigger_next_analysis(analysis)
+            trigger_next_analysis(analysis, language_code)
             return False
 
     except Exception as exc:
@@ -116,7 +149,11 @@ def process_analysis_task(self, analysis_id):
                 analysis.save(update_fields=['status'])
                 
                 # ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ - ИДЕМ ДАЛЬШЕ
-                trigger_next_analysis(analysis)
+                trigger_next_analysis(analysis, language_code)
             except Exception:
                 pass
             return False
+            
+    finally:
+        # КРИТИЧЕСКИ ВАЖНО: Очищаем локаль за собой, чтобы не ломать следующие таски в этом воркере
+        translation.deactivate()
