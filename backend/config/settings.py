@@ -48,7 +48,6 @@ INSTALLED_APPS = [
     'ninja_jwt',
     'core',
     'analysis',
-    'cms',
     "anymail",
 ]
 
@@ -137,7 +136,11 @@ LANGUAGES = (
 )
 
 MODELTRANSLATION_DEFAULT_LANGUAGE = 'ru'
-MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'ru') # Если перевода нет, покажет английский, затем русский
+MODELTRANSLATION_FALLBACK_LANGUAGES = ('en', 'ru')
+
+LOCALE_PATHS = [
+    os.path.join(BASE_DIR, 'locale'),
+]
 
 
 # Static files (CSS, JavaScript, Images)

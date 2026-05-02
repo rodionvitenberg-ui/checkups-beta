@@ -2,6 +2,7 @@ import uuid
 import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
+from django.utils.translation import gettext_lazy as _
 
 # --- Менеджер для создания пользователя по Email ---
 class CustomUserManager(BaseUserManager):
@@ -21,8 +22,8 @@ class CustomUserManager(BaseUserManager):
 
 # --- Кастомный Юзер ---
 class User(AbstractUser):
-    username = None  # Убираем username, используем email
-    email = models.EmailField('Email address', unique=True)
+    username = None
+    email = models.EmailField(_('Email address'), unique=True) # Добавили перевод
     phone = models.CharField(max_length=20, blank=True, null=True)
     
     USERNAME_FIELD = 'email'
@@ -34,26 +35,22 @@ class User(AbstractUser):
         return self.email
     
 class PatientProfile(models.Model):
-    """
-    Профиль конкретного человека (Папа, Ребенок, Я), 
-    к которому привязываются анализы.
-    """
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patients')
-    full_name = models.CharField(max_length=255)
+    full_name = models.CharField(max_length=255, verbose_name=_("ФИО"))
     
-    # Базовые данные
-    birth_date = models.DateField(null=True, blank=True)
+    birth_date = models.DateField(null=True, blank=True, verbose_name=_("Дата рождения"))
     gender = models.CharField(
         max_length=10, 
-        choices=[('M', 'Male'), ('F', 'Female')],
-        null=True, blank=True
+        choices=[('M', _('Мужской')), ('F', _('Женский'))], # Переводим choices
+        null=True, blank=True,
+        verbose_name=_("Пол")
     )
     
-    # --- НОВЫЕ ПОЛЯ (АНКЕТА) ---
-    weight = models.FloatField(null=True, blank=True, help_text="Вес в кг")
-    height = models.FloatField(null=True, blank=True, help_text="Рост в см")
-    lifestyle = models.TextField(null=True, blank=True, help_text="Вредные привычки, диета, активность")
-    chronic_diseases = models.TextField(null=True, blank=True, help_text="Хронические заболевания")
+    # Оборачиваем help_text
+    weight = models.FloatField(null=True, blank=True, help_text=_("Вес в кг"), verbose_name=_("Вес"))
+    height = models.FloatField(null=True, blank=True, help_text=_("Рост в см"), verbose_name=_("Рост"))
+    lifestyle = models.TextField(null=True, blank=True, help_text=_("Вредные привычки, диета, активность"), verbose_name=_("Образ жизни"))
+    chronic_diseases = models.TextField(null=True, blank=True, help_text=_("Хронические заболевания"), verbose_name=_("Хронические заболевания"))
     
     created_at = models.DateTimeField(auto_now_add=True)
 
@@ -63,60 +60,37 @@ class PatientProfile(models.Model):
 # --- Модель Анализа ---
 class MedicalAnalysis(models.Model):
     uid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
-    
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='analyses', null=True, blank=True)
-    
-    # Ссылка на профиль (может быть пустой, пока юзер не привяжет)
     patient = models.ForeignKey(PatientProfile, on_delete=models.SET_NULL, related_name='analyses', null=True, blank=True)
-    
-    file = models.FileField(upload_to='analyses/%Y/%m/%d/')
+    file = models.FileField(upload_to='analyses/%Y/%m/%d/', verbose_name=_("Файл анализа"))
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Status(models.TextChoices):
-        PENDING = 'pending', 'Ожидает'
-        PROCESSING = 'processing', 'В работе'
-        COMPLETED = 'completed', 'Готово'
-        FAILED = 'failed', 'Ошибка'
+        # Переводим человекочитаемые значения статусов
+        PENDING = 'pending', _('Ожидает')
+        PROCESSING = 'processing', _('В работе')
+        COMPLETED = 'completed', _('Готово')
+        FAILED = 'failed', _('Ошибка')
         
-    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING)
-    
-    # JSON от AI (теперь будет включать и данные о найденном имени)
-    ai_result = models.JSONField(null=True, blank=True)
+    status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, verbose_name=_("Статус"))
+    ai_result = models.JSONField(null=True, blank=True, verbose_name=_("Результат ИИ"))
     
     def __str__(self):
-        return f"Analysis {self.uid} ({self.status})"
+        return f"Analysis {self.uid} ({self.get_status_display()})"
     
 class AnalysisIndicator(models.Model):
-    """
-    Атомарная запись одного показателя для построения графиков.
-    Одна строка = Одна точка на графике.
-    """
     analysis = models.ForeignKey(MedicalAnalysis, on_delete=models.CASCADE, related_name='atomic_indicators')
     patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='indicators')
     
-    # slug из справочника (например, 'hemoglobin'). 
-    # db_index=True критически важен для быстрого поиска по всей истории.
     slug = models.CharField(max_length=50, db_index=True)
-    
-    # Оригинальное название (для отображения в тултипе графика)
-    name = models.CharField(max_length=255)
-    
-    # Числовое значение для графиков. 
-    # Если AI вернул "не обнаружено", value будет null.
-    value = models.FloatField(null=True, blank=True)
-    
-    # Строковое значение (на всякий случай, если парсинг числа не удался)
+    name = models.CharField(max_length=255, verbose_name=_("Название"))
+    value = models.FloatField(null=True, blank=True, verbose_name=_("Значение"))
     string_value = models.CharField(max_length=50)
-    
-    unit = models.CharField(max_length=50, null=True, blank=True)
-    
-    # Дата взятия анализа (берем из анализа или OCR)
-    date = models.DateField(default=datetime.date.today)
-    
+    unit = models.CharField(max_length=50, null=True, blank=True, verbose_name=_("Ед. измерения"))
+    date = models.DateField(default=datetime.date.today, verbose_name=_("Дата"))
     created_at = models.DateTimeField(auto_now_add=True)
 
     class Meta:
-        # Ускоряет запросы вида: "Дай мне гемоглобин этого пациента за год"
         indexes = [
             models.Index(fields=['patient', 'slug', 'date']),
         ]

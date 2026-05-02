@@ -6,7 +6,6 @@ from ninja import NinjaAPI, UploadedFile, File, Schema, Form
 from ninja.security import HttpBearer
 from ninja.errors import HttpError
 from ninja_jwt.authentication import JWTAuth
-from cms.api import cms_router
 
 # Django imports
 from django.shortcuts import get_object_or_404
@@ -70,7 +69,6 @@ class ChangePasswordSchema(Schema):
 
 api = NinjaAPI()
 User = get_user_model()
-api.add_router("/cms/", cms_router)
 
 class OptionalJWTAuth(JWTAuth):
     """
