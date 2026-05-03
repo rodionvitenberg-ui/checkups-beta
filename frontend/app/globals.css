@@ -74,11 +74,11 @@
   --popover-foreground: hsl(0, 0%, 10%);
   --primary: hsl(0, 0%, 15%);
   --primary-foreground: hsl(0, 0%, 98%);
-  --secondary: #4ca2be;
+  --secondary: oklab(68.338% -0.0733 -0.08418);
   --secondary-foreground: hsl(0, 0%, 15%);
   --muted: hsl(0, 0%, 96%);
   --muted-foreground: hsl(0, 0%, 45%);
-  --accent: #154462;
+  --accent: oklab(42.870000000000005% -0.04479 -0.05854);
   --accent-foreground: hsl(0, 0%, 15%);
   --destructive: hsl(0, 84%, 60%);
   --border: rgba(255, 255, 255, 0.8);

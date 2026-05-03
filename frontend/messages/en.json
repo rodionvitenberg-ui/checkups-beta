@@ -1,0 +1,218 @@
+{
+  "Metadata": {
+    "title": "DataDoctor.pro | AI Lab Results Interpreter",
+    "description": "Upload your blood test PDF and get a clear explanation powered by AI."
+  },
+  "Hero": {
+    "title": "ABOUT THE PROJECT",
+    "description": "Checkups is a free intelligent AI service for medical lab results interpretation...",
+    "imageAlt": "About the project"
+  },
+  "FileUploader": {
+    "dropHere": "Drop files here",
+    "uploadTitle": "Upload Lab Results",
+    "formats": "Click or drag PDF, JPG, PNG",
+    "limit": "(up to 3 files)"
+  },
+  "Features": {
+    "feature1": {
+      "title": "ACTS AS A VIRTUAL GENERAL PRACTITIONER:",
+      "content": "It reviews your lab results and identifies risk zones, saving you both time and money."
+    },
+    "feature2": {
+      "title": "EXPLAINS POTENTIAL CAUSES:",
+      "content": "Unlike standard lab reports that only show deviations from the norm, our AI points out potential underlying causes."
+    },
+    "feature3": {
+      "title": "STORES EVERYTHING IN ONE PLACE:",
+      "content": "You will always have access to all your interpreted results, and we are implementing a feature to track your data trends over time."
+    },
+    "feature4": {
+      "title": "HIGHLIGHTS RISKS AND CONSEQUENCES:",
+      "content": "We explain what might happen if certain indicators continue to decline."
+    }
+  },
+  "ExampleButton": {
+    "title": "View Sample Analysis",
+    "subtitleMobile": "Report with charts and recommendations",
+    "subtitleDesktop": "See what a finished report with charts and recommendations looks like",
+    "altText": "View example"
+  },
+  "FAQ": {
+    "title": "Questions & Answers",
+    "subtitle": "Learn more about how our service works and how we take care of your health.",
+    "items": [
+      {
+        "question": "How does the lab results interpretation work?",
+        "answer": "We extract numerical data from your PDF file, anonymize it, and pass it to a medical AI that compares the findings with reference values and your history of past results."
+      },
+      {
+        "question": "Is it safe? Do you store my data?",
+        "answer": "Absolutely. Before analysis, we remove your name and contact information. You have full control over your profile and can delete all uploaded files at any time."
+      },
+      {
+        "question": "Does this replace a doctor's visit?",
+        "answer": "No. Our service provides informational guidance and helps you understand complex medical terminology. Always consult a specialist for diagnosis and treatment plans."
+      }
+    ]
+  },
+  "Footer": {
+    "logoAlt": "DataDoctor Logo",
+    "copyright": "© {year} DataDoctor. All rights reserved.",
+    "about": "About the project",
+    "legal": "Legal Information"
+  },
+  "Upload": {
+    "title": "Documents uploaded",
+    "subtitle": "Start interpretation or attach another file (maximum: {max})",
+    "dropFiles": "Release files",
+    "addMore": "Add document",
+    "fileFormat": "PDF, JPG, PNG up to 10MB",
+    "selectedFiles": "Selected files",
+    "maxFilesError": "Limit: {max} file at a time.",
+    "uploadError": "An error occurred during upload. Please try again.",
+    "sending": "Uploading to server...",
+    "startAnalysis": "Start analysis"
+  },
+  "Claim": {
+    "defaultLoading": "Preparing for analysis...",
+    "loadingTexts": [
+      "Recognizing document...",
+      "Extracting medical indicators...",
+      "Analyzing retrieved data...",
+      "Searching for potential causes...",
+      "Generating insights and recommendations...",
+      "Almost ready..."
+    ],
+    "loadingDone": "Done!",
+    "analyzing": {
+      "title": "AI is analyzing the document"
+    },
+    "form": {
+      "title": "Initial analysis complete!",
+      "description": "Your data has been successfully read. Please enter your email. We will create your personal account (a PIN code will be sent to your email) and immediately continue interpreting the remaining documents.",
+      "emailLabel": "Email address",
+      "emailPlaceholder": "your@email.com",
+      "submitButton": "Continue"
+    },
+    "verify": {
+      "title": "Verification",
+      "descLine1": "A 6-digit PIN code has been sent to <b>{email}</b>.",
+      "descLine2": "If you have registered before, simply enter your password.",
+      "codeLabel": "Email code or password",
+      "codePlaceholder": "Enter code or password",
+      "submitButton": "Activate & Continue"
+    },
+    "results": {
+      "titleCompleted": "All analyses interpreted!",
+      "titlePending": "Interpreting documents...",
+      "descCompleted": "Results are ready. Click on any document to view the detailed AI report.",
+      "descPending": "Please wait while we finish processing the remaining files. You can already open the completed results.",
+      "document": "Document {index}",
+      "viewButton": "View",
+      "inProgress": "In progress",
+      "dashboardButton": "Go to Dashboard"
+    },
+    "toasts": {
+      "validationError": "Please enter a valid email",
+      "errorTitle": "Error",
+      "codeSentTitle": "Code sent!",
+      "codeSentDesc": "We have sent a 6-digit code to your email.",
+      "welcomeBackTitle": "Welcome back!",
+      "welcomeBackDesc": "This email is already registered. Please enter your password.",
+      "defaultError": "An error occurred.",
+      "successTitle": "Success",
+      "successDesc": "Account activated, results linked",
+      "invalidCode": "Invalid code"
+    }
+  },
+  "Dashboard": {
+    "AnalysisItem": {
+      "confirmDelete": "Are you sure you want to delete this analysis? This action cannot be undone.",
+      "from": "from",
+      "defaultName": "Analysis",
+      "status": {
+        "completed": "Ready to view",
+        "processing": "Processing..."
+      },
+      "titles": {
+        "open": "Open Interpretation",
+        "viewOriginal": "View Original",
+        "downloadPDF": "Download PDF Report",
+        "delete": "Delete Analysis"
+      },
+      "toasts": {
+        "warningTitle": "Attention",
+        "pdfNotReady": "PDF data is not ready yet",
+        "errorTitle": "Error",
+        "pdfError": "Failed to generate PDF",
+        "viewError": "Could not open original file",
+        "successTitle": "Deleted",
+        "deleteSuccess": "Analysis deleted successfully",
+        "deleteError": "Could not delete analysis"
+      }
+    },
+    "ProfileCard": {
+      "defaultName": "Analyses (Unlinked)",
+      "defaultDesc": "Document analyses without a name",
+      "patientDesc": "Analyses for this patient",
+      "tabHistory": "Document List",
+      "tabDynamics": "Data Trends",
+      "emptyHistory": "No uploaded analyses yet",
+      "deleteButton": "Delete Profile",
+      "confirmDelete": "Delete the patient and all their analyses?",
+      "titles": {
+        "rename": "Rename"
+      },
+       "toasts": {
+        "successRenameTitle": "Success",
+        "successRenameDesc": "Profile name updated",
+        "errorRenameTitle": "Error",
+        "errorRenameDesc": "Failed to rename",
+        "successDeleteTitle": "Deleted",
+        "successDeleteDesc": "Profile deleted",
+        "errorDeleteTitle": "Error",
+        "errorDeleteDesc": "Failed to delete profile"
+      }
+    },
+     "Page": {
+       "loadingData": "Loading data...",
+       "title": "Dashboard",
+       "subtitle": "Manage your documents and profiles",
+       "uploadAnalysis": "Upload Analysis",
+       "settingsTitle": "Account Settings",
+       "changePassword": "Change Password",
+       "logout": "Log Out",
+       "uploadModalTitle": "Upload Analysis"
+    }
+  },
+  "Analysis": {
+    "Loading": {
+      "title": "AI is working",
+      "defaultText": "Preparing for analysis...",
+      "done": "Done!",
+      "texts": [
+        "Recognizing document...",
+        "Extracting medical indicators...",
+        "Evaluating trends from history...",
+        "Analyzing retrieved data with AI...",
+        "Searching for potential causes...",
+        "Generating insights and recommendations..."
+      ]
+    },
+    "Indicators": {
+      "title": "Indicators by System",
+      "count": "{count} values",
+      "defaultCategory": "General Indicators",
+      "statusCritical": "Critical",
+      "statusHigh": "Above normal",
+      "statusLow": "Below normal",
+      "reference": "Reference"
+    },
+    "CausesAndRecommendations": {
+      "causesTitle": "Potential Causes",
+      "noDeviations": "No significant deviations identified.",
+      "recommendationsTitle": "Recommendations"
+    }
+  }
+}

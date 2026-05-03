@@ -1,0 +1,218 @@
+{
+  "Metadata": {
+    "title": "DataDoctor.pro | Intérprete de Resultados con IA",
+    "description": "Sube el PDF de tus análisis de sangre y obtén una explicación clara impulsada por IA."
+  },
+  "Hero": {
+    "title": "SOBRE EL PROYECTO",
+    "description": "Checkups es un servicio gratuito de IA inteligente para la interpretación de análisis médicos...",
+    "imageAlt": "Sobre el proyecto"
+  },
+  "FileUploader": {
+    "dropHere": "Suelte los archivos aquí",
+    "uploadTitle": "Subir análisis",
+    "formats": "Haga clic o arrastre PDF, JPG, PNG",
+    "limit": "(hasta 3 archivos)"
+  },
+  "Features": {
+    "feature1": {
+      "title": "ACTÚA COMO UN MÉDICO DE CABECERA VIRTUAL:",
+      "content": "Revisa los resultados de tus análisis e identifica zonas de riesgo, ahorrándote tiempo y dinero."
+    },
+    "feature2": {
+      "title": "EXPLICA LAS POSIBLES CAUSAS:",
+      "content": "A diferencia de los informes de laboratorio que solo muestran desviaciones de la norma, nuestra IA señala las posibles causas subyacentes."
+    },
+    "feature3": {
+      "title": "TODO EN UN SOLO LUGAR:",
+      "content": "Siempre tendrás acceso a todos tus análisis interpretados y estamos implementando una función para comparar tu evolución en el tiempo."
+    },
+    "feature4": {
+      "title": "SEÑALA RIESGOS Y CONSECUENCIAS:",
+      "content": "Te explicamos qué podría suceder si ciertos indicadores continúan empeorando."
+    }
+  },
+  "ExampleButton": {
+    "title": "Ver ejemplo de análisis",
+    "subtitleMobile": "Informe con gráficos y recomendaciones",
+    "subtitleDesktop": "Descubre cómo se ve un informe completo con gráficos y recomendaciones",
+    "altText": "Ver ejemplo"
+  },
+  "FAQ": {
+    "title": "Preguntas y Respuestas",
+    "subtitle": "Conozca más sobre el funcionamiento de nuestro servicio y cómo cuidamos de su salud.",
+    "items": [
+      {
+        "question": "¿Cómo funciona la interpretación de los análisis?",
+        "answer": "Extraemos los valores numéricos de su archivo PDF, los anonimizamos y los enviamos a una IA médica que los compara con los valores de referencia y el historial de sus resultados anteriores."
+      },
+      {
+        "question": "¿Es seguro? ¿Guardan mis datos?",
+        "answer": "Totalmente. Antes del análisis, eliminamos su nombre y datos de contacto. Usted tiene el control total de su perfil y puede eliminar todos los archivos subidos en cualquier momento."
+      },
+      {
+        "question": "¿Reemplaza esto la visita al médico?",
+        "answer": "No. Nuestro servicio proporciona información de referencia y ayuda a comprender la compleja terminología médica. Consulte siempre a un especialista para obtener un diagnóstico y un plan de tratamiento."
+      }
+    ]
+  },
+  "Footer": {
+    "logoAlt": "Logotipo de DataDoctor",
+    "copyright": "© {year} DataDoctor. Todos los derechos reservados.",
+    "about": "Sobre el proyecto",
+    "legal": "Información legal"
+  },
+  "Upload": {
+    "title": "Documentos cargados",
+    "subtitle": "Inicie la interpretación o adjunte otro archivo (máximo: {max})",
+    "dropFiles": "Suelte los archivos",
+    "addMore": "Añadir documento",
+    "fileFormat": "PDF, JPG, PNG hasta 10MB",
+    "selectedFiles": "Archivos seleccionados",
+    "maxFilesError": "Límite: {max} archivo a la vez.",
+    "uploadError": "Ocurrió un error al enviar. Inténtelo de nuevo.",
+    "sending": "Enviando al servidor...",
+    "startAnalysis": "Iniciar análisis"
+  },
+  "Claim": {
+    "defaultLoading": "Preparando el análisis...",
+    "loadingTexts": [
+      "Reconociendo el documento...",
+      "Extrayendo indicadores médicos...",
+      "Analizando los datos obtenidos...",
+      "Buscando posibles causas...",
+      "Generando conclusiones y recomendaciones...",
+      "Casi listo..."
+    ],
+    "loadingDone": "¡Listo!",
+    "analyzing": {
+      "title": "La IA está analizando el documento"
+    },
+    "form": {
+      "title": "¡Primer análisis completado!",
+      "description": "Sus datos se han leído correctamente. Ingrese su correo electrónico. Crearemos su cuenta personal (recibirá un código PIN por correo) и continuaremos de inmediato con la interpretación de los documentos restantes.",
+      "emailLabel": "Correo electrónico",
+      "emailPlaceholder": "su@email.com",
+      "submitButton": "Continuar"
+    },
+    "verify": {
+      "title": "Verificación",
+      "descLine1": "Se ha enviado un código PIN de 6 dígitos a <b>{email}</b>.",
+      "descLine2": "Si ya se ha registrado anteriormente, simplemente introduzca su contraseña.",
+      "codeLabel": "Código del correo o contraseña",
+      "codePlaceholder": "Ingrese el código o contraseña",
+      "submitButton": "Activar y continuar"
+    },
+    "results": {
+      "titleCompleted": "¡Todos los análisis interpretados!",
+      "titlePending": "Interpretando documentos...",
+      "descCompleted": "Los resultados están listos. Haga clic en cualquier documento para ver el informe detallado de la IA.",
+      "descPending": "Por favor, espere mientras terminamos de procesar los archivos restantes. Ya puede abrir los resultados listos.",
+      "document": "Documento {index}",
+      "viewButton": "Ver",
+      "inProgress": "En proceso",
+      "dashboardButton": "Ir al Panel de Control"
+    },
+    "toasts": {
+      "validationError": "Ingrese un correo electrónico válido",
+      "errorTitle": "Error",
+      "codeSentTitle": "¡Código enviado!",
+      "codeSentDesc": "Hemos enviado un código de 6 dígitos a su correo electrónico.",
+      "welcomeBackTitle": "¡Bienvenido de nuevo!",
+      "welcomeBackDesc": "Este correo ya está registrado. Por favor, introduzca su contraseña.",
+      "defaultError": "Ha ocurrido un error.",
+      "successTitle": "Éxito",
+      "successDesc": "Cuenta activada, análisis vinculados",
+      "invalidCode": "Código inválido"
+    }
+  },
+  "Dashboard": {
+    "AnalysisItem": {
+      "confirmDelete": "¿Está seguro de que desea eliminar este análisis? Esta acción no se puede deshacer.",
+      "from": "del",
+      "defaultName": "Análisis",
+      "status": {
+        "completed": "Listo para ver",
+        "processing": "Procesando..."
+      },
+      "titles": {
+        "open": "Abrir interpretación",
+        "viewOriginal": "Ver original",
+        "downloadPDF": "Descargar informe PDF",
+        "delete": "Eliminar análisis"
+      },
+      "toasts": {
+        "warningTitle": "Atención",
+        "pdfNotReady": "Los datos para el PDF aún no están listos",
+        "errorTitle": "Error",
+        "pdfError": "No se pudo generar el PDF",
+        "viewError": "No se pudo abrir el archivo original",
+        "successTitle": "Eliminado",
+        "deleteSuccess": "Análisis eliminado correctamente",
+        "deleteError": "No se pudo eliminar el análisis"
+      }
+    },
+    "ProfileCard": {
+    "defaultName": "Análisis (Sin vincular)",
+    "defaultDesc": "Análisis de documentos sin nombre",
+    "patientDesc": "Análisis de este paciente",
+    "tabHistory": "Lista de documentos",
+    "tabDynamics": "Evolución de indicadores",
+    "emptyHistory": "Aún no hay análisis cargados",
+    "deleteButton": "Eliminar perfil",
+    "confirmDelete": "¿Eliminar al paciente y todos sus análisis?",
+    "titles": {
+      "rename": "Renombrar"
+    },
+    "toasts": {
+      "successRenameTitle": "Éxito",
+      "successRenameDesc": "Nombre del perfil actualizado",
+      "errorRenameTitle": "Error",
+      "errorRenameDesc": "No se pudo renombrar",
+      "successDeleteTitle": "Eliminado",
+      "successDeleteDesc": "Perfil eliminado",
+      "errorDeleteTitle": "Error",
+      "errorDeleteDesc": "No se pudo eliminar el perfil"
+      }
+    },
+     "Page": {
+       "loadingData": "Cargando datos...",
+       "title": "Panel",
+       "subtitle": "Gestione sus documentos y perfiles",
+       "uploadAnalysis": "Subir análisis",
+       "settingsTitle": "Configuración de la cuenta",
+       "changePassword": "Cambiar contraseña",
+       "logout": "Cerrar sesión",
+       "uploadModalTitle": "Cargar análisis"
+    }
+  },
+  "Analysis": {
+    "Loading": {
+      "title": "La IA está trabajando",
+      "defaultText": "Preparando el análisis...",
+      "done": "¡Listo!",
+      "texts": [
+        "Reconociendo el documento...",
+        "Extrayendo indicadores médicos...",
+        "Evaluando tendencias del historial...",
+        "Analizando los datos con IA...",
+        "Buscando posibles causas...",
+        "Generando conclusiones y recomendaciones..."
+      ]
+    },
+    "Indicators": {
+      "title": "Indicadores por sistema",
+      "count": "{count} valores",
+      "defaultCategory": "Indicadores generales",
+      "statusCritical": "Crítico",
+      "statusHigh": "Superior al normal",
+      "statusLow": "Inferior al normal",
+      "reference": "Referencia"
+    },
+    "CausesAndRecommendations": {
+      "causesTitle": "Posibles causas",
+      "noDeviations": "No se identificaron desviaciones significativas.",
+      "recommendationsTitle": "Recomendaciones"
+    }
+  }
+}

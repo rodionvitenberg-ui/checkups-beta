@@ -20,6 +20,7 @@ from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
 from django.core.cache import cache
+from django.utils.translation import gettext as _ # ДОБАВЛЕНО ДЛЯ ЛОКАЛИЗАЦИИ
 
 # JWT imports
 from ninja_jwt.authentication import JWTAuth
@@ -89,22 +90,26 @@ class OptionalJWTAuth(JWTAuth):
 @api.post("/auth/register", response=AuthResponseSchema)
 def register(request, payload: RegisterSchema):
     if User.objects.filter(email=payload.email).exists():
-        return api.create_response(request, {"message": "Пользователь с таким email уже существует"}, status=400)
+        return api.create_response(request, {"message": _("Пользователь с таким email уже существует")}, status=400)
     
     with transaction.atomic():
         user = User.objects.create(email=payload.email, phone=payload.phone)
-        # Упрощенная генерация: 6 цифр, если пароль не передан
         password = payload.password or get_random_string(6, allowed_chars='0123456789')
         user.set_password(password)
         user.save()
         
-        PatientProfile.objects.create(user=user, full_name="Основной профиль")
+        # Переводим название дефолтного профиля
+        PatientProfile.objects.create(user=user, full_name=_("Основной профиль"))
         
         if not payload.password:
             try:
+                # Шаблон письма вынесен в gettext
+                mail_subject = _("Регистрация в DataDoctor.pro")
+                mail_message = _("Добро пожаловать в DataDoctor.pro!\n\nВаши данные для входа:\nЛогин: {email}\nВаш пароль: {password}\n\nПожалуйста, сохраните эти данные или смените пароль в личном кабинете.").format(email=user.email, password=password)
+                
                 send_mail(
-                    subject='Регистрация в DataDoctor.pro',
-                    message=f'Добро пожаловать в DataDoctor.pro!\n\nВаши данные для входа:\nЛогин: {user.email}\nВаш пароль: {password}\n\nПожалуйста, сохраните эти данные или смените пароль в личном кабинете.',
+                    subject=mail_subject,
+                    message=mail_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=True, 
@@ -123,7 +128,7 @@ def register(request, payload: RegisterSchema):
 def login(request, payload: LoginSchema):
     user = authenticate(username=payload.email, password=payload.password)
     if not user:
-        return api.create_response(request, {"message": "Неверный email или пароль"}, status=401)
+        return api.create_response(request, {"message": _("Неверный email или пароль")}, status=401)
     
     refresh = RefreshToken.for_user(user)
     return {
@@ -134,10 +139,9 @@ def login(request, payload: LoginSchema):
 
 @api.post("/auth/claim-request")
 def claim_request(request, payload: ClaimRequestOTPSchema):
-    # Проверяем все анализы сразу
     analyses = MedicalAnalysis.objects.filter(uid__in=payload.analysis_uids)
     if not analyses.exists():
-        raise Http404("Анализы не найдены")
+        raise Http404(_("Анализы не найдены"))
 
     user = User.objects.filter(email=payload.email).first()
 
@@ -147,12 +151,15 @@ def claim_request(request, payload: ClaimRequestOTPSchema):
             pin_code = get_random_string(6, allowed_chars='0123456789')
             user.set_password(pin_code)
             user.save()
-            PatientProfile.objects.create(user=user, full_name="Основной профиль")
+            PatientProfile.objects.create(user=user, full_name=_("Основной профиль"))
 
             try:
+                mail_subject = _("Код доступа к результатам | DataDoctor.pro")
+                mail_message = _("Ваши анализы готовы!\n\nВаш PIN-код для просмотра результатов: {pin_code}\n\nНикому не сообщайте этот код.").format(pin_code=pin_code)
+                
                 send_mail(
-                    subject='Код доступа к результатам | DataDoctor.pro',
-                    message=f'Ваши анализы готовы!\n\nВаш PIN-код для просмотра результатов: {pin_code}\n\nНикому не сообщайте этот код.',
+                    subject=mail_subject,
+                    message=mail_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=True,
@@ -160,25 +167,25 @@ def claim_request(request, payload: ClaimRequestOTPSchema):
             except Exception as e:
                 print(f"❌ Ошибка отправки письма: {e}")
 
-            return {"message": "PIN-код отправлен на почту", "status": "pin_sent"}
+            return {"message": _("PIN-код отправлен на почту"), "status": "pin_sent"}
         else:
-            return {"message": "Email найден. Введите пароль.", "status": "requires_password"}
+            return {"message": _("Email найден. Введите пароль."), "status": "requires_password"}
 
 @api.post("/auth/claim-verify", response=AuthResponseSchema)
 def claim_verify(request, payload: ClaimVerifyOTPSchema):
     pwd = getattr(payload, 'password', None) or getattr(payload, 'code', None)
     user = authenticate(username=payload.email, password=pwd)
     if not user:
-        return api.create_response(request, {"message": "Неверный код или пароль"}, status=401)
+        return api.create_response(request, {"message": _("Неверный код или пароль")}, status=401)
 
     analyses = MedicalAnalysis.objects.filter(uid__in=payload.analysis_uids)
     
-    # Защита от двойной привязки
     for analysis in analyses:
         if analysis.user and analysis.user != user:
-            return api.create_response(request, {"message": "Один из анализов уже привязан к другому аккаунту"}, status=400)
+            return api.create_response(request, {"message": _("Один из анализов уже привязан к другому аккаунту")}, status=400)
 
-    patient_profile = PatientProfile.objects.filter(user=user).first()
+    # Используем первый созданный профиль (основной) для привязки анонимных анализов
+    patient_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
     
     with transaction.atomic():
         for analysis in analyses:
@@ -188,10 +195,11 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
                 analysis.save(update_fields=['user', 'patient'])
                 AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
 
-    # ИЗМЕНЕНИЕ: Ищем только ПЕРВЫЙ анализ, который висит в PENDING, и пинаем его.
     first_pending = analyses.filter(status=MedicalAnalysis.Status.PENDING).first()
     if first_pending:
-        process_analysis_task.delay(first_pending.uid)
+        # Прокидываем текущий язык в таску!
+        lang = getattr(request, 'LANGUAGE_CODE', 'en')
+        process_analysis_task.delay(first_pending.uid, lang)
 
     refresh = RefreshToken.for_user(user)
     return {
@@ -207,7 +215,7 @@ def refresh_token(request, payload: RefreshRequestSchema):
         refresh = RefreshToken(payload.refresh)
         return {"access": str(refresh.access_token)}
     except TokenError:
-        return api.create_response(request, {"message": "Токен устарел или недействителен"}, status=401)
+        return api.create_response(request, {"message": _("Токен устарел или недействителен")}, status=401)
 
 # --- Восстановление пароля ---
 @api.post("/auth/reset-password-request")
@@ -215,18 +223,22 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
     try:
         user = User.objects.get(email=payload.email)
     except User.DoesNotExist:
-        return {"message": "Если такой email существует, мы отправили инструкцию."}
+        # Мы не переводим это сообщение, чтобы злоумышленник не мог "прощупывать" базу
+        return {"message": _("Если такой email существует, мы отправили инструкцию.")}
 
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     
-    domain = "https://bimark.org" 
+    domain = "https://datadoctor.pro" # ИСПРАВЛЕНИЕ: Заменил bimark.org на предполагаемый твой
     reset_link = f"{domain}/auth/reset-password?uid={uid}&token={token}"
     
     try:
+        mail_subject = _("Восстановление пароля DataDoctor.pro")
+        mail_message = _("Вы запросили сброс пароля.\nДля установки нового пароля перейдите по ссылке:\n{reset_link}\n\nЕсли вы не запрашивали это действие, просто проигнорируйте письмо.").format(reset_link=reset_link)
+        
         send_mail(
-            subject='Восстановление пароля DataDoctor.pro',
-            message=f'Вы запросили сброс пароля.\nДля установки нового пароля перейдите по ссылке:\n{reset_link}\n\nЕсли вы не запрашивали это действие, просто проигнорируйте письмо.',
+            subject=mail_subject,
+            message=mail_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
             fail_silently=True,
@@ -234,7 +246,7 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
     except Exception as e:
         print(f"❌ Ошибка отправки письма при сбросе: {e}")
     
-    return {"message": "Инструкция по сбросу пароля отправлена на Email."}
+    return {"message": _("Инструкция по сбросу пароля отправлена на Email.")}
 
 @api.post("/auth/reset-password-confirm")
 def reset_password_confirm(request, payload: ResetPasswordConfirmSchema):
@@ -242,28 +254,26 @@ def reset_password_confirm(request, payload: ResetPasswordConfirmSchema):
         uid = force_str(urlsafe_base64_decode(payload.uidb64))
         user = User.objects.get(pk=uid)
     except (TypeError, ValueError, OverflowError, User.DoesNotExist):
-        return api.create_response(request, {"message": "Неверная ссылка"}, status=400)
+        return api.create_response(request, {"message": _("Неверная ссылка")}, status=400)
 
     if not default_token_generator.check_token(user, payload.token):
-        return api.create_response(request, {"message": "Ссылка устарела или недействительна"}, status=400)
+        return api.create_response(request, {"message": _("Ссылка устарела или недействительна")}, status=400)
 
     user.set_password(payload.new_password)
     user.save()
-    return {"message": "Пароль успешно изменен. Теперь вы можете войти."}
+    return {"message": _("Пароль успешно изменен. Теперь вы можете войти.")}
 
 @api.post("/auth/change-password", auth=JWTAuth())
 def change_password(request, payload: ChangePasswordSchema):
     user = request.user
     
-    # Проверяем, совпадает ли старый пароль
     if not user.check_password(payload.old_password):
-        return api.create_response(request, {"message": "Неверный текущий пароль"}, status=400)
+        return api.create_response(request, {"message": _("Неверный текущий пароль")}, status=400)
     
-    # Хэшируем и сохраняем новый пароль
     user.set_password(payload.new_password)
     user.save()
     
-    return {"message": "Пароль успешно изменен"}
+    return {"message": _("Пароль успешно изменен")}
 
 # ==========================================
 # 2. РАБОТА С АНАЛИЗАМИ (Гибридный доступ)
@@ -284,10 +294,11 @@ def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Fo
             pass
             
     if user and user.is_authenticated:
-        patient_profile = PatientProfile.objects.filter(user=user).first()
+        # Берем основной (первый) профиль
+        patient_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
         if not patient_profile:
              patient_profile = PatientProfile.objects.create(
-                 user=user, full_name="Я (Основной профиль)"
+                 user=user, full_name=_("Я (Основной профиль)")
              )
 
     analysis = MedicalAnalysis.objects.create(
@@ -297,10 +308,10 @@ def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Fo
         status=MedicalAnalysis.Status.PENDING
     )
     
-    # ИЗМЕНЕНИЕ: Независимо от авторизации, мы отправляем в Celery ТОЛЬКО первый файл.
-    # Остальные файлы лягут в БД со статусом PENDING и будут запущены по цепочке!
     if is_first:
-        transaction.on_commit(lambda: process_analysis_task.delay(analysis.uid))
+        # Прокидываем язык!
+        lang = getattr(request, 'LANGUAGE_CODE', 'en')
+        transaction.on_commit(lambda: process_analysis_task.delay(analysis.uid, lang))
         
     return analysis
 
@@ -311,9 +322,8 @@ def get_analysis_result(request, uid: uuid.UUID):
     try:
         analysis = MedicalAnalysis.objects.get(uid=uid)
     except MedicalAnalysis.DoesNotExist:
-        raise Http404("Анализ не найден")
+        raise Http404(_("Анализ не найден"))
 
-    # Доступ по UUID открыт для всех (т.к. UUID - это как секретная ссылка)
     return analysis
 
 @api.get("/analyses/{uid}/download", auth=None)
@@ -321,9 +331,8 @@ def download_analysis_file(request, uid: uuid.UUID):
     analysis = get_object_or_404(MedicalAnalysis, uid=uid)
 
     if not analysis.file:
-        raise Http404("Файл не найден")
+        raise Http404(_("Файл не найден"))
 
-    # Доступ к файлу по UUID также открыт
     response = FileResponse(analysis.file.open('rb'))
     fname = analysis.file.name.split("/")[-1]
     response['Content-Disposition'] = f'inline; filename="{fname}"'
@@ -331,12 +340,8 @@ def download_analysis_file(request, uid: uuid.UUID):
 
 @api.post("/analyses/{uid}/reanalyze", response=AnalysisResponseSchema, auth=None)
 def reanalyze_document(request, uid: uuid.UUID):
-    """
-    Создает новую запись анализа на основе старого файла (для применения новой медкарты)
-    """
     old_analysis = get_object_or_404(MedicalAnalysis, uid=uid)
     
-    # Создаем дубликат записи, но с новым UID и статусом PENDING
     new_analysis = MedicalAnalysis.objects.create(
         file=old_analysis.file,
         user=old_analysis.user,
@@ -344,8 +349,8 @@ def reanalyze_document(request, uid: uuid.UUID):
         status=MedicalAnalysis.Status.PENDING
     )
     
-    # Отправляем новый UID в Celery
-    transaction.on_commit(lambda: process_analysis_task.delay(new_analysis.uid))
+    lang = getattr(request, 'LANGUAGE_CODE', 'en')
+    transaction.on_commit(lambda: process_analysis_task.delay(new_analysis.uid, lang))
     
     return new_analysis
 
@@ -355,7 +360,7 @@ def reanalyze_document(request, uid: uuid.UUID):
 
 @api.get("/profiles", response=List[PatientProfileSchema], auth=JWTAuth())
 def list_profiles(request):
-    return PatientProfile.objects.filter(user=request.user)
+    return PatientProfile.objects.filter(user=request.user).order_by('created_at')
 
 @api.post("/profiles", response=PatientProfileSchema, auth=JWTAuth())
 def create_profile(request, payload: CreateProfileSchema):
@@ -375,8 +380,11 @@ def create_profile(request, payload: CreateProfileSchema):
 def update_profile(request, profile_id: int, payload: UpdateProfileSchema):
     profile = get_object_or_404(PatientProfile, id=profile_id, user=request.user)
     
-    if profile.full_name == "Анализы" or "Основной" in profile.full_name:
-        return api.create_response(request, {"message": "Базовый профиль переименовать нельзя"}, status=400)
+    # ИСПРАВЛЕНИЕ УЯЗВИМОСТИ: Проверяем по дате создания, а не по названию
+    first_profile = PatientProfile.objects.filter(user=request.user).order_by('created_at').first()
+    
+    if profile.id == first_profile.id and profile.full_name != payload.full_name:
+        return api.create_response(request, {"message": _("Базовый профиль переименовать нельзя")}, status=400)
         
     profile.full_name = payload.full_name
     profile.birth_date = payload.birth_date
@@ -425,7 +433,7 @@ def get_patient_analyses(request, patient_id: int):
 def delete_analysis(request, uid: uuid.UUID):
     analysis = get_object_or_404(MedicalAnalysis, uid=uid)
     if analysis.user != request.user:
-        return api.create_response(request, {"message": "Доступ запрещен"}, status=403)
+        return api.create_response(request, {"message": _("Доступ запрещен")}, status=403)
 
     analysis.delete()
     return {"success": True}

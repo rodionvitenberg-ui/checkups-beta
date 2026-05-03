@@ -1,7 +1,9 @@
-import Link from "next/link";
+import { Link } from '@/i18n/routing'; // Меняем импорт Link на локализованный
 import Image from "next/image";
+import { useTranslations } from 'next-intl';
 
 export function Footer() {
+  const t = useTranslations('Footer');
   const currentYear = new Date().getFullYear();
 
   return (
@@ -14,28 +16,27 @@ export function Footer() {
             <Link href="/" className="hover:opacity-80 transition-opacity">
               <Image 
                 src="/logo.png" 
-                alt="Checkups Logo" 
+                alt={t('logoAlt')} 
                 width={140} 
                 height={40} 
                 className="h-10 w-auto object-contain" 
-                unoptimized // ДОБАВЛЕНО: отключаем сжатие для максимальной четкости
+                unoptimized
               />
             </Link>
             <p className="text-sm text-accent">
-              © {currentYear} DataDoctor. Все права защищены.
+              {/* Передаем текущий год как переменную в JSON */}
+              {t('copyright', { year: currentYear })}
             </p>
           </div>
 
           {/* Правая часть: Ссылки */}
           <div className="flex flex-wrap justify-center md:justify-end gap-6 text-sm font-bold text-secondary tracking-wide">
-            {/* Я поставил ссылку на главную страницу, но ты можешь заменить на нужную */}
             <Link href="/" className="hover:text-accent transition-colors uppercase">
-              О проекте
+              {t('about')}
             </Link>
             
-            {/* Ссылку /legal нужно будет потом создать, или указать свой путь */}
             <Link href="/legal" className="hover:text-accent transition-colors uppercase">
-              Юридическая информация
+              {t('legal')}
             </Link>
           </div>
 

@@ -52,14 +52,17 @@ def process_analysis_task(self, analysis_id, language_code='en'):
         raw_text = extract_text_from_pdf(analysis.file.path)
         
         # --- ШАГ 2: Ищем имя (NER) и привязываем профиль ---
-        # Подключаем русский и английский для поиска
+        # Подключаем русский, английский и испанский для максимально точного поиска
         results_ru = analyzer.analyze(text=raw_text, entities=["PERSON"], language='ru')
         results_en = analyzer.analyze(text=raw_text, entities=["PERSON"], language='en')
-        all_results = results_ru + results_en
+        results_es = analyzer.analyze(text=raw_text, entities=["PERSON"], language='es')
+        
+        # Склеиваем все результаты
+        all_results = results_ru + results_en + results_es
         
         extracted_name = None
         if all_results:
-            # Берем сущность PERSON с наибольшим весом (score)
+            # Берем сущность PERSON с наибольшим весом (score) среди всех языков
             best_match = max(all_results, key=lambda x: x.score)
             extracted_name = raw_text[best_match.start:best_match.end].strip()
 
@@ -79,8 +82,14 @@ def process_analysis_task(self, analysis_id, language_code='en'):
 
         # --- ШАГ 3: АНОНИМИЗАЦИЯ ---
         # Ищем все PII (имена, телефоны, адреса, даты)
-        pii_results = analyzer.analyze(text=raw_text, language='ru')
-        anonymized_result = anonymizer.anonymize(text=raw_text, analyzer_results=pii_results)
+        pii_ru = analyzer.analyze(text=raw_text, language='ru')
+        pii_en = analyzer.analyze(text=raw_text, language='en')
+        pii_es = analyzer.analyze(text=raw_text, language='es')
+        
+        anonymized_result = anonymizer.anonymize(
+            text=raw_text, 
+            analyzer_results=pii_ru + pii_en + pii_es
+        )
         safe_text = anonymized_result.text
         
         # --- ШАГ 4: Сборка контекста прогрессии ---

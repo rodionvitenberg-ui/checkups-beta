@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-02 18:56+0000\n"
+"POT-Creation-Date: 2026-05-02 20:34+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -18,40 +18,181 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=n == 1 ? 0 : n != 0 && n % 1000000 == 0 ? "
 "1 : 2;\n"
-#: analysis/models.py:6
+
+#: analysis/models.py:11
 msgid "Экстрактор (Извлечение)"
 msgstr ""
 
-#: analysis/models.py:7
+#: analysis/models.py:12
 msgid "Интерпретатор (Анализ)"
 msgstr ""
 
-#: analysis/models.py:8
-msgid "Верификатор (Проверка)"
-msgstr ""
-
-#: analysis/models.py:10
-msgid "Название промпта"
-msgstr ""
-
 #: analysis/models.py:14
+msgid "Название (для админки)"
+msgstr ""
+
+#: analysis/models.py:15
+msgid "Роль в пайплайне"
+msgstr ""
+
+#: analysis/models.py:18
 msgid "Системный промпт"
 msgstr ""
 
-#: analysis/models.py:17
+#: analysis/models.py:21
 msgid "Дополнительный контекст/Примеры"
 msgstr ""
 
-#: config/settings.py:134
+#: analysis/models.py:23
+msgid "Активен"
+msgstr ""
+
+#: analysis/models.py:28
+msgid "Шаблон промпта"
+msgstr ""
+
+#: analysis/models.py:29
+msgid "Шаблоны промптов"
+msgstr ""
+
+#: config/settings.py:133
 msgid "English"
 msgstr ""
 
-#: config/settings.py:135
+#: config/settings.py:134
 msgid "Spanish"
 msgstr ""
 
-#: config/settings.py:136
+#: config/settings.py:135
 msgid "Russian"
+msgstr ""
+
+#: core/api.py:93
+msgid "Пользователь с таким email уже существует"
+msgstr ""
+
+#: core/api.py:102 core/api.py:154
+msgid "Основной профиль"
+msgstr ""
+
+#: core/api.py:107
+msgid "Регистрация в DataDoctor.pro"
+msgstr ""
+
+#: core/api.py:108
+#, python-brace-format
+msgid ""
+"Добро пожаловать в DataDoctor.pro!\n"
+"\n"
+"Ваши данные для входа:\n"
+"Логин: {email}\n"
+"Ваш пароль: {password}\n"
+"\n"
+"Пожалуйста, сохраните эти данные или смените пароль в личном кабинете."
+msgstr ""
+
+#: core/api.py:131
+msgid "Неверный email или пароль"
+msgstr ""
+
+#: core/api.py:144
+msgid "Анализы не найдены"
+msgstr ""
+
+#: core/api.py:157
+msgid "Код доступа к результатам | DataDoctor.pro"
+msgstr ""
+
+#: core/api.py:158
+#, python-brace-format
+msgid ""
+"Ваши анализы готовы!\n"
+"\n"
+"Ваш PIN-код для просмотра результатов: {pin_code}\n"
+"\n"
+"Никому не сообщайте этот код."
+msgstr ""
+
+#: core/api.py:170
+msgid "PIN-код отправлен на почту"
+msgstr ""
+
+#: core/api.py:172
+msgid "Email найден. Введите пароль."
+msgstr ""
+
+#: core/api.py:179
+msgid "Неверный код или пароль"
+msgstr ""
+
+#: core/api.py:185
+msgid "Один из анализов уже привязан к другому аккаунту"
+msgstr ""
+
+#: core/api.py:218
+msgid "Токен устарел или недействителен"
+msgstr ""
+
+#: core/api.py:227
+msgid "Если такой email существует, мы отправили инструкцию."
+msgstr ""
+
+#: core/api.py:236
+msgid "Восстановление пароля DataDoctor.pro"
+msgstr ""
+
+#: core/api.py:237
+#, python-brace-format
+msgid ""
+"Вы запросили сброс пароля.\n"
+"Для установки нового пароля перейдите по ссылке:\n"
+"{reset_link}\n"
+"\n"
+"Если вы не запрашивали это действие, просто проигнорируйте письмо."
+msgstr ""
+
+#: core/api.py:249
+msgid "Инструкция по сбросу пароля отправлена на Email."
+msgstr ""
+
+#: core/api.py:257
+msgid "Неверная ссылка"
+msgstr ""
+
+#: core/api.py:260
+msgid "Ссылка устарела или недействительна"
+msgstr ""
+
+#: core/api.py:264
+msgid "Пароль успешно изменен. Теперь вы можете войти."
+msgstr ""
+
+#: core/api.py:271
+msgid "Неверный текущий пароль"
+msgstr ""
+
+#: core/api.py:276
+msgid "Пароль успешно изменен"
+msgstr ""
+
+#: core/api.py:301
+msgid "Я (Основной профиль)"
+msgstr ""
+
+#: core/api.py:325
+msgid "Анализ не найден"
+msgstr ""
+
+#: core/api.py:334
+msgid "Файл не найден"
+msgstr ""
+
+#: core/api.py:387
+msgid "Базовый профиль переименовать нельзя"
+msgstr ""
+
+#: core/api.py:436
+msgid "Доступ запрещен"
 msgstr ""
 
 #: core/models.py:26

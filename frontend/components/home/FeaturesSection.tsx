@@ -1,41 +1,34 @@
-'use client';
-
 import Image from 'next/image';
-import { ContentBlock } from '@/lib/api';
 import { clsx } from 'clsx';
-// Импортируем иконки из Phosphor
-import { Stethoscope, WarningCircle, Folders, TrendDown } from '@phosphor-icons/react';
+import { useTranslations } from 'next-intl';
+import { Stethoscope, WarningCircle, Folders, TrendDown } from '@phosphor-icons/react/dist/ssr'; // Для серверных компонентов лучше импортировать из /ssr
 
-interface FeaturesSectionProps {
-  feat1?: ContentBlock;
-  feat2?: ContentBlock;
-  feat3?: ContentBlock;
-  feat4?: ContentBlock;
-}
+export const FeaturesSection = () => {
+  const t = useTranslations('Features');
 
-export const FeaturesSection = ({ feat1, feat2, feat3, feat4 }: FeaturesSectionProps) => {
+  // Определяем массив внутри, получая данные из next-intl
   const features = [
     {
-      title: feat1?.title || "ВЫПОЛНЯЕТ РОЛЬ ВИРТУАЛЬНОГО ТЕРАПЕВТА:",
-      content: feat1?.content || "Отсматривает ваши результаты анализов, выявляет зоны риска, при этом вы экономите время и деньги.",
+      title: t('feature1.title'),
+      content: t('feature1.content'),
       image: "/arts/1.png",
       icon: <Stethoscope weight="duotone" className="w-8 h-8" />,
     },
     {
-      title: feat2?.title || "РАССКАЗЫВАЕТ О ВОЗМОЖНЫХ ПРИЧИНАХ:",
-      content: feat2?.content || "В отличии от анализов, где просто показаны отклонения от нормы, наш ИИ указывает на возможные причины.",
+      title: t('feature2.title'),
+      content: t('feature2.content'),
       image: "/arts/2.png",
       icon: <WarningCircle weight="duotone" className="w-8 h-8" />,
     },
     {
-      title: feat3?.title || "ХРАНИТ ВСЕ В ОДНОМ МЕСТЕ:",
-      content: feat3?.content || "У вас всегда будет доступ ко всем анализам, которые вы расшифровали у нас, а мы реализуем функцию сравнения в динамике.",
+      title: t('feature3.title'),
+      content: t('feature3.content'),
       image: "/arts/3.png",
       icon: <Folders weight="duotone" className="w-8 h-8" />,
     },
     {
-      title: feat4?.title || "УКАЗЫВАЕТ НА РИСКИ И ПОСЛЕДСТВИЯ:",
-      content: feat4?.content || "Рассказываем о том, что может произойти, если те или иные показатели будут ухудшаться.",
+      title: t('feature4.title'),
+      content: t('feature4.content'),
       image: "/arts/4.png",
       icon: <TrendDown weight="duotone" className="w-8 h-8" />,
     },
