@@ -1,8 +1,11 @@
 import os
 import json
 import time
-from google import genai
-from google.genai import types
+from openai import OpenAI
+from dotenv import load_dotenv
+
+# Принудительно читаем .env
+load_dotenv()
 
 from core.schemas import AIResultSchema
 from .models import PromptTemplate
@@ -10,28 +13,47 @@ from .models import PromptTemplate
 class AnalysisPipeline:
     def __init__(self, language_code='ru'):
         self.api_keys = []
+        
+        # Ищем ключи в окружении (теперь ищем универсальные AI_API_KEY)
         for key, val in os.environ.items():
-            if key.startswith("GOOGLE_API_KEY") and val:
+            if key.startswith("AI_API_KEY") and val:
                 self.api_keys.append(val)
+                
+        if not self.api_keys and os.environ.get("AI_API_KEY"):
+            self.api_keys.append(os.environ.get("AI_API_KEY"))
         
         if not self.api_keys:
+            print("⚠️ ВНИМАНИЕ: Ключи AI_API_KEY не найдены в .env!")
             self.api_keys = ["DUMMY_KEY"]
             
         self.current_key_idx = 0
-        self.model_name = "gemini-3.1-flash" # Обновленная, умная модель!
+        
+        # --- НАСТРОЙКИ МОДЕЛИ И ПРОВАЙДЕРА ---
+        # Вариант 1: DeepSeek (Официальный API)
+        self.base_url = "https://api.deepseek.com"
+        self.model_name = "deepseek-chat" # Это DeepSeek V3
+        
+        # Вариант 2: OpenRouter (Агрегатор для Qwen, DeepSeek, Llama)
+        # self.base_url = "https://openrouter.ai/api/v1"
+        # self.model_name = "qwen/qwen-2.5-72b-instruct" # Или "deepseek/deepseek-chat"
+        # -------------------------------------
+        
         self.language_code = language_code 
 
     def _get_client(self):
-        return genai.Client(api_key=self.api_keys[self.current_key_idx])
+        return OpenAI(
+            api_key=self.api_keys[self.current_key_idx],
+            base_url=self.base_url
+        )
 
     def _switch_key(self):
         if self.current_key_idx < len(self.api_keys) - 1:
             self.current_key_idx += 1
-            print(f"🔄 ЛИМИТЫ ИСЧЕРПАНЫ. Переключаюсь на резервный API KEY #{self.current_key_idx + 1}")
+            print(f"🔄 ЛИМИТЫ ИСЧЕРПАНЫ. Переключаюсь на ключ #{self.current_key_idx + 1}")
             return True
         return False
 
-    def _call_gemini_with_fallback(self, prompt, schema=None, mime_type="application/json", max_retries=None, temperature=0.2):
+    def _call_llm_with_fallback(self, sys_prompt, user_prompt, require_json=False, max_retries=None, temperature=0.1):
         if max_retries is None:
             max_retries = len(self.api_keys) * 2
 
@@ -39,45 +61,45 @@ class AnalysisPipeline:
             try:
                 client = self._get_client()
                 
-                contents = [prompt] 
+                messages = [
+                    {"role": "system", "content": sys_prompt},
+                    {"role": "user", "content": user_prompt}
+                ]
 
-                # Температуру теперь можно настраивать для каждого шага
-                config_kwargs = {"temperature": temperature}
-                if mime_type: config_kwargs["response_mime_type"] = mime_type
-                if schema: config_kwargs["response_schema"] = schema
-
-                response = client.models.generate_content(
-                    model=self.model_name,
-                    contents=contents,
-                    config=types.GenerateContentConfig(**config_kwargs)
-                )
+                kwargs = {
+                    "model": self.model_name,
+                    "messages": messages,
+                    "temperature": temperature,
+                }
                 
-                if schema and response.parsed:
-                    if hasattr(response.parsed, 'model_dump'):
-                        return response.parsed.model_dump()
-                    elif hasattr(response.parsed, 'dict'):
-                        return response.parsed.dict()
-                    return response.parsed
+                if require_json:
+                    # Стандартный вызов JSON для OpenAI/DeepSeek/OpenRouter
+                    kwargs["response_format"] = {"type": "json_object"}
 
-                return response.text
+                response = client.chat.completions.create(**kwargs)
+                result_text = response.choices[0].message.content
+
+                if require_json:
+                    return json.loads(result_text)
+
+                return result_text
 
             except Exception as e:
                 err_str = str(e).lower()
-                print(f"⚠️ Gemini API Error (Попытка {attempt + 1}/{max_retries}): {e}")
+                print(f"⚠️ API Error (Попытка {attempt + 1}/{max_retries}): {e}")
                 
-                if "429" in err_str or "exhausted" in err_str or "quota" in err_str:
+                if "429" in err_str or "rate limit" in err_str or "insufficient_quota" in err_str:
                     if self._switch_key():
                         continue 
                     else:
-                        print("❌ Все резервные ключи исчерпаны! Ждем 5 сек...")
-                        time.sleep(5) 
+                        print("❌ Все ключи исчерпаны! Ждем 20 сек...")
+                        time.sleep(20) 
                 else:
                     time.sleep(2)
 
-        raise Exception("Failed to call Gemini after multiple retries and key switches")
+        raise Exception("Failed to call AI API after multiple retries")
 
     def _get_prompt(self, role: str) -> str:
-        """Достает системный промпт из БД с учетом активного языка"""
         try:
             template = PromptTemplate.objects.get(role=role, is_active=True)
             prompt_text = template.system_prompt
@@ -95,8 +117,7 @@ class AnalysisPipeline:
             print(f"--- Stage 2: Профессор (Interpretation) [{self.model_name}] ---")
             interpreted_data = self._step_interpret(raw_data, patient_context)
             
-            # ВЕРИФИКАТОР УДАЛЕН! Сразу отдаем результат
-            return interpreted_data.model_dump() if hasattr(interpreted_data, 'model_dump') else interpreted_data
+            return interpreted_data
             
         except Exception as e:
             print(f"Pipeline failed: {e}")
@@ -104,25 +125,47 @@ class AnalysisPipeline:
 
     def _step_extract(self, safe_text: str):
         sys_prompt = self._get_prompt(PromptTemplate.Role.EXTRACTOR)
-        full_prompt = f"{sys_prompt}\n\nОБЕЗЛИЧЕННЫЙ ТЕКСТ АНАЛИЗА:\n{safe_text}"
+        sys_prompt += "\n\nВАЖНО: Верни ответ СТРОГО в формате валидного JSON объекта."
         
-        # Для экстракции ставим температуру 0.1, чтобы ИИ не фантазировал
-        result = self._call_gemini_with_fallback(
-            prompt=full_prompt, 
-            mime_type="application/json",
+        full_prompt = f"ОБЕЗЛИЧЕННЫЙ ТЕКСТ АНАЛИЗА:\n{safe_text}"
+        
+        return self._call_llm_with_fallback(
+            sys_prompt=sys_prompt,
+            user_prompt=full_prompt, 
+            require_json=True,
             temperature=0.1 
         )
-        return json.loads(result) if isinstance(result, str) else result
 
     def _step_interpret(self, raw_data: dict, patient_context: str = None):
         sys_prompt = self._get_prompt(PromptTemplate.Role.INTERPRETER)
+        
+        json_structure = """
+        {
+          "reasoning": "string",
+          "patient_info": {"extracted_date": "YYYY-MM-DD"},
+          "summary": {"is_critical": boolean, "general_comment": "string"},
+          "indicators": [{"slug": "string", "name": "string", "value": "string", "unit": "string", "ref_range": "string", "status": "normal|low|high|critical", "comment": "string", "category": "string"}],
+          "causes": [{"title": "string", "description": "string", "severity": "green|yellow|red"}],
+          "recommendations": [{"type": "string", "text": "string"}]
+        }
+        """
+        
+        strict_rules = """
+        КРИТИЧЕСКИЕ ПРАВИЛА ЗАПОЛНЕНИЯ МАССИВА indicators:
+        1. Поле 'name' должно переноситься ДОСЛОВНО И ЦЕЛИКОМ. Категорически запрещено обрезать названия. Пиши 'Эпителий переходный' (а не 'переходный'), 'Глюкоза (сахар)' (а не 'сахар').
+        2. Поле 'ref_range' переноси дословно из текста (например '1003 - 1035' или '< 5'). Если референса нет, ставь '-'.
+        3. Не путай название показателя с его категорией. Используй поле 'category' для группировки.
+        """
+        
+        sys_prompt += f"\n\nВАЖНО: Верни ответ СТРОГО в формате валидного JSON объекта, используя следующую структуру:\n{json_structure}"
+        sys_prompt += f"\n\n{strict_rules}"
+        
         context_str = f"КОНТЕКСТ ПАЦИЕНТА: {patient_context}" if patient_context else "КОНТЕКСТ ПАЦИЕНТА: Неизвестен."
+        full_prompt = f"{context_str}\nВОТ ИСХОДНЫЕ ДАННЫЕ (RAW JSON):\n{json.dumps(raw_data, ensure_ascii=False)}"
         
-        full_prompt = f"{sys_prompt}\n{context_str}\nВОТ ИСХОДНЫЕ ДАННЫЕ (RAW JSON):\n{json.dumps(raw_data, ensure_ascii=False)}"
-        
-        # Для профессора ставим температуру 0.2 (немного свободы для рассуждений)
-        return self._call_gemini_with_fallback(
-            prompt=full_prompt, 
-            schema=AIResultSchema,
-            temperature=0.2
+        return self._call_llm_with_fallback(
+            sys_prompt=sys_prompt,
+            user_prompt=full_prompt, 
+            require_json=True,
+            temperature=0.1 
         )

@@ -1,6 +1,7 @@
 import fitz # PyMuPDF
 from celery import shared_task
 from presidio_analyzer import AnalyzerEngine
+from presidio_analyzer.nlp_engine import NlpEngineProvider
 from presidio_anonymizer import AnonymizerEngine
 from django.utils import timezone
 from datetime import timedelta
@@ -9,8 +10,23 @@ from analysis.services import AnalysisPipeline
 from core.services import save_atomic_indicators
 from django.utils import translation
 
-analyzer = AnalyzerEngine()
+# --- НАСТРОЙКА PRESIDIO ДЛЯ МУЛЬТИЯЗЫЧНОСТИ ---
+nlp_configuration = {
+    "nlp_engine_name": "spacy",
+    "models": [
+        {"lang_code": "en", "model_name": "en_core_web_lg"},
+        {"lang_code": "ru", "model_name": "ru_core_news_lg"},
+        {"lang_code": "es", "model_name": "es_core_news_md"},
+    ]
+}
+nlp_engine = NlpEngineProvider(nlp_configuration=nlp_configuration).create_engine()
+
+analyzer = AnalyzerEngine(
+    nlp_engine=nlp_engine, 
+    supported_languages=["en", "ru", "es"]
+)
 anonymizer = AnonymizerEngine()
+# ----------------------------------------------
 
 def extract_text_from_pdf(file_path):
     doc = fitz.open(file_path)
@@ -18,10 +34,6 @@ def extract_text_from_pdf(file_path):
     return text
 
 def trigger_next_analysis(analysis, language_code='en'):
-    """
-    Ищет следующий анализ в очереди для этого пользователя и запускает его.
-    Это создает последовательную цепную реакцию (один за другим).
-    """
     if analysis.user:
         next_pending = MedicalAnalysis.objects.filter(
             user=analysis.user, 
@@ -30,20 +42,23 @@ def trigger_next_analysis(analysis, language_code='en'):
         
         if next_pending:
             print(f"🔗 Цепная реакция: Запускаем следующий анализ ({next_pending.uid}) на языке {language_code}")
-            # Обязательно прокидываем язык дальше!
             process_analysis_task.delay(next_pending.uid, language_code)
 
 
 @shared_task(bind=True, max_retries=5)
 def process_analysis_task(self, analysis_id, language_code='en'): 
-    # Временно переключаем локаль воркера, чтобы django-modeltranslation 
-    # подтянул правильные поля из БД
     translation.activate(language_code)
     print(f"🔄 Pipeline started for Analysis ID: {analysis_id} (Lang: {language_code})")
     
+    # --- ЗАЩИТА ОТ БЕСКОНЕЧНЫХ РЕТРАЕВ ПРИ УДАЛЕНИИ ---
     try:
         analysis = MedicalAnalysis.objects.select_related('patient', 'user').get(uid=analysis_id)
+    except MedicalAnalysis.DoesNotExist:
+        print(f"❌ Анализ {analysis_id} не найден (вероятно, удален). Отмена задачи.")
+        translation.deactivate()
+        return False
         
+    try:
         if analysis.status != MedicalAnalysis.Status.PROCESSING:
             analysis.status = MedicalAnalysis.Status.PROCESSING
             analysis.save(update_fields=['status'])
@@ -52,19 +67,35 @@ def process_analysis_task(self, analysis_id, language_code='en'):
         raw_text = extract_text_from_pdf(analysis.file.path)
         
         # --- ШАГ 2: Ищем имя (NER) и привязываем профиль ---
-        # Подключаем русский, английский и испанский для максимально точного поиска
         results_ru = analyzer.analyze(text=raw_text, entities=["PERSON"], language='ru')
         results_en = analyzer.analyze(text=raw_text, entities=["PERSON"], language='en')
         results_es = analyzer.analyze(text=raw_text, entities=["PERSON"], language='es')
         
-        # Склеиваем все результаты
         all_results = results_ru + results_en + results_es
         
         extracted_name = None
         if all_results:
-            # Берем сущность PERSON с наибольшим весом (score) среди всех языков
-            best_match = max(all_results, key=lambda x: x.score)
-            extracted_name = raw_text[best_match.start:best_match.end].strip()
+            # Сортируем все найденные сущности по убыванию уверенности
+            sorted_results = sorted(all_results, key=lambda x: x.score, reverse=True)
+            
+            # Черный список слов-паразитов из медицинских бланков
+            stop_words = [
+                'единица', 'единицы', 'результат', 'норма', 'референс', 
+                'дата', 'пациент', 'врач', 'пол', 'возраст', 'исследование', 
+                'клиника', 'лаборатория', 'отклонение', 'инвитро', 'гемотест'
+            ]
+            
+            for match in sorted_results:
+                name_candidate = raw_text[match.start:match.end].strip()
+                name_lower = name_candidate.lower()
+                
+                # Проверяем, содержит ли кандидат мусорные слова
+                is_garbage = any(stop_word in name_lower for stop_word in stop_words)
+                
+                # Берем только чистые имена длиннее 2 символов
+                if len(name_candidate) > 2 and not is_garbage:
+                    extracted_name = name_candidate
+                    break
 
         if extracted_name and analysis.user:
             profile, created = PatientProfile.objects.get_or_create(
@@ -73,7 +104,6 @@ def process_analysis_task(self, analysis_id, language_code='en'):
             analysis.patient = profile
             analysis.save(update_fields=['patient'])
         elif not analysis.patient and analysis.user:
-            # Дефолтный профиль
             profile, _ = PatientProfile.objects.get_or_create(
                 user=analysis.user, full_name="Я (Основной профиль)"
             )
@@ -81,7 +111,6 @@ def process_analysis_task(self, analysis_id, language_code='en'):
             analysis.save(update_fields=['patient'])
 
         # --- ШАГ 3: АНОНИМИЗАЦИЯ ---
-        # Ищем все PII (имена, телефоны, адреса, даты)
         pii_ru = analyzer.analyze(text=raw_text, language='ru')
         pii_en = analyzer.analyze(text=raw_text, language='en')
         pii_es = analyzer.analyze(text=raw_text, language='es')
@@ -140,7 +169,6 @@ def process_analysis_task(self, analysis_id, language_code='en'):
             analysis.status = MedicalAnalysis.Status.FAILED
             analysis.save(update_fields=['status'])
             
-            # ДАЖЕ ЕСЛИ ОШИБКА, ЗАПУСКАЕМ СЛЕДУЮЩИЙ
             trigger_next_analysis(analysis, language_code)
             return False
 
@@ -153,16 +181,14 @@ def process_analysis_task(self, analysis_id, language_code='en'):
         except self.MaxRetriesExceededError:
             print("❌ Max retries exceeded.")
             try:
+                # Обернуто в try/except на случай, если запись удалена
                 analysis.refresh_from_db()
                 analysis.status = MedicalAnalysis.Status.FAILED
                 analysis.save(update_fields=['status'])
-                
-                # ВСЕ ПОПЫТКИ ИСЧЕРПАНЫ - ИДЕМ ДАЛЬШЕ
                 trigger_next_analysis(analysis, language_code)
-            except Exception:
+            except MedicalAnalysis.DoesNotExist:
                 pass
             return False
             
     finally:
-        # КРИТИЧЕСКИ ВАЖНО: Очищаем локаль за собой, чтобы не ломать следующие таски в этом воркере
         translation.deactivate()

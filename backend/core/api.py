@@ -199,7 +199,7 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
     if first_pending:
         # Прокидываем текущий язык в таску!
         lang = getattr(request, 'LANGUAGE_CODE', 'en')
-        process_analysis_task.delay(first_pending.uid, lang)
+        transaction.on_commit(lambda: process_analysis_task.delay(first_pending.uid, lang))
 
     refresh = RefreshToken.for_user(user)
     return {

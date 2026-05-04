@@ -15,12 +15,12 @@ class SummarySchema(Schema):
 class IndicatorSchema(Schema):
     name: str
     slug: Optional[str] = None
-    value: str
-    unit: Optional[str] = None
-    ref_range: Optional[str] = None
-    status: str 
+    value: Optional[str] = None      # Разрешаем null
+    unit: Optional[str] = None       
+    ref_range: Optional[str] = None  
+    status: Optional[str] = None     # Разрешаем null
     comment: Optional[str] = None
-    # НОВОЕ ПОЛЕ: Категория для группировки (например, "Печень", "Кроветворение")
+    # Категория для группировки (например, "Печень", "Кроветворение")
     category: Optional[str] = "Общие показатели"
 
 class CauseSchema(Schema):

@@ -31,22 +31,41 @@ export default function AnalysisPage() {
   const [isViewingOriginal, setIsViewingOriginal] = useState(false);
   const [isUploadModalOpen, setIsUploadModalOpen] = useState(false);
 
+  // Обновленный useEffect с рекурсивным setTimeout для защиты от DDOS
   useEffect(() => {
-    let intervalId: NodeJS.Timeout;
+    let timeoutId: NodeJS.Timeout;
+    let isMounted = true; // Флаг для защиты от утечек памяти при размонтировании
+
     const fetchStatus = async () => {
       try {
         const result = await getAnalysisResult(id);
+        if (!isMounted) return; 
+
         setData(result);
-        if (result.status === 'completed' || result.status === 'failed') {
+        
+        // Если анализ еще в процессе - планируем следующий запрос через 3 сек
+        if (result.status === 'pending' || result.status === 'processing') {
+          timeoutId = setTimeout(fetchStatus, 3000);
+        } else {
+          // Если 'completed' или 'failed' — останавливаем поллинг
           setIsPolling(false);
-          clearInterval(intervalId);
         }
-      } catch (error) { console.error(error); }
+      } catch (error) { 
+        console.error("Ошибка опроса:", error);
+        // При ошибке (например, моргнул интернет) продолжаем опрашивать
+        if (isMounted) {
+            timeoutId = setTimeout(fetchStatus, 3000);
+        }
+      }
     };
-    fetchStatus();
-    if (isPolling) intervalId = setInterval(fetchStatus, 3000);
-    return () => clearInterval(intervalId);
-  }, [id, isPolling]);
+
+    fetchStatus(); // Запускаем первый опрос
+
+    return () => {
+      isMounted = false; // Помечаем, что компонент умер
+      clearTimeout(timeoutId); // Убиваем таймер
+    };
+  }, [id]);
 
   const handleDownloadPDF = async () => {
     if (!data) return;
