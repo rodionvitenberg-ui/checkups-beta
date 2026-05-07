@@ -1,0 +1,93 @@
+{% extends "admin/change_list.html" %}
+{% load i18n %}
+
+{% block content %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+<style>
+    .dashboard-container { display: flex; flex-direction: column; gap: 20px; padding: 20px; background: #fff; border-radius: 8px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); margin-bottom: 20px;}
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; }
+    .stat-card { background: #f8f9fa; border-left: 4px solid #417690; padding: 20px; border-radius: 4px; }
+    .stat-card.error { border-left-color: #dc3545; }
+    .stat-card.success { border-left-color: #28a745; }
+    .stat-card.warning { border-left-color: #ffc107; }
+    .stat-title { font-size: 12px; text-transform: uppercase; color: #666; font-weight: bold; margin-bottom: 5px; }
+    .stat-value { font-size: 28px; font-weight: bold; color: #333; margin: 0;}
+    .chart-container { position: relative; height: 300px; width: 100%; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px;}
+</style>
+
+<div class="dashboard-container">
+    <h2>Обзор системы (Checkups AI)</h2>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-title">Всего пользователей</div>
+            <div class="stat-value">{{ total_users }}</div>
+        </div>
+        <div class="stat-card success">
+            <div class="stat-title">Успешных анализов</div>
+            <div class="stat-value">{{ completed_analyses }}</div>
+        </div>
+        <div class="stat-card error">
+            <div class="stat-title">Ошибок OCR/ИИ (Error Rate)</div>
+            <div class="stat-value">{{ failed_analyses }} <span style="font-size: 14px; color:#666;">({{ error_rate }}%)</span></div>
+        </div>
+        <div class="stat-card warning">
+            <div class="stat-title">Реплик в ИИ-Чате</div>
+            <div class="stat-value">{{ total_messages }}</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-title">Токенов потрачено (Эстимация)</div>
+            <div class="stat-value">~{{ estimated_tokens }}</div>
+        </div>
+    </div>
+
+    <div class="chart-container">
+        <canvas id="analysisChart"></canvas>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const ctx = document.getElementById('analysisChart').getContext('2d');
+    
+    // Получаем данные из контекста Django
+    const labels = JSON.parse('{{ chart_dates|safe }}');
+    const data = JSON.parse('{{ chart_counts|safe }}');
+
+    new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: labels,
+            datasets: [{
+                label: 'Загружено анализов',
+                data: data,
+                borderColor: '#417690',
+                backgroundColor: 'rgba(65, 118, 144, 0.1)',
+                borderWidth: 2,
+                pointBackgroundColor: '#417690',
+                pointRadius: 4,
+                fill: true,
+                tension: 0.3
+            }]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: { display: false },
+                title: { display: true, text: 'Динамика загрузок за последние 7 дней', align: 'start', font: { size: 14 } }
+            },
+            scales: {
+                y: { beginAtZero: true, ticks: { stepSize: 1 } }
+            }
+        }
+    });
+});
+</script>
+
+<style>
+    #changelist { display: none; }
+</style>
+
+{% endblock %}

@@ -117,3 +117,13 @@ class AnalysisIndicator(models.Model):
 
     def __str__(self):
         return f"{self.patient.full_name} - {self.slug}: {self.value}"
+    
+class SystemAnalytics(MedicalAnalysis):
+    """
+    Proxy-модель для вывода дашборда аналитики в Django Admin.
+    Она не создает новую таблицу в БД.
+    """
+    class Meta:
+        proxy = True
+        verbose_name = _("📈 Дашборд Аналитики")
+        verbose_name_plural = _("📈 Дашборд Аналитики")

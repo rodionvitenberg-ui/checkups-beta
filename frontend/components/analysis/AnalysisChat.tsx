@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
+import { createPortal } from 'react-dom';
 import { Send, MessageSquare, X, Loader2, Bot, User } from 'lucide-react';
 import { clsx } from 'clsx';
-import { streamAnalysisChat } from '@/lib/api';
+import { streamAnalysisChat, getChatHistory } from '@/lib/api'; // Добавили getChatHistory
 import { useTranslations } from 'next-intl';
 
 interface Message {
@@ -12,19 +13,52 @@ interface Message {
 }
 
 export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
-    const t = useTranslations('Analysis.Chat'); // Добавь переводы, если используешь next-intl
+    const t = useTranslations('Analysis.Chat');
+    const [mounted, setMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<Message[]>([
-        { role: 'assistant', content: t('greeting', { fallback: 'Здравствуйте! Я ваш медицинский ИИ-ассистент. Готов ответить на любые вопросы по вашему анализу.' }) }
-    ]);
+    const [messages, setMessages] = useState<Message[]>([]); // Изначально пусто
     const [isLoading, setIsLoading] = useState(false);
+    const [isInitialLoading, setIsInitialLoading] = useState(true); // Состояние загрузки истории
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Автоскролл вниз при новых сообщениях
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
-    }, [messages]);
+        setMounted(true);
+    }, []);
+
+    // ЗАГРУЗКА ИСТОРИИ ИЗ БД
+    useEffect(() => {
+        if (mounted && analysisUid) {
+            const loadHistory = async () => {
+                try {
+                    setIsInitialLoading(true);
+                    const history = await getChatHistory(analysisUid);
+                    
+                    if (history && history.length > 0) {
+                        setMessages(history);
+                    } else {
+                        // Если история пуста, добавляем приветствие
+                        setMessages([{ 
+                            role: 'assistant', 
+                            content: t('greeting', { fallback: 'Здравствуйте! Я ваш медицинский ИИ-ассистент. Готов ответить на любые вопросы по вашему анализу.' }) 
+                        }]);
+                    }
+                } catch (error) {
+                    console.error("Failed to load chat history:", error);
+                } finally {
+                    setIsInitialLoading(false);
+                }
+            };
+            loadHistory();
+        }
+    }, [mounted, analysisUid, t]);
+
+    // Автоскролл
+    useEffect(() => {
+        if (isOpen) {
+            messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+        }
+    }, [messages, isOpen]);
 
     const handleSend = async () => {
         if (!input.trim() || isLoading) return;
@@ -35,7 +69,6 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
         setMessages(newMessages);
         setIsLoading(true);
 
-        // Добавляем пустое сообщение ассистента, которое будем заполнять
         setMessages(prev => [...prev, { role: 'assistant', content: '' }]);
 
         try {
@@ -54,7 +87,7 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
             console.error("Chat Error:", error);
             setMessages(prev => {
                 const updated = [...prev];
-                updated[updated.length - 1].content = t('errorMsg', { fallback: 'Произошла ошибка при получении ответа. Попробуйте еще раз.' });
+                updated[updated.length - 1].content = t('errorMsg', { fallback: 'Произошла ошибка при получении ответа.' });
                 return updated;
             });
         } finally {
@@ -69,13 +102,15 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
         }
     };
 
-    return (
-        <>
-            {/* ПЛАВАЮЩАЯ КНОПКА ОТКРЫТИЯ */}
+    if (!mounted) return null;
+
+    const chatContent = (
+        <div className="fixed inset-0 pointer-events-none z-[9999]">
+            {/* КНОПКА ОТКРЫТИЯ */}
             <button
                 onClick={() => setIsOpen(true)}
                 className={clsx(
-                    "fixed bottom-6 right-6 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all duration-300 z-40 flex items-center justify-center hover:scale-110",
+                    "absolute bottom-6 right-6 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all duration-300 pointer-events-auto flex items-center justify-center hover:scale-110",
                     isOpen ? "opacity-0 scale-50 pointer-events-none" : "opacity-100"
                 )}
             >
@@ -84,10 +119,10 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
 
             {/* ОКНО ЧАТА */}
             <div className={clsx(
-                "fixed bottom-6 right-6 w-[380px] h-[600px] max-h-[80vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 z-50 origin-bottom-right",
+                "absolute bottom-6 right-6 w-[380px] h-[600px] max-h-[80vh] bg-white rounded-3xl shadow-2xl border border-slate-200 flex flex-col overflow-hidden transition-all duration-300 pointer-events-auto origin-bottom-right",
                 isOpen ? "scale-100 opacity-100" : "scale-50 opacity-0 pointer-events-none"
             )}>
-                {/* ХЕДЕР ЧАТА */}
+                {/* ХЕДЕР */}
                 <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
@@ -105,29 +140,38 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
 
                 {/* СПИСОК СООБЩЕНИЙ */}
                 <div className="flex-1 overflow-y-auto p-4 space-y-4 bg-slate-50">
-                    {messages.map((msg, idx) => (
-                        <div key={idx} className={clsx("flex gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}>
-                            {msg.role === 'assistant' && (
-                                <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0 text-blue-600 mt-1">
-                                    <Bot className="w-4 h-4" />
-                                </div>
-                            )}
-                            <div className={clsx(
-                                "max-w-[80%] rounded-2xl p-3 text-sm whitespace-pre-wrap leading-relaxed shadow-sm",
-                                msg.role === 'user' 
-                                    ? "bg-blue-600 text-white rounded-tr-sm" 
-                                    : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm"
-                            )}>
-                                {msg.content}
-                            </div>
-                            {msg.role === 'user' && (
-                                <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center shrink-0 text-slate-500 mt-1">
-                                    <User className="w-4 h-4" />
-                                </div>
-                            )}
+                    {isInitialLoading ? (
+                        <div className="flex flex-col items-center justify-center h-full text-slate-400 space-y-2">
+                            <Loader2 className="w-6 h-6 animate-spin" />
+                            <p className="text-xs">Загрузка истории...</p>
                         </div>
-                    ))}
-                    <div ref={messagesEndRef} />
+                    ) : (
+                        <>
+                            {messages.map((msg, idx) => (
+                                <div key={idx} className={clsx("flex gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}>
+                                    {msg.role === 'assistant' && (
+                                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0 text-blue-600 mt-1">
+                                            <Bot className="w-4 h-4" />
+                                        </div>
+                                    )}
+                                    <div className={clsx(
+                                        "max-w-[80%] rounded-2xl p-3 text-sm whitespace-pre-wrap leading-relaxed shadow-sm",
+                                        msg.role === 'user' 
+                                            ? "bg-blue-600 text-white rounded-tr-sm" 
+                                            : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm"
+                                    )}>
+                                        {msg.content}
+                                    </div>
+                                    {msg.role === 'user' && (
+                                        <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center shrink-0 text-slate-500 mt-1">
+                                            <User className="w-4 h-4" />
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                            <div ref={messagesEndRef} />
+                        </>
+                    )}
                 </div>
 
                 {/* ИНПУТ */}
@@ -137,13 +181,14 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
                             onKeyDown={handleKeyDown}
+                            disabled={isInitialLoading}
                             placeholder={t('inputPlaceholder', { fallback: 'Спросите о ваших показателях...' })}
                             className="w-full max-h-32 min-h-[44px] bg-transparent resize-none outline-none py-2 px-3 text-sm text-slate-700"
                             rows={1}
                         />
                         <button
                             onClick={handleSend}
-                            disabled={!input.trim() || isLoading}
+                            disabled={!input.trim() || isLoading || isInitialLoading}
                             className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 transition-colors mb-0.5 mr-0.5"
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
@@ -151,6 +196,8 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
                     </div>
                 </div>
             </div>
-        </>
+        </div>
     );
+
+    return createPortal(chatContent, document.body);
 }

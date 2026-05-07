@@ -266,20 +266,25 @@ export async function createCustomTrait(name: string, category: string): Promise
     return res.data;
 }
 
+export const getChatHistory = async (uid: string): Promise<{role: 'user' | 'assistant', content: string}[]> => {
+    const response = await api.get(`/premium/analyses/${uid}/chat`);
+    return response.data;
+};
+
 export const streamAnalysisChat = async (
     uid: string, 
     messages: { role: string; content: string }[],
     onChunk: (text: string) => void
 ): Promise<void> => {
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
-    const locale = typeof window !== 'undefined' ? document.documentElement.lang : 'ru';
+    const locale = typeof window !== 'undefined' ? document.documentElement.lang : 'en';
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/analyses/${uid}/chat`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/premium/analyses/${uid}/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',
             'Authorization': `Bearer ${token}`,
-            'Accept-Language': locale || 'ru'
+            'Accept-Language': locale || 'en'
         },
         body: JSON.stringify({ messages })
     });

@@ -71,6 +71,10 @@
     "documentLabel": "Document",
     "sending": "Sending...",
     "startAnalysis": "Start Analysis",
+    "agreementText": "I agree to the ",
+"termsLink": "Terms of Service",
+"and": " and ",
+"privacyLink": "Privacy Policy",
     "profile": {
       "title": "Whom does this analysis belong to?",
       "authHint": "The AI will use the selected profile's parameters for an accurate interpretation.",
@@ -414,5 +418,12 @@
   "pageTitle": "Terms of Service",
   "pageSubtitle": "Service usage rules and medical disclaimer",
   "lastUpdated": "Last Updated"
+},
+"Consent": {
+  "title": "Your Privacy Matters",
+  "description": "We use cookies for sessions and service improvement. Our system locally anonymizes your data before any AI analysis. Learn more in our",
+  "privacyLink": "Privacy Policy",
+  "accept": "Accept All",
+  "decline": "Decline"
 }
 }

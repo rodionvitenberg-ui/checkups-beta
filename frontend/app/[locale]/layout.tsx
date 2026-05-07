@@ -4,6 +4,7 @@ import "../globals.css";
 import { Header } from "@/components/layout/Header";
 import Providers from "@/components/Providers";
 import { Footer } from '@/components/layout/Footer';
+import ConsentBanner from "@/components/layout/ConsentBanner";
 
 // Импорты для next-intl
 import { NextIntlClientProvider } from 'next-intl';
@@ -65,7 +66,7 @@ export default async function LocaleLayout({
           <Providers>
             <div className="relative z-10 flex flex-col min-h-screen">
               <Header />
-              
+              <ConsentBanner />
               <main className="flex-1">
                 {children}
               </main>

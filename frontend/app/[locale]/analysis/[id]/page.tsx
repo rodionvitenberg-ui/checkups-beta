@@ -35,37 +35,64 @@ export default function AnalysisPage() {
 
   // Обновленный useEffect с рекурсивным setTimeout для защиты от DDOS
   useEffect(() => {
-    let timeoutId: NodeJS.Timeout;
-    let isMounted = true; // Флаг для защиты от утечек памяти при размонтировании
+    let eventSource: EventSource | null = null;
+    let isMounted = true;
 
-    const fetchStatus = async () => {
+    const loadInitialData = async () => {
       try {
-        const result = await getAnalysisResult(id);
-        if (!isMounted) return; 
-
-        setData(result);
+        // Сначала забираем текущие данные
+        const res = await getAnalysisResult(id);
+        if (!isMounted) return;
         
-        // Если анализ еще в процессе - планируем следующий запрос через 3 сек
-        if (result.status === 'pending' || result.status === 'processing') {
-          timeoutId = setTimeout(fetchStatus, 3000);
-        } else {
-          // Если 'completed' или 'failed' — останавливаем поллинг
+        setData(res);
+        
+        // Если анализ уже готов или упал — останавливаем ожидание
+        if (res.status === 'completed' || res.status === 'failed') {
           setIsPolling(false);
+        } else {
+          // Если он всё еще в обработке, открываем потоковое соединение (SSE)
+          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
+          eventSource = new EventSource(`${apiUrl}/analyses/${id}/status-stream`);
+
+          eventSource.onmessage = async (event) => {
+            const status = event.data;
+            
+            // Если сервер сообщил, что всё готово
+            if (status === 'completed' || status === 'failed') {
+              if (eventSource) eventSource.close(); // Закрываем поток
+              setIsPolling(false);
+              
+              // Делаем ОДИН финальный запрос, чтобы скачать готовый JSON с результатами
+              try {
+                const finalRes = await getAnalysisResult(id);
+                if (isMounted) setData(finalRes);
+              } catch (e) {
+                console.error("Error fetching final data:", e);
+              }
+            } else {
+              // Если статус изменился (например, с pending на processing), обновляем UI
+              setData(prev => prev ? { ...prev, status: status as any } : null);
+            }
+          };
+
+          eventSource.onerror = () => {
+            // Если соединение оборвалось (например, мигнул интернет)
+            if (eventSource) eventSource.close();
+          };
         }
-      } catch (error) { 
-        console.error("Ошибка опроса:", error);
-        // При ошибке (например, моргнул интернет) продолжаем опрашивать
-        if (isMounted) {
-            timeoutId = setTimeout(fetchStatus, 3000);
-        }
+      } catch (err) {
+        console.error("Error loading initial data:", err);
       }
     };
 
-    fetchStatus(); // Запускаем первый опрос
+    loadInitialData();
 
+    // Cleanup: закрываем соединение, если юзер ушел со страницы до завершения анализа
     return () => {
-      isMounted = false; // Помечаем, что компонент умер
-      clearTimeout(timeoutId); // Убиваем таймер
+      isMounted = false;
+      if (eventSource) {
+        eventSource.close();
+      }
     };
   }, [id]);
 

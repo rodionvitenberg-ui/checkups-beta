@@ -73,6 +73,10 @@
     "documentLabel": "Documento",
     "sending": "Enviando...",
     "startAnalysis": "Iniciar análisis",
+    "agreementText": "Acepto los ",
+"termsLink": "Términos de servicio",
+"and": " y la ",
+"privacyLink": "Política de privacidad",
     "profile": {
       "title": "¿A quién pertenece este análisis?",
       "authHint": "La IA tendrá en cuenta los parámetros del perfil seleccionado para una interpretación precisa.",
@@ -416,5 +420,12 @@
   "pageTitle": "Términos de Servicio",
   "pageSubtitle": "Reglas de uso del servicio y descargo de responsabilidad",
   "lastUpdated": "Última actualización"
+},
+"Consent": {
+  "title": "Su privacidad es importante",
+  "description": "Utilizamos cookies para sesiones y mejora del servicio. Nuestro sistema anonimiza localmente sus datos antes de cualquier análisis de IA. Más información en nuestra",
+  "privacyLink": "Política de privacidad",
+  "accept": "Aceptar todo",
+  "decline": "Rechazar"
 }
 }
