@@ -116,10 +116,3 @@ class ChartResponseSchema(Schema):
     slug: str
     name: str
     data: List[IndicatorHistoryPoint]
-
-class ChatMessageSchema(Schema):
-    role: str  # 'user' или 'assistant'
-    content: str
-
-class ChatRequestSchema(Schema):
-    messages: List[ChatMessageSchema]

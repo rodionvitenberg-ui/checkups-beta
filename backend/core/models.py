@@ -89,6 +89,11 @@ class MedicalAnalysis(models.Model):
         
     status = models.CharField(max_length=20, choices=Status.choices, default=Status.PENDING, verbose_name=_("Статус"))
     ai_result = models.JSONField(null=True, blank=True, verbose_name=_("Результат ИИ"))
+    chat_summary = models.TextField(
+        blank=True, 
+        null=True, 
+        verbose_name=_("Краткое содержание чата (Архив)")
+    )
     
     def __str__(self):
         return f"Analysis {self.uid} ({self.get_status_display()})"

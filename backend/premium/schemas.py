@@ -27,3 +27,15 @@ class PatientTraitLinkSchema(Schema):
     trait: TraitSchema
     details: Optional[str] = None
     created_at: datetime
+
+class ChatMessageSchema(Schema):
+    role: str
+    content: str
+
+class ChatRequestSchema(Schema):
+    messages: List[ChatMessageSchema]
+
+class ChatMessageResponseSchema(Schema):
+    role: str
+    content: str
+    created_at: datetime

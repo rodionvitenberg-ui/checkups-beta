@@ -1,6 +1,6 @@
 from django.db import models
 from django.utils.translation import gettext_lazy as _
-from core.models import PatientProfile, User
+from core.models import PatientProfile, User, MedicalAnalysis
 
 # 1. Справочник характеристик
 class Trait(models.Model):
@@ -64,3 +64,54 @@ class PatientTraitLink(models.Model):
 
     def __str__(self):
         return f"{self.patient.full_name} - {self.trait.name}"
+    
+class ChatMessage(models.Model):
+    class Role(models.TextChoices):
+        USER = 'user', _('Пользователь')
+        ASSISTANT = 'assistant', _('Ассистент')
+
+    analysis = models.ForeignKey(
+        MedicalAnalysis, 
+        on_delete=models.CASCADE, 
+        related_name='chat_messages'
+    )
+    role = models.CharField(max_length=20, choices=Role.choices)
+    content = models.TextField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    is_summarized = models.BooleanField(
+        default=False, 
+        verbose_name=_("Архивировано")
+    )
+
+    class Meta:
+        verbose_name = _("Сообщение чата")
+        verbose_name_plural = _("Сообщения чата")
+        ordering = ['created_at']
+
+    def __str__(self):
+        return f"{self.role} - {self.analysis.uid}"
+    
+class ChatSettings(models.Model):
+    """
+    Глобальные настройки ИИ-чата (Singleton).
+    """
+    optimize_tokens = models.BooleanField(
+        default=True, 
+        verbose_name=_("Оптимизация токенов (JSON-диета и Суммаризация)")
+    )
+    
+    class Meta:
+        verbose_name = _("Настройки чата")
+        verbose_name_plural = _("Настройки чата")
+
+    def save(self, *args, **kwargs):
+        self.pk = 1  # Жестко фиксируем ID, чтобы запись была только одна
+        super().save(*args, **kwargs)
+
+    @classmethod
+    def get_settings(cls):
+        obj, created = cls.objects.get_or_create(pk=1)
+        return obj
+
+    def __str__(self):
+        return "Глобальные настройки чата"

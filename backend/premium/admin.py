@@ -2,7 +2,7 @@
 
 from django.contrib import admin
 from modeltranslation.admin import TranslationAdmin
-from .models import Trait, PatientTraitLink
+from .models import Trait, PatientTraitLink, ChatMessage, ChatSettings
 
 @admin.register(Trait)
 class TraitAdmin(TranslationAdmin): # <-- Наследуемся от TranslationAdmin
@@ -23,3 +23,17 @@ class PatientTraitLinkAdmin(admin.ModelAdmin):
             return obj.details[:50] + "..." if len(obj.details) > 50 else obj.details
         return "-"
     short_details.short_description = "Детали"
+
+@admin.register(ChatSettings)
+class ChatSettingsAdmin(admin.ModelAdmin):
+    list_display = ('__str__', 'optimize_tokens')
+    
+    # Запрещаем добавлять новые настройки, если одна уже есть
+    def has_add_permission(self, request):
+        if self.model.objects.exists():
+            return False
+        return True
+
+    # Запрещаем удалять глобальные настройки
+    def has_delete_permission(self, request, obj=None):
+        return False

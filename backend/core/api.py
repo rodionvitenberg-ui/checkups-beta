@@ -1,4 +1,5 @@
 import uuid
+import time
 import json
 import random
 from typing import List, Optional
@@ -11,7 +12,6 @@ from ninja_jwt.authentication import JWTAuth
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.http import FileResponse, Http404, HttpRequest, StreamingHttpResponse
-from analysis.services import ChatAssistant
 from typing import Optional, Any
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -40,9 +40,7 @@ from .schemas import (
     RefreshRequestSchema,
     ClaimRequestOTPSchema,
     ClaimVerifyOTPSchema,
-    UpdateProfileSchema,
-    ChatMessageSchema,
-    ChatRequestSchema
+    UpdateProfileSchema
 )
 from .tasks import process_analysis_task
 
@@ -402,6 +400,31 @@ def reanalyze_document(request, uid: uuid.UUID):
     
     return new_analysis
 
+@api.get("/analyses/{uid}/status-stream", auth=None)
+def stream_analysis_status(request, uid: uuid.UUID):
+    def event_stream():
+        last_status = None
+        while True:
+            # Делаем легкий запрос только за нужным полем
+            analysis = MedicalAnalysis.objects.filter(uid=uid).only('status').first()
+            if not analysis:
+                yield "data: not_found\n\n"
+                break
+            
+            # Отправляем статус, только если он изменился
+            if analysis.status != last_status:
+                yield f"data: {analysis.status}\n\n"
+                last_status = analysis.status
+            
+            # Если статус финальный — закрываем поток со стороны сервера
+            if analysis.status in ['completed', 'failed']:
+                break
+            
+            # Спим 2 секунды. Это не блокирует сервер, так как это генератор!
+            time.sleep(2)
+            
+    return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
 # ==========================================
 # 3. ЛИЧНЫЙ КАБИНЕТ (Защищено JWT)
 # ==========================================
@@ -505,60 +528,5 @@ def delete_analysis(request, uid: uuid.UUID):
 
     analysis.delete()
     return {"success": True}
-
-@api.post("/analyses/{uid}/chat", auth=JWTAuth())
-def chat_with_analysis(request, uid: uuid.UUID, payload: ChatRequestSchema):
-    analysis = get_object_or_404(MedicalAnalysis, uid=uid)
-    
-    # Защита: общаться можно только со своими анализами
-    if analysis.user != request.user:
-        return api.create_response(request, {"message": _("Доступ запрещен")}, status=403)
-
-    if not analysis.ai_result:
-        return api.create_response(request, {"message": _("Анализ еще не расшифрован")}, status=400)
-
-    # 1. Собираем пациентский контекст СТРОГО для этого анализа
-    context_lines = []
-    if analysis.patient:
-        if analysis.patient.gender:
-            context_lines.append(f"Пол: {analysis.patient.get_gender_display()}")
-        if analysis.patient.birth_date:
-            context_lines.append(f"Дата рождения: {analysis.patient.birth_date}")
-        if analysis.patient.weight and analysis.patient.height:
-            context_lines.append(f"Вес: {analysis.patient.weight} кг, Рост: {analysis.patient.height} см")
-        
-        # Добавляем особенности (PRO), если есть
-        try:
-            premium_traits = analysis.patient.premium_traits.all()
-            if premium_traits.exists():
-                context_lines.append("Особенности здоровья:")
-                for link in premium_traits:
-                    context_lines.append(f"- {link.trait.name}: {link.details or 'не указано'}")
-        except Exception:
-            pass
-
-    patient_context = "\n".join(context_lines)
-
-    # 2. Инициализируем стриминг
-    lang = getattr(request, 'LANGUAGE_CODE', 'ru')
-    assistant = ChatAssistant(language_code=lang)
-    
-    # 3. Функция-генератор для формата Server-Sent Events (SSE)
-    def event_stream():
-        stream_generator = assistant.stream_chat(
-            analysis_data=analysis.ai_result, 
-            patient_context=patient_context, 
-            chat_history=payload.messages
-        )
-        for chunk in stream_generator:
-            # Формат SSE: "data: <содержимое>\n\n"
-            # Заменяем переносы строк, чтобы не сломать протокол SSE
-            clean_chunk = chunk.replace("\n", "\\n")
-            yield f"data: {clean_chunk}\n\n"
-        
-        # Сигнал окончания потока
-        yield "data: [DONE]\n\n"
-
-    return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
 
 api.add_router("/premium", "premium.api.router")
