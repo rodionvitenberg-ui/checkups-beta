@@ -13,6 +13,8 @@ import { useTranslations } from 'next-intl';
 
 import { AnalysisTreeSidebar } from '@/components/analysis/AnalysisTreeSidebar';
 import StaticBackground from '@/components/background/StaticBackground';
+import { RefineAnalysisBlock } from '@/components/analysis/RefineAnalysisBlock';
+import { AnalysisChat } from '@/components/analysis/AnalysisChat';
 
 // Импорты наших новых модулей
 import { AnalysisLoading } from '@/components/analysis/AnalysisLoading';
@@ -134,7 +136,12 @@ export default function AnalysisPage() {
         {/* ЛЕВАЯ КОЛОНКА (Сайдбар) */}
         <div className="w-full lg:w-[320px] shrink-0 order-2 lg:order-1 lg:sticky lg:top-36">
             <AnalysisTreeSidebar currentId={id} />
+            
+            {/* НОВЫЙ БЛОК РЕ-АНАЛИЗА */}
+            <RefineAnalysisBlock analysis={data} />
+            <AnalysisChat analysisUid={id} />
         </div>
+        
 
         {/* ПРАВАЯ КОЛОНКА (Контент) */}
         <div className="flex-1 w-full space-y-6 order-1 lg:order-2">

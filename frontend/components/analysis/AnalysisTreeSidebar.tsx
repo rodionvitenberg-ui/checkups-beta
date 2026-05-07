@@ -2,40 +2,39 @@
 
 import { useState, useMemo, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { getProfiles, getPatientAnalyses, AnalysisResponse, PatientProfile } from '@/lib/api';
+import { getProfiles, getPatientAnalyses } from '@/lib/api';
+import { AnalysisResponse, PatientProfile } from '@/lib/types';
 import { FolderOpen, User, FileText, ChevronRight, Loader2 } from 'lucide-react';
 import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { ru, enUS, es } from 'date-fns/locale';
 import { clsx } from 'clsx';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 
 interface AnalysisTreeSidebarProps {
   currentId: string;
 }
 
 export function AnalysisTreeSidebar({ currentId }: AnalysisTreeSidebarProps) {
+    const t = useTranslations('TreeSidebar');
     const [isAuth, setIsAuth] = useState(false);
 
-    // Проверяем авторизацию только на клиенте
     useEffect(() => {
         setIsAuth(!!localStorage.getItem('token'));
     }, []);
 
-    // 1. Получаем профили
     const { data: profiles = [], isLoading: isLoadingProfiles } = useQuery({
         queryKey: ['profiles'],
         queryFn: getProfiles,
         enabled: isAuth,
     });
 
-    // 2. Получаем все анализы для всех профилей параллельно
     const { data: analysesMap = {}, isLoading: isLoadingAnalyses } = useQuery({
         queryKey: ['all-analyses', profiles.map(p => p.id)],
         queryFn: async () => {
             const map: Record<number, AnalysisResponse[]> = {};
             await Promise.all(profiles.map(async (p) => {
                 const ans = await getPatientAnalyses(p.id);
-                // Сортируем от новых к старым
                 map[p.id] = ans.sort((a,b) => new Date(b.created_at || 0).getTime() - new Date(a.created_at || 0).getTime());
             }));
             return map;
@@ -45,7 +44,6 @@ export function AnalysisTreeSidebar({ currentId }: AnalysisTreeSidebarProps) {
 
     const isLoading = isLoadingProfiles || isLoadingAnalyses;
 
-    // Считаем общее количество анализов и фильтруем пустые папки по умолчанию
     const { totalAnalyses, validProfiles } = useMemo(() => {
         let total = 0;
         const valid: PatientProfile[] = [];
@@ -54,9 +52,9 @@ export function AnalysisTreeSidebar({ currentId }: AnalysisTreeSidebarProps) {
             const profileAnalyses = analysesMap[profile.id] || [];
             total += profileAnalyses.length;
 
-            const isDefaultProfile = profile.full_name === "Анализы" || profile.full_name.includes("Основной");
+            // Расширили проверку, чтобы захватить и старые, и новые дефолтные имена
+            const isDefaultProfile = profile.full_name === "Анализы" || profile.full_name.includes("Основной") || profile.full_name.includes("Мой");
             
-            // Если это дефолтная папка "Без привязки" и она пустая - пропускаем
             if (isDefaultProfile && profileAnalyses.length === 0) {
                 continue;
             }
@@ -64,17 +62,18 @@ export function AnalysisTreeSidebar({ currentId }: AnalysisTreeSidebarProps) {
             valid.push(profile);
         }
 
-        // Сортируем: сначала нормальные пациенты, папка "Без привязки" в конце
         valid.sort((a, b) => {
-            if (a.full_name === "Анализы" || a.full_name.includes("Основной")) return 1;
-            if (b.full_name === "Анализы" || b.full_name.includes("Основной")) return -1;
+            const aIsDefault = a.full_name === "Анализы" || a.full_name.includes("Основной") || a.full_name.includes("Мой");
+            const bIsDefault = b.full_name === "Анализы" || b.full_name.includes("Основной") || b.full_name.includes("Мой");
+            
+            if (aIsDefault) return 1;
+            if (bIsDefault) return -1;
             return 0;
         });
 
         return { totalAnalyses: total, validProfiles: valid };
     }, [profiles, analysesMap]);
 
-    // Правило: скрываем, если не авторизован или анализов меньше 2
     if (!isAuth || (!isLoading && totalAnalyses < 2)) {
         return null;
     }
@@ -82,7 +81,7 @@ export function AnalysisTreeSidebar({ currentId }: AnalysisTreeSidebarProps) {
     return (
         <div className="bg-white/80 backdrop-blur-md border border-white/60 shadow-lg shadow-[#3f94ca]/5 rounded-3xl p-4 sm:p-5 w-full">
             <h3 className="text-sm font-bold text-slate-700 uppercase tracking-wider mb-4 px-2">
-                История расшифровок
+                {t('title')}
             </h3>
 
             {isLoading ? (
@@ -105,17 +104,21 @@ export function AnalysisTreeSidebar({ currentId }: AnalysisTreeSidebarProps) {
     );
 }
 
-// Внутренний компонент для папки
+// --- ВНУТРЕННИЙ КОМПОНЕНТ ---
 function FolderTreeItem({ profile, analyses, currentId }: { profile: PatientProfile, analyses: AnalysisResponse[], currentId: string }) {
-    const isDefaultProfile = profile.full_name === "Анализы" || profile.full_name.includes("Основной");
+    const t = useTranslations('TreeSidebar');
+    const locale = useLocale();
+    
+    // Подбираем правильную локаль для date-fns в зависимости от языка приложения
+    const dateLocale = locale === 'ru' ? ru : locale === 'es' ? es : enUS;
+
+    const isDefaultProfile = profile.full_name === "Анализы" || profile.full_name.includes("Основной") || profile.full_name.includes("Мой");
     const hasCurrentAnalysis = analyses.some(a => a.uid === currentId);
     
-    // Автоматически раскрываем папку, если в ней находится текущий открытый анализ
     const [isOpen, setIsOpen] = useState(hasCurrentAnalysis);
 
     return (
         <div className="flex flex-col">
-            {/* Сама папка */}
             <button 
                 onClick={() => setIsOpen(!isOpen)}
                 className={clsx(
@@ -131,25 +134,37 @@ function FolderTreeItem({ profile, analyses, currentId }: { profile: PatientProf
                     {isDefaultProfile ? <FolderOpen className="w-4 h-4" /> : <User className="w-4 h-4" />}
                 </div>
                 <span className="text-sm font-bold text-slate-800 truncate flex-1">
-                    {isDefaultProfile ? 'Без привязки' : profile.full_name}
+                    {isDefaultProfile ? t('unassigned') : profile.full_name}
                 </span>
                 <span className="text-[10px] font-bold text-slate-400 bg-slate-100 px-1.5 py-0.5 rounded-md">
                     {analyses.length}
                 </span>
             </button>
 
-            {/* Вложенные файлы (Анимация через grid-rows) */}
             <div className={clsx(
                 "grid transition-all duration-300 ease-in-out pl-6 ml-3 border-l-2",
                 isOpen ? "grid-rows-[1fr] opacity-100 border-slate-200/60 mt-2" : "grid-rows-[0fr] opacity-0 border-transparent mt-0"
             )}>
                 <div className="overflow-hidden flex flex-col gap-1">
                     {analyses.length === 0 ? (
-                        <p className="text-xs text-slate-400 py-1 pl-2">Пусто</p>
+                        <p className="text-xs text-slate-400 py-1 pl-2">{t('empty')}</p>
                     ) : (
                         analyses.map(analysis => {
                             const isCurrent = analysis.uid === currentId;
-                            const dateStr = analysis.created_at ? format(new Date(analysis.created_at), 'd MMM yyyy', { locale: ru }) : 'Неизвестно';
+                            
+                            // --- НОВАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ДАТЫ ---
+                            let dateStr = t('unknownDate');
+                            
+                            // 1. Сначала пытаемся взять реальную дату анализа из результатов ИИ
+                            if (analysis.ai_result?.patient_info?.extracted_date) {
+                                // Берем дату (отсекаем время, если ИИ вернул "30.10.2025 08:23")
+                                dateStr = analysis.ai_result.patient_info.extracted_date.split(' ')[0];
+                            } 
+                            // 2. Если ИИ не нашел дату, берем дату загрузки файла (фолбэк)
+                            else if (analysis.created_at) {
+                                dateStr = format(new Date(analysis.created_at), 'd MMM yyyy', { locale: dateLocale });
+                            }
+                            // -------------------------------------
                             
                             return (
                                 <Link 
@@ -163,7 +178,7 @@ function FolderTreeItem({ profile, analyses, currentId }: { profile: PatientProf
                                     )}
                                 >
                                     <FileText className={clsx("w-3.5 h-3.5 shrink-0", isCurrent ? "text-[#3f94ca]" : "text-slate-400")} />
-                                    <span className="truncate">От {dateStr}</span>
+                                    <span className="truncate">{t('datePrefix', { date: dateStr })}</span>
                                 </Link>
                             );
                         })

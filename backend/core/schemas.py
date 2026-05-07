@@ -1,5 +1,5 @@
 from ninja import Schema
-from typing import List, Optional, Any
+from typing import List, Optional, Any, List
 import uuid
 from datetime import date, datetime
 
@@ -49,8 +49,6 @@ class PatientProfileSchema(Schema):
     gender: Optional[str] = None
     weight: Optional[float] = None
     height: Optional[float] = None
-    lifestyle: Optional[str] = None
-    chronic_diseases: Optional[str] = None
 
 class CreateProfileSchema(Schema):
     full_name: str
@@ -58,8 +56,6 @@ class CreateProfileSchema(Schema):
     gender: Optional[str] = None 
     weight: Optional[float] = None
     height: Optional[float] = None
-    lifestyle: Optional[str] = None
-    chronic_diseases: Optional[str] = None
 
 class UpdateProfileSchema(Schema):
     full_name: str
@@ -67,8 +63,6 @@ class UpdateProfileSchema(Schema):
     gender: Optional[str] = None
     weight: Optional[float] = None
     height: Optional[float] = None
-    lifestyle: Optional[str] = None
-    chronic_diseases: Optional[str] = None
 
 class AssignProfileRequest(Schema):
     profile_id: int
@@ -101,9 +95,16 @@ class AnalysisResponseSchema(Schema):
     created_at: datetime
     ai_result: Optional[AIResultSchema] = None
     patient_profile_id: Optional[int] = None
+    parent_analysis_uid: Optional[uuid.UUID] = None 
+    
     @staticmethod
     def resolve_patient_profile_id(obj):
         return obj.patient_id
+        
+    # Резолвер, чтобы отдать на фронт UUID родительского анализа (если он есть)
+    @staticmethod
+    def resolve_parent_analysis_uid(obj):
+        return obj.parent_analysis.uid if obj.parent_analysis else None
 
 class IndicatorHistoryPoint(Schema):
     date: date  # <--- ИСПРАВЛЕНО: было datetime.date, стало просто date
@@ -115,3 +116,10 @@ class ChartResponseSchema(Schema):
     slug: str
     name: str
     data: List[IndicatorHistoryPoint]
+
+class ChatMessageSchema(Schema):
+    role: str  # 'user' или 'assistant'
+    content: str
+
+class ChatRequestSchema(Schema):
+    messages: List[ChatMessageSchema]

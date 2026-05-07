@@ -6,6 +6,7 @@ import axios from 'axios';
 import { Loader2, Mail, Lock, ArrowRight, CheckCircle, ArrowLeft, KeyRound } from 'lucide-react';
 import Link from 'next/link';
 import { useToast } from '@/components/ui/toast';
+import { useTranslations } from 'next-intl';
 
 // Импортируем наш фон
 import StaticBackground from '@/components/background/StaticBackground';
@@ -14,6 +15,7 @@ function ResetPasswordContent() {
     const searchParams = useSearchParams();
     const router = useRouter();
     const { toast } = useToast();
+    const t = useTranslations('Auth.Reset');
 
     // Параметры из URL (если пришли из письма)
     const uid = searchParams.get('uid');
@@ -43,8 +45,8 @@ function ResetPasswordContent() {
                 
                 setIsSuccess(true);
                 toast({
-                    title: "Письмо отправлено",
-                    description: "Проверьте вашу почту (и папку Спам).",
+                    title: t('toast.emailSentTitle'),
+                    description: t('toast.emailSentDesc'),
                     variant: "success",
                 });
 
@@ -52,8 +54,8 @@ function ResetPasswordContent() {
                 // 2. УСТАНОВКА НОВОГО ПАРОЛЯ
                 if (password !== confirmPassword) {
                     toast({
-                        title: "Ошибка",
-                        description: "Пароли не совпадают",
+                        title: t('toast.errorTitle'),
+                        description: t('toast.passwordsNotMatch'),
                         variant: "destructive",
                     });
                     setIsLoading(false);
@@ -62,8 +64,8 @@ function ResetPasswordContent() {
 
                 if (password.length < 6) {
                     toast({
-                        title: "Ошибка",
-                        description: "Пароль должен быть не менее 6 символов",
+                        title: t('toast.errorTitle'),
+                        description: t('toast.passwordTooShort'),
                         variant: "destructive",
                     });
                     setIsLoading(false);
@@ -77,8 +79,8 @@ function ResetPasswordContent() {
                 });
 
                 toast({
-                    title: "Успешно!",
-                    description: "Пароль изменен. Теперь вы можете войти.",
+                    title: t('toast.successTitle'),
+                    description: t('toast.successDesc'),
                     variant: "success",
                 });
                 
@@ -88,9 +90,9 @@ function ResetPasswordContent() {
 
         } catch (err: any) {
             console.error(err);
-            const msg = err.response?.data?.message || "Произошла ошибка";
+            const msg = err.response?.data?.message || t('toast.defaultError');
             toast({
-                title: "Ошибка",
+                title: t('toast.errorTitle'),
                 description: msg,
                 variant: "destructive",
             });
@@ -107,16 +109,17 @@ function ResetPasswordContent() {
                 <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
                     <CheckCircle className="w-8 h-8 text-green-600" />
                 </div>
-                <h2 className="text-2xl font-bold text-slate-900 mb-2">Проверьте почту</h2>
+                <h2 className="text-2xl font-bold text-slate-900 mb-2">{t('successScreen.title')}</h2>
                 <p className="text-slate-500 mb-8 leading-relaxed">
-                    Мы отправили инструкцию по сбросу пароля на <strong>{email}</strong>.
-                    Ссылка действительна 24 часа.
+                    {t('successScreen.desc1')} <strong>{email}</strong>.
+                    <br />
+                    {t('successScreen.desc2')}
                 </p>
                 <Link 
                     href="/auth" 
                     className="block w-full bg-slate-100/80 text-slate-700 font-bold py-3 rounded-lg hover:bg-slate-200 transition-colors"
                 >
-                    Вернуться ко входу
+                    {t('successScreen.backToLogin')}
                 </Link>
             </div>
         );
@@ -135,12 +138,12 @@ function ResetPasswordContent() {
                 )}
                 
                 <h2 className="text-xl font-bold text-white mb-2 flex items-center justify-center gap-2">
-                    {mode === 'request' ? 'Сброс пароля' : 'Новый пароль'}
+                    {mode === 'request' ? t('form.titleRequest') : t('form.titleConfirm')}
                 </h2>
                 <p className="text-white text-xs">
                     {mode === 'request' 
-                        ? 'Введите email, чтобы получить ссылку' 
-                        : 'Придумайте надежный пароль'}
+                        ? t('form.subtitleRequest') 
+                        : t('form.subtitleConfirm')}
                 </p>
             </div>
 
@@ -149,7 +152,7 @@ function ResetPasswordContent() {
                 {mode === 'request' ? (
                     // Поле EMAIL
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-slate-700 uppercase">Email</label>
+                        <label className="text-xs font-bold text-slate-700 uppercase">{t('form.emailLabel')}</label>
                         <div className="relative">
                             <Mail className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                             <input 
@@ -166,7 +169,7 @@ function ResetPasswordContent() {
                     // Поля ПАРОЛЯ
                     <>
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-700 uppercase">Новый пароль</label>
+                            <label className="text-xs font-bold text-slate-700 uppercase">{t('form.newPasswordLabel')}</label>
                             <div className="relative">
                                 <KeyRound className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                                 <input 
@@ -180,7 +183,7 @@ function ResetPasswordContent() {
                             </div>
                         </div>
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-slate-700 uppercase">Повторите пароль</label>
+                            <label className="text-xs font-bold text-slate-700 uppercase">{t('form.confirmPasswordLabel')}</label>
                             <div className="relative">
                                 <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
                                 <input 
@@ -202,7 +205,7 @@ function ResetPasswordContent() {
                     className="w-full bg-secondary text-white font-bold py-2.5 rounded-lg hover:secondary transition-all flex items-center justify-center gap-2 disabled:opacity-70 disabled:cursor-not-allowed"
                 >
                     {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : <ArrowRight className="w-5 h-5" />}
-                    {mode === 'request' ? 'Отправить ссылку' : 'Сохранить пароль'}
+                    {mode === 'request' ? t('form.btnRequest') : t('form.btnConfirm')}
                 </button>
             </form>
         </div>

@@ -48,6 +48,7 @@ INSTALLED_APPS = [
     'ninja_jwt',
     'core',
     'analysis',
+    'premium',
     "anymail",
 ]
 

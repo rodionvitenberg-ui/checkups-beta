@@ -63,16 +63,35 @@
     "legal": "Información legal"
   },
   "Upload": {
-    "title": "Documentos cargados",
-    "subtitle": "Inicie la interpretación o adjunte otro archivo (máximo: {max})",
-    "dropFiles": "Suelte los archivos",
-    "addMore": "Añadir documento",
-    "fileFormat": "PDF, JPG, PNG hasta 10MB",
-    "selectedFiles": "Archivos seleccionados",
-    "maxFilesError": "Límite: {max} archivo a la vez.",
-    "uploadError": "Ocurrió un error al enviar. Inténtelo de nuevo.",
-    "sending": "Enviando al servidor...",
-    "startAnalysis": "Iniciar análisis"
+    "createNew": "Agregar nuevo paciente",
+    "newProfileHint": "El nuevo perfil se guardará automáticamente en su cuenta personal.",
+    "title": "Enviar para análisis",
+    "subtitle": "Máximo de {max} archivo a la vez",
+    "dropFiles": "Suelte el archivo aquí",
+    "addMore": "Haga clic o arrastre un archivo",
+    "fileFormat": "Formatos admitidos: PDF, JPG, PNG",
+    "documentLabel": "Documento",
+    "sending": "Enviando...",
+    "startAnalysis": "Iniciar análisis",
+    "profile": {
+      "title": "¿A quién pertenece este análisis?",
+      "authHint": "La IA tendrá en cuenta los parámetros del perfil seleccionado para una interpretación precisa.",
+      "guestHint": "Indique los datos del paciente para que la IA pueda aplicar las normas médicas correctas (los valores de referencia dependen del sexo y la edad).",
+      "nameLabel": "Nombre del paciente",
+      "namePlaceholder": "Ej: Juan Pérez",
+      "genderLabel": "Sexo",
+      "genderMale": "Masc.",
+      "genderFemale": "Fem.",
+      "dobLabel": "Fecha de nacimiento",
+      "createNew": "Agregar paciente",
+"newProfileHint": "El nuevo perfil se guardará automáticamente en su cuenta personal."
+    },
+    "errors": {
+      "maxFiles": "Puede subir un máximo de {max} archivo",
+      "fillAllFields": "Por favor, complete todos los datos del paciente para que podamos interpretar los análisis con precisión.",
+      "uploadFailed": "Error al subir el archivo",
+      "defaultError": "Ocurrió un error durante la carga"
+    }
   },
   "Claim": {
     "defaultLoading": "Preparando el análisis...",
@@ -128,7 +147,10 @@
   },
   "Dashboard": {
     "AnalysisItem": {
-      "confirmDelete": "¿Está seguro de que desea eliminar este análisis? Esta acción no se puede deshacer.",
+      "deleteModalTitle": "Eliminar análisis",
+  "confirmDelete": "¿Está seguro de que desea eliminar este análisis? Esta acción no se puede deshacer.",
+  "cancelBtn": "Cancelar",
+  "confirmDeleteBtn": "Eliminar",
       "from": "del",
       "defaultName": "Análisis",
       "status": {
@@ -158,9 +180,13 @@
     "patientDesc": "Análisis de este paciente",
     "tabHistory": "Lista de documentos",
     "tabDynamics": "Evolución de indicadores",
+    "tabSettings": "Configuración",
     "emptyHistory": "Aún no hay análisis cargados",
     "deleteButton": "Eliminar perfil",
-    "confirmDelete": "¿Eliminar al paciente y todos sus análisis?",
+    "deleteModalTitle": "Eliminar perfil",
+  "confirmDelete": "¿Está seguro de que desea eliminar el perfil? Todos los análisis cargados y el gráfico de evolución se eliminarán de forma permanente.",
+  "cancelBtn": "Cancelar",
+  "confirmDeleteBtn": "Eliminar",
     "titles": {
       "rename": "Renombrar"
     },
@@ -175,6 +201,45 @@
       "errorDeleteDesc": "No se pudo eliminar el perfil"
       }
     },
+    "PatientSettings": {
+    "baseParamsTitle": "Parámetros físicos",
+    "heightLabel": "Altura (cm)",
+    "weightLabel": "Peso (kg)",
+    "saveBtn": "Guardar cambios",
+    "premiumTitle": "Características de salud",
+    "premiumDesc": "Añada enfermedades crónicas y detalles de estilo de vida. La IA tendrá en cuenta este contexto al volver a analizar los resultados.",
+    "noTraits": "No se han especificado características",
+    "addTraitBtn": "Añadir característica",
+    "modalSelectTitle": "Seleccione una característica",
+    "modalDetailsTitle": "Especifique los detalles",
+    "detailsLabel": "Detalles (duración, dosis, frecuencia)",
+    "detailsPlaceholder": "Por ejemplo: historial de 10 años, fumo un paquete al día...",
+    "detailsHint": "La IA analizará este texto. Escriba con sus propias palabras.",
+    "backBtn": "Volver",
+    "saveTraitBtn": "Añadir",
+    "traitAdded": "Característica añadida con éxito",
+    "traitRemoved": "Característica eliminada",
+    "successTitle": "Éxito",
+    "successDesc": "Parámetros del perfil guardados",
+    "errorTitle": "Error",
+    "errorDesc": "Algo salió mal",
+    "categories": {
+      "disease": "Enfermedades",
+      "bad_habit": "Malos hábitos",
+      "good_habit": "Hábitos saludables",
+      "feature": "Características fisiológicas"
+    },
+    "createCustomBtn": "¿No está en la lista? Añada la suya",
+    "genderLabel": "Sexo",
+  "genderNotSelected": "No especificado",
+  "genderMale": "Masculino",
+  "genderFemale": "Femenino",
+  "dobLabel": "Fecha de nacimiento",
+  "modalCustomTitle": "Característica personalizada",
+  "customNameLabel": "Nombre",
+  "customNamePlaceholder": "Ej: Consumo diario de proteína",
+  "customCategoryLabel": "Categoría"
+  },
      "Page": {
        "loadingData": "Cargando datos...",
        "title": "Panel",
@@ -184,7 +249,21 @@
        "changePassword": "Cambiar contraseña",
        "logout": "Cerrar sesión",
        "uploadModalTitle": "Cargar análisis"
-    }
+    },
+    "ChangePasswordModal": {
+    "title": "Cambiar contraseña",
+    "oldPasswordLabel": "Contraseña actual",
+    "oldPasswordPlaceholder": "Ingrese la contraseña anterior",
+    "newPasswordLabel": "Nueva contraseña",
+    "newPasswordPlaceholder": "Mínimo 6 caracteres",
+    "confirmPasswordLabel": "Confirmar contraseña",
+    "confirmPasswordPlaceholder": "Repita la nueva contraseña",
+    "btnSave": "Guardar cambios",
+    "errorMismatch": "Las nuevas contraseñas no coinciden",
+    "errorTooShort": "La contraseña debe tener al menos 6 caracteres",
+    "errorServer": "Contraseña actual incorrecta o error del servidor",
+    "successChanged": "¡Contraseña cambiada con éxito!"
+  }
   },
   "Analysis": {
     "Loading": {
@@ -213,6 +292,129 @@
       "causesTitle": "Posibles causas",
       "noDeviations": "No se identificaron desviaciones significativas.",
       "recommendationsTitle": "Recomendaciones"
-    }
+    },
+     "Header": {
+      "title": "Interpretación del",
+      "statusNormal": "Normal",
+      "statusAttention": "Atención",
+      "btnAdd": "Añadir análisis",
+      "btnOriginal": "Original",
+      "btnDownload": "Descargar PDF"
+    },
+     "Page": {
+      "pdfError": "No se pudo generar el PDF.",
+      "originalError": "No se pudo cargar el archivo original.",
+      "disclaimerTitle": "Atención:",
+      "disclaimerText": "Este informe ha sido generado por inteligencia artificial, no constituye un diagnóstico médico y tiene un propósito puramente informativo. Por favor, consulte obligatoriamente a un médico cualificado para obtener un diagnóstico preciso y un plan de tratamiento.",
+      "uploadModalTitle": "Cargar análisis"
+    },
+    "RefineBlock": {
+    "cardTitle": "Refinar análisis (PRO)",
+    "cardDesc": "La IA ha analizado el formulario. Añada su peso exacto, altura e historial de enfermedades crónicas para obtener un recalculo personalizado.",
+    "openModalBtn": "Ingresar datos",
+    "modalTitle": "Parámetros del paciente",
+    "modalSubtitle": "Estos datos influyen fundamentalmente en los valores de referencia y en las causas de las desviaciones.",
+    "baseParams": "Métricas base",
+    "saveParams": "Guardar",
+    "gender": "Sexo",
+    "notSelected": "No especificado",
+    "male": "Masculino",
+    "female": "Femenino",
+    "dob": "Fecha de nacimiento",
+    "height": "Altura (cm)",
+    "weight": "Peso (kg)",
+    "healthTraits": "Características de salud (PRO)",
+    "noTraits": "No especificado",
+    "addTraitBtn": "Añadir característica",
+    "reanalyzeWarning": "Al iniciar el recalculo, la IA volverá a analizar el formulario original teniendo en cuenta todos los datos ingresados. Esto puede tardar unos 30 segundos.",
+    "saveBeforeReanalyze": "Primero guarde las métricas base",
+    "startReanalyzeBtn": "Iniciar recalculo personalizado",
+    "savedTitle": "Guardado",
+    "savedDesc": "Parámetros base actualizados",
+    "reanalyzeSuccessTitle": "Recalculo iniciado",
+    "reanalyzeSuccessDesc": "La IA está analizando los datos de nuevo",
+    "errorTitle": "Error",
+    "errorDesc": "Algo salió mal"
   }
+  },
+  "Auth": {
+    "titleRegister": "Crear cuenta",
+    "titleLogin": "Bienvenido de nuevo",
+    "titleVerify": "Verificación",
+    "descRegister": "Ingrese sus datos para obtener acceso",
+    "descLogin": "Ingrese su correo electrónico y contraseña para iniciar sesión",
+    "descVerify": "Ingrese el código enviado a su correo electrónico",
+    "tabRegister": "Registro",
+    "tabLogin": "Iniciar sesión",
+    "emailLabel": "Correo electrónico",
+    "passwordLabel": "Contraseña",
+    "codeLabel": "Código del correo",
+    "forgotPassword": "¿Olvidó su contraseña?",
+    "btnRegister": "Obtener código",
+    "btnVerify": "Verificar",
+    "btnLogin": "Iniciar sesión",
+    "agreement": "Al hacer clic en el botón, acepta la política de procesamiento de datos personales. Se enviará un código de acceso al correo electrónico especificado.",
+    "goBack": "Volver atrás",
+    "toast": {
+      "codeSentTitle": "¡Código enviado!",
+      "codeSentDesc": "Hemos enviado un código de 6 dígitos a {email}",
+      "welcomeTitle": "¡Bienvenido!",
+      "welcomeDesc": "Inicio de sesión exitoso.",
+      "accountExistsTitle": "La cuenta ya existe",
+      "accountExistsDesc": "Este correo ya está registrado. Por favor, inicie sesión con su contraseña.",
+      "resetPasswordBtn": "Restablecer contraseña",
+      "invalidCodeTitle": "Código inválido",
+      "invalidCodeDesc": "Compruebe los números del correo e inténtelo de nuevo.",
+      "errorTitle": "Error",
+      "defaultError": "Ha ocurrido un error. Compruebe sus datos."
+    },
+    "Reset": {
+      "toast": {
+        "emailSentTitle": "Correo enviado",
+        "emailSentDesc": "Revise su correo (y la carpeta de Spam).",
+        "errorTitle": "Error",
+        "passwordsNotMatch": "Las contraseñas no coinciden",
+        "passwordTooShort": "La contraseña debe tener al menos 6 caracteres",
+        "successTitle": "¡Éxito!",
+        "successDesc": "Contraseña cambiada. Ahora puede iniciar sesión.",
+        "defaultError": "Ha ocurrido un error"
+      },
+      "successScreen": {
+        "title": "Revise su correo",
+        "desc1": "Hemos enviado instrucciones para restablecer la contraseña a ",
+        "desc2": "El enlace es válido por 24 horas.",
+        "backToLogin": "Volver a iniciar sesión"
+      },
+      "form": {
+        "titleRequest": "Restablecer contraseña",
+        "titleConfirm": "Nueva contraseña",
+        "subtitleRequest": "Ingrese su correo electrónico para recibir un enlace",
+        "subtitleConfirm": "Cree una contraseña segura",
+        "emailLabel": "Correo electrónico",
+        "newPasswordLabel": "Nueva contraseña",
+        "confirmPasswordLabel": "Confirmar contraseña",
+        "btnRequest": "Enviar enlace",
+        "btnConfirm": "Guardar contraseña"
+      }
+    }
+  },
+  "TreeSidebar": {
+  "title": "Historial de análisis",
+  "unassigned": "Sin asignar",
+  "empty": "Vacío",
+  "unknownDate": "Desconocido",
+  "datePrefix": "De {date}"
+},
+"Header": {
+  "home": "Inicio",
+  "dashboard": "Panel",
+  "login": "Iniciar sesión",
+  "openMenu": "Abrir menú",
+  "closeMenu": "Cerrar menú"
+},
+"Terms": {
+  "pageTitle": "Términos de Servicio",
+  "pageSubtitle": "Reglas de uso del servicio y descargo de responsabilidad",
+  "lastUpdated": "Última actualización"
+}
 }

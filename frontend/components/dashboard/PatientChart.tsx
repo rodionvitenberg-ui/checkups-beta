@@ -4,7 +4,8 @@ import { useState, useMemo } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-import { ChartData } from '@/lib/api';
+// ИСПРАВЛЕНИЕ: Импортируем из types, а не из api
+import { ChartData } from '@/lib/types'; 
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Activity } from 'lucide-react';
@@ -31,11 +32,15 @@ export function PatientChart({ history }: PatientChartProps) {
 
   const chartData = useMemo(() => {
     if (!activeChart) return [];
-    return activeChart.data.map(point => ({
-      ...point,
-      dateObj: parseISO(point.date).getTime(), 
-      formattedDate: format(parseISO(point.date), 'd MMM yyyy', { locale: ru })
-    }));
+    return activeChart.data.map(point => {
+      // ИСПРАВЛЕНИЕ: Безопасный парсинг даты
+      const dateVal = point.date ? parseISO(point.date) : new Date();
+      return {
+        ...point,
+        dateObj: dateVal.getTime(), 
+        formattedDate: format(dateVal, 'd MMM yyyy', { locale: ru })
+      };
+    });
   }, [activeChart]);
 
   // Кастомная всплывающая подсказка
@@ -98,22 +103,20 @@ export function PatientChart({ history }: PatientChartProps) {
         <ResponsiveContainer width="100%" height="100%">
           <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
             <defs>
-              {/* Красивый градиент под линией */}
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
                 <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25}/>
                 <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
               </linearGradient>
             </defs>
             
-            {/* Убрали вертикальные линии сетки, оставили только горизонтальные пунктиры */}
             <CartesianGrid strokeDasharray="4 4" vertical={false} stroke="#f1f5f9" />
             
             <XAxis 
               dataKey="formattedDate" 
               stroke="#94a3b8" 
               fontSize={12}
-              tickLine={false} // Убрали засечки
-              axisLine={false} // Убрали жирную линию оси
+              tickLine={false}
+              axisLine={false}
               tickMargin={12}
               minTickGap={20}
             />
@@ -124,7 +127,7 @@ export function PatientChart({ history }: PatientChartProps) {
               tickLine={false}
               axisLine={false}
               domain={['auto', 'auto']}
-              tickFormatter={(val) => val.toLocaleString()} // Форматирование длинных чисел
+              tickFormatter={(val) => val.toLocaleString()} 
             />
             
             <Tooltip 

@@ -10,7 +10,8 @@ from ninja_jwt.authentication import JWTAuth
 # Django imports
 from django.shortcuts import get_object_or_404
 from django.db import transaction
-from django.http import FileResponse, Http404, HttpRequest
+from django.http import FileResponse, Http404, HttpRequest, StreamingHttpResponse
+from analysis.services import ChatAssistant
 from typing import Optional, Any
 from django.contrib.auth import authenticate, get_user_model
 from django.contrib.auth.tokens import default_token_generator
@@ -39,7 +40,9 @@ from .schemas import (
     RefreshRequestSchema,
     ClaimRequestOTPSchema,
     ClaimVerifyOTPSchema,
-    UpdateProfileSchema
+    UpdateProfileSchema,
+    ChatMessageSchema,
+    ChatRequestSchema
 )
 from .tasks import process_analysis_task
 
@@ -180,20 +183,36 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
 
     analyses = MedicalAnalysis.objects.filter(uid__in=payload.analysis_uids)
     
-    for analysis in analyses:
-        if analysis.user and analysis.user != user:
-            return api.create_response(request, {"message": _("Один из анализов уже привязан к другому аккаунту")}, status=400)
-
-    # Используем первый созданный профиль (основной) для привязки анонимных анализов
-    patient_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
-    
     with transaction.atomic():
         for analysis in analyses:
             if not analysis.user:
                 analysis.user = user
-                analysis.patient = patient_profile
-                analysis.save(update_fields=['user', 'patient'])
-                AnalysisIndicator.objects.filter(analysis=analysis).update(patient=patient_profile)
+                
+                # Если у анализа есть профиль-сирота, привязываем его к юзеру
+                if analysis.patient and analysis.patient.user is None:
+                    # Проверяем, нет ли уже у юзера профиля с таким же именем
+                    existing_profile = PatientProfile.objects.filter(user=user, full_name=analysis.patient.full_name).first()
+                    
+                    if existing_profile:
+                        # Если профиль с таким именем уже есть (например, юзер создал его вручную), 
+                        # перепривязываем анализ к существующему, а сироту удаляем
+                        old_orphan = analysis.patient
+                        analysis.patient = existing_profile
+                        analysis.save(update_fields=['user', 'patient'])
+                        old_orphan.delete()
+                    else:
+                        # Если такого профиля нет, просто "усыновляем" сироту
+                        analysis.patient.user = user
+                        analysis.patient.save(update_fields=['user'])
+                        analysis.save(update_fields=['user'])
+                else:
+                    # Если профиля не было совсем, привязываем к основному
+                    main_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
+                    analysis.patient = main_profile
+                    analysis.save(update_fields=['user', 'patient'])
+
+                # Обновляем записи в истории, чтобы они тоже принадлежали пациенту
+                AnalysisIndicator.objects.filter(analysis=analysis).update(patient=analysis.patient)
 
     first_pending = analyses.filter(status=MedicalAnalysis.Status.PENDING).first()
     if first_pending:
@@ -280,7 +299,15 @@ def change_password(request, payload: ChangePasswordSchema):
 # ==========================================
 
 @api.post("/analyses/upload", response=AnalysisResponseSchema, auth=None)
-def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Form(True)):
+def upload_analysis(
+    request, 
+    file: UploadedFile = File(...), 
+    is_first: bool = Form(True),
+    patient_id: str = Form(None),   
+    guest_name: str = Form(None),
+    guest_gender: str = Form(None),
+    guest_dob: str = Form(None)
+):
     user = None
     patient_profile = None 
     
@@ -292,14 +319,36 @@ def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Fo
             user = User.objects.get(id=access_token['user_id'])
         except (TokenError, User.DoesNotExist):
             pass
+    
+    print(f"🕵️ ДЕБАГ ЗАГРУЗКИ: user={user}, patient_id='{patient_id}', guest_name='{guest_name}'")
             
     if user and user.is_authenticated:
-        # Берем основной (первый) профиль
-        patient_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
-        if not patient_profile:
-             patient_profile = PatientProfile.objects.create(
-                 user=user, full_name=_("Я (Основной профиль)")
-             )
+        if patient_id and patient_id != 'new':
+            # Выбрали существующего пациента
+            try:
+                patient_profile = get_object_or_404(PatientProfile, id=int(patient_id), user=user)
+            except ValueError:
+                pass
+        elif patient_id == 'new' and guest_name:
+            # АВТОРИЗОВАННЫЙ юзер создает новый профиль прямо при загрузке
+            patient_profile = PatientProfile.objects.create(
+                user=user,
+                full_name=guest_name,
+                gender=guest_gender if guest_gender in ['M', 'F'] else None,
+                birth_date=guest_dob if guest_dob else None
+            )
+        else:
+            # Дефолтный фолбэк
+            patient_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
+    else:
+        # ГОСТЬ (Сирота)
+        if guest_name:
+            patient_profile = PatientProfile.objects.create(
+                user=None,
+                full_name=guest_name,
+                gender=guest_gender if guest_gender in ['M', 'F'] else None,
+                birth_date=guest_dob if guest_dob else None
+            )
 
     analysis = MedicalAnalysis.objects.create(
         file=file,
@@ -309,12 +358,10 @@ def upload_analysis(request, file: UploadedFile = File(...), is_first: bool = Fo
     )
     
     if is_first:
-        # Прокидываем язык!
         lang = getattr(request, 'LANGUAGE_CODE', 'en')
         transaction.on_commit(lambda: process_analysis_task.delay(analysis.uid, lang))
         
     return analysis
-
 # ---------------------------------------------------------
 
 @api.get("/analyses/{uid}", response=AnalysisResponseSchema, auth=None)
@@ -346,6 +393,7 @@ def reanalyze_document(request, uid: uuid.UUID):
         file=old_analysis.file,
         user=old_analysis.user,
         patient=old_analysis.patient,
+        parent_analysis=old_analysis,
         status=MedicalAnalysis.Status.PENDING
     )
     
@@ -396,6 +444,26 @@ def update_profile(request, profile_id: int, payload: UpdateProfileSchema):
     profile.save()
     return profile
 
+@api.delete("/profiles/{profile_id}", auth=JWTAuth())
+def delete_patient_profile(request, profile_id: int):
+    # Находим профиль, принадлежащий именно этому пользователю
+    profile = get_object_or_404(PatientProfile, id=profile_id, user=request.user)
+    
+    # Защита: не позволяем удалить основной профиль
+    first_profile = PatientProfile.objects.filter(user=request.user).order_by('created_at').first()
+    if profile.id == first_profile.id:
+        return api.create_response(
+            request, 
+            {"message": _("Основной профиль нельзя удалить")}, 
+            status=400
+        )
+        
+    # Благодаря on_delete=models.CASCADE в моделях, 
+    # все связанные анализы и показатели удалятся автоматически
+    profile.delete()
+    
+    return {"success": True, "message": _("Профиль успешно удален")}
+
 @api.get("/patients/{patient_id}/history", response=List[ChartResponseSchema], auth=JWTAuth())
 def get_patient_history(request, patient_id: int, slugs: str = None):
     profile = get_object_or_404(PatientProfile, id=patient_id, user=request.user)
@@ -437,3 +505,60 @@ def delete_analysis(request, uid: uuid.UUID):
 
     analysis.delete()
     return {"success": True}
+
+@api.post("/analyses/{uid}/chat", auth=JWTAuth())
+def chat_with_analysis(request, uid: uuid.UUID, payload: ChatRequestSchema):
+    analysis = get_object_or_404(MedicalAnalysis, uid=uid)
+    
+    # Защита: общаться можно только со своими анализами
+    if analysis.user != request.user:
+        return api.create_response(request, {"message": _("Доступ запрещен")}, status=403)
+
+    if not analysis.ai_result:
+        return api.create_response(request, {"message": _("Анализ еще не расшифрован")}, status=400)
+
+    # 1. Собираем пациентский контекст СТРОГО для этого анализа
+    context_lines = []
+    if analysis.patient:
+        if analysis.patient.gender:
+            context_lines.append(f"Пол: {analysis.patient.get_gender_display()}")
+        if analysis.patient.birth_date:
+            context_lines.append(f"Дата рождения: {analysis.patient.birth_date}")
+        if analysis.patient.weight and analysis.patient.height:
+            context_lines.append(f"Вес: {analysis.patient.weight} кг, Рост: {analysis.patient.height} см")
+        
+        # Добавляем особенности (PRO), если есть
+        try:
+            premium_traits = analysis.patient.premium_traits.all()
+            if premium_traits.exists():
+                context_lines.append("Особенности здоровья:")
+                for link in premium_traits:
+                    context_lines.append(f"- {link.trait.name}: {link.details or 'не указано'}")
+        except Exception:
+            pass
+
+    patient_context = "\n".join(context_lines)
+
+    # 2. Инициализируем стриминг
+    lang = getattr(request, 'LANGUAGE_CODE', 'ru')
+    assistant = ChatAssistant(language_code=lang)
+    
+    # 3. Функция-генератор для формата Server-Sent Events (SSE)
+    def event_stream():
+        stream_generator = assistant.stream_chat(
+            analysis_data=analysis.ai_result, 
+            patient_context=patient_context, 
+            chat_history=payload.messages
+        )
+        for chunk in stream_generator:
+            # Формат SSE: "data: <содержимое>\n\n"
+            # Заменяем переносы строк, чтобы не сломать протокол SSE
+            clean_chunk = chunk.replace("\n", "\\n")
+            yield f"data: {clean_chunk}\n\n"
+        
+        # Сигнал окончания потока
+        yield "data: [DONE]\n\n"
+
+    return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
+api.add_router("/premium", "premium.api.router")

@@ -8,7 +8,7 @@ from django.utils.translation import gettext_lazy as _
 class CustomUserManager(BaseUserManager):
     def create_user(self, email, password=None, **extra_fields):
         if not email:
-            raise ValueError('Email обязателен')
+            raise ValueError(_('Email обязателен'))
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
         user.set_password(password)
@@ -23,7 +23,7 @@ class CustomUserManager(BaseUserManager):
 # --- Кастомный Юзер ---
 class User(AbstractUser):
     username = None
-    email = models.EmailField(_('Email address'), unique=True) # Добавили перевод
+    email = models.EmailField(_('Email address'), unique=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
     
     USERNAME_FIELD = 'email'
@@ -35,38 +35,53 @@ class User(AbstractUser):
         return self.email
     
 class PatientProfile(models.Model):
-    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='patients')
+    # ИЗМЕНЕНИЕ: null=True, blank=True для поддержки гостевого входа
+    # Сохраняем CASCADE и related_name для корректной работы ЛК
+    user = models.ForeignKey(
+        User, 
+        on_delete=models.CASCADE, 
+        related_name='patients', 
+        null=True, 
+        blank=True
+    )
     full_name = models.CharField(max_length=255, verbose_name=_("ФИО"))
     
     birth_date = models.DateField(null=True, blank=True, verbose_name=_("Дата рождения"))
     gender = models.CharField(
         max_length=10, 
-        choices=[('M', _('Мужской')), ('F', _('Женский'))], # Переводим choices
+        choices=[('M', _('Мужской')), ('F', _('Женский'))],
         null=True, blank=True,
         verbose_name=_("Пол")
     )
     
-    # Оборачиваем help_text
     weight = models.FloatField(null=True, blank=True, help_text=_("Вес в кг"), verbose_name=_("Вес"))
     height = models.FloatField(null=True, blank=True, help_text=_("Рост в см"), verbose_name=_("Рост"))
-    lifestyle = models.TextField(null=True, blank=True, help_text=_("Вредные привычки, диета, активность"), verbose_name=_("Образ жизни"))
-    chronic_diseases = models.TextField(null=True, blank=True, help_text=_("Хронические заболевания"), verbose_name=_("Хронические заболевания"))
     
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"{self.full_name} ({self.user.email})"
+        # Умный __str__ для отладки сирот
+        owner = self.user.email if self.user else _("Гость")
+        return f"{self.full_name} ({owner})"
 
 # --- Модель Анализа ---
 class MedicalAnalysis(models.Model):
     uid = models.UUIDField(default=uuid.uuid4, editable=False, unique=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='analyses', null=True, blank=True)
-    patient = models.ForeignKey(PatientProfile, on_delete=models.SET_NULL, related_name='analyses', null=True, blank=True)
+    patient = models.ForeignKey(PatientProfile, on_delete=models.CASCADE, related_name='analyses', null=True, blank=True)
     file = models.FileField(upload_to='analyses/%Y/%m/%d/', verbose_name=_("Файл анализа"))
+    
+    parent_analysis = models.ForeignKey(
+        'self', 
+        on_delete=models.SET_NULL, 
+        null=True, blank=True, 
+        related_name='reanalyses',
+        verbose_name=_("Оригинальный анализ")
+    )
+    
     created_at = models.DateTimeField(auto_now_add=True)
     
     class Status(models.TextChoices):
-        # Переводим человекочитаемые значения статусов
         PENDING = 'pending', _('Ожидает')
         PROCESSING = 'processing', _('В работе')
         COMPLETED = 'completed', _('Готово')

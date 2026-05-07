@@ -10,6 +10,7 @@ class PromptTemplate(models.Model):
     class Role(models.TextChoices):
         EXTRACTOR = 'extractor', _('Экстрактор (Извлечение)')
         INTERPRETER = 'interpreter', _('Интерпретатор (Анализ)')
+        CHAT_ASSISTANT = 'chat_assistant', _('Чат-ассистент')
 
     name = models.CharField(max_length=255, verbose_name=_("Название (для админки)"))
     role = models.CharField(max_length=20, choices=Role.choices, unique=True, verbose_name=_("Роль в пайплайне"))

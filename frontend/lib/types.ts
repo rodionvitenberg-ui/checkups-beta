@@ -60,12 +60,10 @@ export interface AnalysisResponse {
 export interface PatientProfile {
     id: number;
     full_name: string;
-    birth_date?: string;
-    gender?: 'M' | 'F';
-    weight?: number;
-    height?: number;
-    lifestyle?: string;
-    chronic_diseases?: string;
+    birth_date?: string | null;
+    gender?: 'M' | 'F' | null;
+    weight?: number | null; // Вес в кг
+    height?: number | null; // Рост в см
 }
 
 export interface ChartPoint {
@@ -79,4 +77,18 @@ export interface ChartData {
     slug: string;
     name: string;
     data: ChartPoint[];
+}
+
+export interface Trait {
+    id: number;
+    name: string;
+    category: 'disease' | 'bad_habit' | 'good_habit' | 'feature';
+    is_custom: boolean;
+}
+
+export interface PatientTraitLink {
+    id: number;
+    trait: Trait;
+    details: string | null;
+    created_at: string;
 }

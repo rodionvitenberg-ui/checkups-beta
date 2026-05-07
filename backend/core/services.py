@@ -1,7 +1,8 @@
 from django.db import transaction
 from .models import MedicalAnalysis, AnalysisIndicator, PatientProfile
-import datetime
 import re
+from datetime import datetime
+import datetime as dt
 
 def save_atomic_indicators(analysis: MedicalAnalysis, ai_result: dict):
     """
@@ -13,15 +14,44 @@ def save_atomic_indicators(analysis: MedicalAnalysis, ai_result: dict):
 
     indicators_data = ai_result.get('indicators', [])
     
-    analysis_date = analysis.created_at.date() if analysis.created_at else datetime.date.today()
-    extracted_date_str = ai_result.get('patient_info', {}).get('extracted_date')
+    analysis_date = analysis.created_at.date() if analysis.created_at else dt.date.today()
     
-    if extracted_date_str:
+    # 1. Сначала ищем там, где она должна быть (в patient_info)
+    extracted_date_str = None
+    patient_info = ai_result.get('patient_info', {})
+    if isinstance(patient_info, dict):
+        extracted_date_str = patient_info.get('extracted_date')
+
+    # 2. АГРЕССИВНЫЙ ПОИСК (Если ИИ потерял поле или вернул null)
+    if not extracted_date_str:
+        import json
+        json_dump = json.dumps(ai_result)
+        # Расширенный поиск: ловит YYYY-MM-DD или DD.MM.YYYY или DD/MM/YYYY или DD-MM-YYYY
+        fallback_match = re.search(r'(\d{4}-\d{2}-\d{2})|(\d{2}[\./-]\d{2}[\./-]\d{4})', json_dump)
+        if fallback_match:
+            extracted_date_str = fallback_match.group(0)
+            print(f"⚠️ Дата вытащена агрессивным поиском: {extracted_date_str}")
+    
+    # 3. Парсинг найденной строки
+    if extracted_date_str and isinstance(extracted_date_str, str):
+        print(f"🔍 Пытаемся распарсить дату от ИИ: {extracted_date_str}")
         try:
-            analysis_date = datetime.datetime.strptime(extracted_date_str, "%Y-%m-%d").date()
-        except ValueError:
-            pass
-    
+            match_iso = re.search(r'(\d{4})-(\d{2})-(\d{2})', extracted_date_str)
+            # Добавили дефис в разрешенные разделители для RU формата
+            match_ru = re.search(r'(\d{2})[\./-](\d{2})[\./-](\d{4})', extracted_date_str)
+            
+            if match_iso:
+                analysis_date = datetime.strptime(match_iso.group(0), "%Y-%m-%d").date()
+                print(f"✅ Успешно установлена ISO дата: {analysis_date}")
+            elif match_ru:
+                # Группы: 1-день, 2-месяц, 3-год
+                analysis_date = datetime.strptime(f"{match_ru.group(3)}-{match_ru.group(2)}-{match_ru.group(1)}", "%Y-%m-%d").date()
+                print(f"✅ Успешно установлена локальная дата: {analysis_date}")
+        except Exception as e:
+            print(f"⚠️ Ошибка парсинга даты '{extracted_date_str}': {e}. Используем дату по умолчанию.")
+    else:
+        print("⚠️ ИИ не вернул дату, используем дату загрузки.")
+
     new_records = []
     
     for item in indicators_data:
@@ -42,7 +72,7 @@ def save_atomic_indicators(analysis: MedicalAnalysis, ai_result: dict):
 
         record = AnalysisIndicator(
             analysis=analysis,
-            patient=analysis.patient, # Пациент уже привязан в tasks.py
+            patient=analysis.patient,
             slug=slug,
             name=item.get('name', 'Unknown'),
             value=num_value,
@@ -54,6 +84,7 @@ def save_atomic_indicators(analysis: MedicalAnalysis, ai_result: dict):
 
     if new_records:
         with transaction.atomic():
+            # Удаляем старые показатели этого анализа (если это ре-анализ)
             AnalysisIndicator.objects.filter(analysis=analysis).delete()
             AnalysisIndicator.objects.bulk_create(new_records)
-        print(f"✅ Сохранено {len(new_records)} показателей для профиля: {analysis.patient.full_name}")
+        print(f"✅ Сохранено {len(new_records)} показателей для профиля: {analysis.patient.full_name} (Дата: {analysis_date})")

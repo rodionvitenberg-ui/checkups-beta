@@ -114,6 +114,36 @@ class AnalysisPipeline:
             print(f"--- Stage 1: Секретарь (Extraction) [{self.model_name}, Lang: {self.language_code}] ---")
             raw_data = self._step_extract(safe_text)
             
+            # --- УМНОЕ ОБОГАЩЕНИЕ КОНТЕКСТА ДЕМОГРАФИЕЙ ИЗ БЛАНКА ---
+            patient_info = raw_data.get('patient_info', {})
+            ext_gender = patient_info.get('extracted_gender')
+            ext_dob_str = patient_info.get('extracted_birth_date')
+            ext_date_str = patient_info.get('extracted_date')
+            
+            additional_context = ""
+            
+            # Если Экстрактор нашел пол, а в профиле его нет
+            if ext_gender and "Пол:" not in (patient_context or ""):
+                gender_ru = "Мужской" if ext_gender.upper() == "MALE" else "Женский"
+                additional_context += f"\nПол (извлечено из бланка): {gender_ru}"
+                
+            # Если Экстрактор нашел дату рождения, а в профиле ее нет
+            if ext_dob_str and "ТОЧНЫЙ ВОЗРАСТ" not in (patient_context or ""):
+                try:
+                    from datetime import datetime
+                    dob_year = int(ext_dob_str.split('-')[0])
+                    current_year = int(ext_date_str.split('-')[0]) if ext_date_str else datetime.now().year
+                    age = current_year - dob_year
+                    if age >= 0:
+                        additional_context += f"\nВозраст (вычислен по бланку): ~{age} лет."
+                except Exception:
+                    pass # Если дата в кривом формате, просто пропускаем
+            
+            # Приклеиваем извлеченные данные к контексту
+            if additional_context:
+                patient_context = (patient_context or "КОНТЕКСТ ПАЦИЕНТА:\n") + additional_context
+                print(f"💡 Контекст обогащен данными из бланка: {additional_context}")
+
             print(f"--- Stage 2: Профессор (Interpretation) [{self.model_name}] ---")
             interpreted_data = self._step_interpret(raw_data, patient_context)
             
@@ -125,7 +155,11 @@ class AnalysisPipeline:
 
     def _step_extract(self, safe_text: str):
         sys_prompt = self._get_prompt(PromptTemplate.Role.EXTRACTOR)
+        
+        # --- ЖЕСТКИЕ ПРАВИЛА ДЛЯ ЭКСТРАКТОРА ---
         sys_prompt += "\n\nВАЖНО: Верни ответ СТРОГО в формате валидного JSON объекта."
+        sys_prompt += f"\nCRITICAL LANGUAGE INSTRUCTION: You MUST translate and return all text values in the language corresponding to the ISO code '{self.language_code}'. The JSON keys must remain in English."
+        sys_prompt += "\nCRITICAL DATE INSTRUCTION: For 'extracted_date', find the date the biomaterial was collected/taken. IGNORE the print date. Format MUST be exactly 'YYYY-MM-DD'. If unknown, return null."
         
         full_prompt = f"ОБЕЗЛИЧЕННЫЙ ТЕКСТ АНАЛИЗА:\n{safe_text}"
         
@@ -142,7 +176,7 @@ class AnalysisPipeline:
         json_structure = """
         {
           "reasoning": "string",
-          "patient_info": {"extracted_date": "YYYY-MM-DD"},
+          "patient_info": {"extracted_date": "string"}, 
           "summary": {"is_critical": boolean, "general_comment": "string"},
           "indicators": [{"slug": "string", "name": "string", "value": "string", "unit": "string", "ref_range": "string", "status": "normal|low|high|critical", "comment": "string", "category": "string"}],
           "causes": [{"title": "string", "description": "string", "severity": "green|yellow|red"}],
@@ -150,11 +184,13 @@ class AnalysisPipeline:
         }
         """
         
-        strict_rules = """
-        КРИТИЧЕСКИЕ ПРАВИЛА ЗАПОЛНЕНИЯ МАССИВА indicators:
-        1. Поле 'name' должно переноситься ДОСЛОВНО И ЦЕЛИКОМ. Категорически запрещено обрезать названия. Пиши 'Эпителий переходный' (а не 'переходный'), 'Глюкоза (сахар)' (а не 'сахар').
-        2. Поле 'ref_range' переноси дословно из текста (например '1003 - 1035' или '< 5'). Если референса нет, ставь '-'.
-        3. Не путай название показателя с его категорией. Используй поле 'category' для группировки.
+        strict_rules = f"""
+        КРИТИЧЕСКИЕ ПРАВИЛА:
+        1. LANGUAGE: You MUST translate ALL generated text (name, comment, category, reasoning, general_comment, recommendations, causes) into the language corresponding to the ISO code '{self.language_code}'. DO NOT leave it in the original language if it differs from '{self.language_code}'.
+        2. JSON KEYS: All JSON keys (e.g., 'reasoning', 'patient_info', 'name') MUST remain in English exactly as shown in the structure.
+        3. INDICATORS: Поле 'name' должно переноситься ДОСЛОВНО И ЦЕЛИКОМ (но переведено на '{self.language_code}'). Категорически запрещено обрезать названия.
+        4. REF RANGE: Поле 'ref_range' переноси дословно из текста (например '1003 - 1035' или '< 5'). Если референса нет, ставь '-'.
+        5. DATE: 'extracted_date' MUST be transferred exactly as it appears in the source text. Do not try to convert it to YYYY-MM-DD.
         """
         
         sys_prompt += f"\n\nВАЖНО: Верни ответ СТРОГО в формате валидного JSON объекта, используя следующую структуру:\n{json_structure}"
@@ -169,3 +205,66 @@ class AnalysisPipeline:
             require_json=True,
             temperature=0.1 
         )
+    
+class ChatAssistant:
+    def __init__(self, language_code='ru'):
+        self.api_keys = []
+        for key, val in os.environ.items():
+            if key.startswith("AI_API_KEY") and val:
+                self.api_keys.append(val)
+        if not self.api_keys and os.environ.get("AI_API_KEY"):
+            self.api_keys.append(os.environ.get("AI_API_KEY"))
+            
+        self.base_url = "https://api.deepseek.com"
+        self.model_name = "deepseek-chat"
+        self.language_code = language_code
+
+    def _get_prompt(self) -> str:
+        try:
+            template = PromptTemplate.objects.get(role=PromptTemplate.Role.CHAT_ASSISTANT, is_active=True)
+            return template.system_prompt
+        except PromptTemplate.DoesNotExist:
+            # Дефолтный промпт, если в БД еще не создали
+            return "You are a helpful medical assistant."
+
+    def stream_chat(self, analysis_data: dict, patient_context: str, chat_history: list):
+        client = OpenAI(
+            api_key=self.api_keys[0], # Для чата берем первый рабочий ключ
+            base_url=self.base_url
+        )
+        
+        sys_prompt = self._get_prompt()
+        
+        # Инжектим данные конкретного анализа в системный промпт
+        context_block = f"""
+        ДАННЫЕ ПАЦИЕНТА И ТЕКУЩЕГО АНАЛИЗА:
+        {patient_context}
+        
+        ВЫЯВЛЕННЫЕ ОТКЛОНЕНИЯ И РЕЗУЛЬТАТЫ (JSON):
+        {json.dumps(analysis_data, ensure_ascii=False)}
+        """
+        
+        messages = [
+            {"role": "system", "content": f"{sys_prompt}\n\n{context_block}"}
+        ]
+        
+        # Добавляем историю сообщений (отсекаем слишком старые, если нужно, чтобы не выйти за лимиты токенов)
+        for msg in chat_history[-10:]: # Берем последние 10 сообщений для контекста
+            messages.append({"role": msg.role, "content": msg.content})
+
+        try:
+            response = client.chat.completions.create(
+                model=self.model_name,
+                messages=messages,
+                temperature=0.3, # Делаем его достаточно детерминированным
+                stream=True # ВАЖНО: Включаем стриминг!
+            )
+            
+            for chunk in response:
+                if chunk.choices[0].delta.content is not None:
+                    # Отдаем текст кусками по мере генерации
+                    yield chunk.choices[0].delta.content
+                    
+        except Exception as e:
+            print(f"Chat stream error: {e}")
+            yield "Извините, произошла ошибка при генерации ответа. Попробуйте еще раз."

@@ -3,12 +3,14 @@
 import { useState } from 'react';
 import { X, Lock, Loader2, KeyRound, AlertCircle, CheckCircle2 } from 'lucide-react';
 import { changePassword } from '@/lib/api';
+import { useTranslations } from 'next-intl';
 
 interface ChangePasswordModalProps {
     onClose: () => void;
 }
 
 export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
+    const t = useTranslations('Dashboard.ChangePasswordModal');
     const [isLoading, setIsLoading] = useState(false);
     const [oldPassword, setOldPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
@@ -26,19 +28,19 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
         setSuccessMsg(null);
 
         if (newPassword !== confirmPassword) {
-            setErrorMsg("Новые пароли не совпадают");
+            setErrorMsg(t('errorMismatch'));
             return;
         }
 
         if (newPassword.length < 6) {
-            setErrorMsg("Пароль должен содержать минимум 6 символов");
+            setErrorMsg(t('errorTooShort'));
             return;
         }
 
         setIsLoading(true);
         try {
             await changePassword(oldPassword, newPassword);
-            setSuccessMsg("Пароль успешно изменен!");
+            setSuccessMsg(t('successChanged'));
             
             // Очищаем форму
             setOldPassword('');
@@ -53,7 +55,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
         } catch (error: any) {
             console.error(error);
             // Берем сообщение об ошибке с бэкенда (которое мы настроили на статус 400)
-            const msg = error.response?.data?.message || 'Неверный текущий пароль или ошибка сервера';
+            const msg = error.response?.data?.message || t('errorServer');
             setErrorMsg(msg);
         } finally {
             setIsLoading(false);
@@ -76,7 +78,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                         <div className="w-10 h-10 rounded-xl bg-[#3f94ca]/10 flex items-center justify-center text-[#3f94ca]">
                             <KeyRound className="w-5 h-5" />
                         </div>
-                        <h3 className="text-xl font-bold text-slate-900">Смена пароля</h3>
+                        <h3 className="text-xl font-bold text-slate-900">{t('title')}</h3>
                     </div>
                     <button 
                         onClick={onClose} 
@@ -105,7 +107,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                     )}
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Текущий пароль</label>
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">{t('oldPasswordLabel')}</label>
                         <div className="relative">
                             <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                             <input 
@@ -113,13 +115,13 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                                 onChange={(e) => handleInputChange(setOldPassword, e.target.value)}
                                 disabled={!!successMsg}
                                 className="w-full pl-10 pr-4 py-2.5 bg-white/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3f94ca] text-sm transition-all disabled:opacity-50"
-                                placeholder="Введите старый пароль"
+                                placeholder={t('oldPasswordPlaceholder')}
                             />
                         </div>
                     </div>
 
                     <div className="space-y-1.5 pt-2">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Новый пароль</label>
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">{t('newPasswordLabel')}</label>
                         <div className="relative">
                             <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                             <input 
@@ -127,13 +129,13 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                                 onChange={(e) => handleInputChange(setNewPassword, e.target.value)}
                                 disabled={!!successMsg}
                                 className="w-full pl-10 pr-4 py-2.5 bg-white/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3f94ca] text-sm transition-all disabled:opacity-50"
-                                placeholder="Минимум 6 символов"
+                                placeholder={t('newPasswordPlaceholder')}
                             />
                         </div>
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">Подтвердите пароль</label>
+                        <label className="text-xs font-bold text-slate-700 uppercase tracking-wider">{t('confirmPasswordLabel')}</label>
                         <div className="relative">
                             <Lock className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
                             <input 
@@ -141,7 +143,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                                 onChange={(e) => handleInputChange(setConfirmPassword, e.target.value)}
                                 disabled={!!successMsg}
                                 className="w-full pl-10 pr-4 py-2.5 bg-white/80 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#3f94ca] text-sm transition-all disabled:opacity-50"
-                                placeholder="Повторите новый пароль"
+                                placeholder={t('confirmPasswordPlaceholder')}
                             />
                         </div>
                     </div>
@@ -152,7 +154,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
                             disabled={isLoading || !!successMsg}
                             className="w-full bg-secondary text-white font-bold py-3 rounded-xl hover:bg-accent transition-colors flex items-center justify-center gap-2 shadow-md shadow-[#3f94ca]/20 disabled:opacity-70 disabled:cursor-not-allowed"
                         >
-                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Сохранить изменения'}
+                            {isLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : t('btnSave')}
                         </button>
                     </div>
                 </form>

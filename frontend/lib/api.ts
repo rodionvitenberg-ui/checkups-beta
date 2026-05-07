@@ -3,7 +3,9 @@ import {
     AuthResponse, 
     AnalysisResponse, 
     PatientProfile, 
-    ChartData 
+    ChartData,
+    Trait,            
+    PatientTraitLink 
 } from './types';
 
 const api = axios.create({
@@ -123,10 +125,15 @@ export const changePassword = async (oldPassword: string, newPassword: string) =
 // АНАЛИЗЫ
 // ==========================================
 
-export const uploadAnalysis = async (file: File, isFirst: boolean = true): Promise<AnalysisResponse> => {
+export const uploadAnalysis = async (file: File, patientId?: number | null, isFirst: boolean = true): Promise<AnalysisResponse> => {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('is_first', isFirst.toString()); 
+    
+    // Если юзер выбрал профиль, передаем его ID
+    if (patientId) {
+        formData.append('patient_id', patientId.toString());
+    }
 
     const response = await api.post<AnalysisResponse>('/analyses/upload', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
@@ -206,10 +213,19 @@ export const getProfiles = async (): Promise<PatientProfile[]> => {
     return response.data;
 };
 
-export const updateProfile = async (profileId: number, newName: string): Promise<PatientProfile> => {
-    const response = await api.put<PatientProfile>(`/profiles/${profileId}`, { full_name: newName });
-    return response.data;
-};
+export async function updateProfile(
+    id: number, 
+    data: { 
+        full_name?: string; 
+        weight?: number | null; 
+        height?: number | null; 
+        birth_date?: string | null; 
+        gender?: 'M' | 'F' | null; // <--- Меняем string на строгий тип
+    }
+): Promise<PatientProfile> {
+    const res = await api.put(`/profiles/${id}`, data);
+    return res.data;
+}
 
 export const deleteProfile = async (profileId: number): Promise<void> => {
     await api.delete(`/profiles/${profileId}`);
@@ -223,4 +239,80 @@ export const getPatientAnalyses = async (patientId: number): Promise<AnalysisRes
 export const getPatientHistory = async (patientId: number): Promise<ChartData[]> => {
     const response = await api.get<ChartData[]>(`/patients/${patientId}/history`);
     return response.data;
+};
+
+export async function getTraits(): Promise<Trait[]> {
+    const res = await api.get('/premium/traits');
+    return res.data;
+}
+
+export async function getPatientTraits(patientId: number): Promise<PatientTraitLink[]> {
+    const res = await api.get(`/premium/patients/${patientId}/traits`);
+    return res.data;
+}
+
+export async function linkPatientTrait(patientId: number, traitId: number, details: string): Promise<PatientTraitLink> {
+    const res = await api.post(`/premium/patients/${patientId}/traits`, { trait_id: traitId, details });
+    return res.data;
+}
+
+export async function removePatientTrait(linkId: number): Promise<void> {
+    const res = await api.delete(`/premium/patients/traits/${linkId}`);
+    return res.data;
+}
+
+export async function createCustomTrait(name: string, category: string): Promise<Trait> {
+    const res = await api.post('/premium/traits/custom', { name, category });
+    return res.data;
+}
+
+export const streamAnalysisChat = async (
+    uid: string, 
+    messages: { role: string; content: string }[],
+    onChunk: (text: string) => void
+): Promise<void> => {
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    const locale = typeof window !== 'undefined' ? document.documentElement.lang : 'ru';
+    
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/analyses/${uid}/chat`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`,
+            'Accept-Language': locale || 'ru'
+        },
+        body: JSON.stringify({ messages })
+    });
+
+    if (!response.ok) {
+        throw new Error('Chat request failed');
+    }
+
+    if (!response.body) throw new Error('ReadableStream not supported');
+
+    const reader = response.body.getReader();
+    const decoder = new TextDecoder('utf-8');
+    let buffer = '';
+
+    while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+        
+        // SSE формат отправляет данные порциями, разделенными \n\n
+        const parts = buffer.split('\n\n');
+        buffer = parts.pop() || ''; // Оставляем неполный чанк в буфере
+
+        for (const part of parts) {
+            if (part.startsWith('data: ')) {
+                const dataStr = part.replace('data: ', '');
+                if (dataStr === '[DONE]') {
+                    return; // Конец потока
+                }
+                // Возвращаем переносы строк, которые мы экранировали на бэкенде
+                onChunk(dataStr.replace(/\\n/g, '\n'));
+            }
+        }
+    }
 };

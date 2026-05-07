@@ -63,16 +63,33 @@
     "legal": "Legal Information"
   },
   "Upload": {
-    "title": "Documents uploaded",
-    "subtitle": "Start interpretation or attach another file (maximum: {max})",
-    "dropFiles": "Release files",
-    "addMore": "Add document",
-    "fileFormat": "PDF, JPG, PNG up to 10MB",
-    "selectedFiles": "Selected files",
-    "maxFilesError": "Limit: {max} file at a time.",
-    "uploadError": "An error occurred during upload. Please try again.",
-    "sending": "Uploading to server...",
-    "startAnalysis": "Start analysis"
+    "title": "Send for Analysis",
+    "subtitle": "Maximum of {max} file at a time",
+    "dropFiles": "Drop file here",
+    "addMore": "Click or drag a file here",
+    "fileFormat": "Supports PDF, JPG, PNG",
+    "documentLabel": "Document",
+    "sending": "Sending...",
+    "startAnalysis": "Start Analysis",
+    "profile": {
+      "title": "Whom does this analysis belong to?",
+      "authHint": "The AI will use the selected profile's parameters for an accurate interpretation.",
+      "guestHint": "Please provide patient details so the AI can apply the correct medical standards (reference ranges depend on gender and age).",
+      "nameLabel": "Patient Name",
+      "namePlaceholder": "E.g., John Doe",
+      "genderLabel": "Gender",
+      "genderMale": "Male",
+      "genderFemale": "Female",
+      "dobLabel": "Date of Birth",
+      "createNew": "Add patient",
+"newProfileHint": "The new profile will be saved in your dashboard."
+    },
+    "errors": {
+      "maxFiles": "You can upload a maximum of {max} file",
+      "fillAllFields": "Please fill in all patient details so we can accurately interpret the analysis.",
+      "uploadFailed": "File upload failed",
+      "defaultError": "An error occurred during upload"
+    }
   },
   "Claim": {
     "defaultLoading": "Preparing for analysis...",
@@ -128,7 +145,10 @@
   },
   "Dashboard": {
     "AnalysisItem": {
-      "confirmDelete": "Are you sure you want to delete this analysis? This action cannot be undone.",
+      "deleteModalTitle": "Delete Analysis",
+  "confirmDelete": "Are you sure you want to delete this analysis? This action cannot be undone.",
+  "cancelBtn": "Cancel",
+  "confirmDeleteBtn": "Delete",
       "from": "from",
       "defaultName": "Analysis",
       "status": {
@@ -157,10 +177,14 @@
       "defaultDesc": "Document analyses without a name",
       "patientDesc": "Analyses for this patient",
       "tabHistory": "Document List",
+      "tabSettings": "Settings",
       "tabDynamics": "Data Trends",
       "emptyHistory": "No uploaded analyses yet",
       "deleteButton": "Delete Profile",
-      "confirmDelete": "Delete the patient and all their analyses?",
+      "deleteModalTitle": "Delete Profile",
+  "confirmDelete": "Are you sure you want to delete this profile? All uploaded analyses and the dynamics chart will be permanently deleted.",
+  "cancelBtn": "Cancel",
+  "confirmDeleteBtn": "Delete",
       "titles": {
         "rename": "Rename"
       },
@@ -175,6 +199,45 @@
         "errorDeleteDesc": "Failed to delete profile"
       }
     },
+    "PatientSettings": {
+    "baseParamsTitle": "Physical Parameters",
+    "heightLabel": "Height (cm)",
+    "weightLabel": "Weight (kg)",
+    "saveBtn": "Save Changes",
+    "premiumTitle": "Health Traits",
+    "premiumDesc": "Add chronic conditions and lifestyle details. The AI will consider this context when re-analyzing the results.",
+    "noTraits": "No traits specified",
+    "addTraitBtn": "Add Trait",
+    "modalSelectTitle": "Select a trait",
+    "modalDetailsTitle": "Specify details",
+    "detailsLabel": "Details (duration, dosages, frequency)",
+    "detailsPlaceholder": "E.g., 10-year history, smoke a pack a day...",
+    "detailsHint": "The AI will analyze this text. Feel free to write in your own words.",
+    "backBtn": "Back",
+    "saveTraitBtn": "Add",
+    "traitAdded": "Trait added successfully",
+    "traitRemoved": "Trait removed",
+    "successTitle": "Success",
+    "successDesc": "Profile parameters saved",
+    "errorTitle": "Error",
+    "errorDesc": "Something went wrong",
+    "categories": {
+      "disease": "Conditions",
+      "bad_habit": "Bad habits",
+      "good_habit": "Healthy habits",
+      "feature": "Physiological traits"
+    },
+    "createCustomBtn": "Not in the list? Add your own",
+    "genderLabel": "Gender",
+  "genderNotSelected": "Not specified",
+  "genderMale": "Male",
+  "genderFemale": "Female",
+  "dobLabel": "Date of Birth",
+  "modalCustomTitle": "Custom Trait",
+  "customNameLabel": "Name",
+  "customNamePlaceholder": "E.g., Daily protein intake",
+  "customCategoryLabel": "Category"
+  },
      "Page": {
        "loadingData": "Loading data...",
        "title": "Dashboard",
@@ -184,7 +247,21 @@
        "changePassword": "Change Password",
        "logout": "Log Out",
        "uploadModalTitle": "Upload Analysis"
-    }
+    },
+    "ChangePasswordModal": {
+    "title": "Change Password",
+    "oldPasswordLabel": "Current Password",
+    "oldPasswordPlaceholder": "Enter old password",
+    "newPasswordLabel": "New Password",
+    "newPasswordPlaceholder": "Minimum 6 characters",
+    "confirmPasswordLabel": "Confirm Password",
+    "confirmPasswordPlaceholder": "Repeat new password",
+    "btnSave": "Save Changes",
+    "errorMismatch": "New passwords do not match",
+    "errorTooShort": "Password must be at least 6 characters",
+    "errorServer": "Incorrect current password or server error",
+    "successChanged": "Password changed successfully!"
+  }
   },
   "Analysis": {
     "Loading": {
@@ -213,6 +290,129 @@
       "causesTitle": "Potential Causes",
       "noDeviations": "No significant deviations identified.",
       "recommendationsTitle": "Recommendations"
-    }
+    },
+     "Header": {
+      "title": "Interpretation from",
+      "statusNormal": "Normal",
+      "statusAttention": "Attention",
+      "btnAdd": "Add Analysis",
+      "btnOriginal": "Original",
+      "btnDownload": "Download PDF"
+    },
+     "Page": {
+      "pdfError": "Failed to generate PDF.",
+      "originalError": "Failed to load original file.",
+      "disclaimerTitle": "Attention:",
+      "disclaimerText": "This report is generated by artificial intelligence, is not a medical diagnosis, and is for informational purposes only. Please be sure to consult a qualified physician for an accurate diagnosis and treatment plan.",
+      "uploadModalTitle": "Upload Analysis"
+   },
+   "RefineBlock": {
+    "cardTitle": "Refine Analysis (PRO)",
+    "cardDesc": "The AI has analyzed the form. Add your exact weight, height, and chronic condition history to receive a personalized recalculation.",
+    "openModalBtn": "Enter Data",
+    "modalTitle": "Patient Parameters",
+    "modalSubtitle": "This data fundamentally impacts reference ranges and the causes of deviations.",
+    "baseParams": "Base Metrics",
+    "saveParams": "Save",
+    "gender": "Gender",
+    "notSelected": "Not specified",
+    "male": "Male",
+    "female": "Female",
+    "dob": "Date of Birth",
+    "height": "Height (cm)",
+    "weight": "Weight (kg)",
+    "healthTraits": "Health Traits (PRO)",
+    "noTraits": "Not specified",
+    "addTraitBtn": "Add Trait",
+    "reanalyzeWarning": "By starting the recalculation, the AI will re-analyze the original form considering all entered data. This may take about 30 seconds.",
+    "saveBeforeReanalyze": "Save base metrics first",
+    "startReanalyzeBtn": "Start Personalized Recalculation",
+    "savedTitle": "Saved",
+    "savedDesc": "Base parameters updated",
+    "reanalyzeSuccessTitle": "Recalculation Started",
+    "reanalyzeSuccessDesc": "AI is re-analyzing the data",
+    "errorTitle": "Error",
+    "errorDesc": "Something went wrong"
   }
+  },
+  "Auth": {
+    "titleRegister": "Create Account",
+    "titleLogin": "Welcome Back",
+    "titleVerify": "Verification",
+    "descRegister": "Enter your details to get access",
+    "descLogin": "Enter your email and password to log in",
+    "descVerify": "Enter the code sent to your email",
+    "tabRegister": "Register",
+    "tabLogin": "Log In",
+    "emailLabel": "Email",
+    "passwordLabel": "Password",
+    "codeLabel": "Code from email",
+    "forgotPassword": "Forgot password?",
+    "btnRegister": "Get Code",
+    "btnVerify": "Verify",
+    "btnLogin": "Log In",
+    "agreement": "By clicking the button, you agree to the personal data processing policy. An access code will be sent to the specified email.",
+    "goBack": "Go Back",
+    "toast": {
+      "codeSentTitle": "Code sent!",
+      "codeSentDesc": "We have sent a 6-digit code to {email}",
+      "welcomeTitle": "Welcome!",
+      "welcomeDesc": "Logged in successfully.",
+      "accountExistsTitle": "Account already exists",
+      "accountExistsDesc": "This email is already registered. Please log in with your password.",
+      "resetPasswordBtn": "Reset password",
+      "invalidCodeTitle": "Invalid code",
+      "invalidCodeDesc": "Check the numbers from the email and try again.",
+      "errorTitle": "Error",
+      "defaultError": "An error occurred. Please check your details."
+    },
+    "Reset": {
+      "toast": {
+        "emailSentTitle": "Email sent",
+        "emailSentDesc": "Check your email (and Spam folder).",
+        "errorTitle": "Error",
+        "passwordsNotMatch": "Passwords do not match",
+        "passwordTooShort": "Password must be at least 6 characters",
+        "successTitle": "Success!",
+        "successDesc": "Password changed. You can now log in.",
+        "defaultError": "An error occurred"
+      },
+      "successScreen": {
+        "title": "Check your email",
+        "desc1": "We have sent password reset instructions to ",
+        "desc2": "The link is valid for 24 hours.",
+        "backToLogin": "Back to login"
+      },
+      "form": {
+        "titleRequest": "Reset Password",
+        "titleConfirm": "New Password",
+        "subtitleRequest": "Enter your email to receive a link",
+        "subtitleConfirm": "Create a strong password",
+        "emailLabel": "Email",
+        "newPasswordLabel": "New password",
+        "confirmPasswordLabel": "Confirm password",
+        "btnRequest": "Send link",
+        "btnConfirm": "Save password"
+      }
+    }
+  },
+  "TreeSidebar": {
+  "title": "Analysis History",
+  "unassigned": "Unassigned",
+  "empty": "Empty",
+  "unknownDate": "Unknown",
+  "datePrefix": "From {date}"
+},
+"Header": {
+  "home": "Home",
+  "dashboard": "Dashboard",
+  "login": "Sign In",
+  "openMenu": "Open menu",
+  "closeMenu": "Close menu"
+},
+"Terms": {
+  "pageTitle": "Terms of Service",
+  "pageSubtitle": "Service usage rules and medical disclaimer",
+  "lastUpdated": "Last Updated"
+}
 }
