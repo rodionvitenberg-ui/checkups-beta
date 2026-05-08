@@ -1,5 +1,9 @@
 import os
 import json
+import base64
+import hashlib
+import requests
+from django.conf import settings
 from openai import OpenAI
 from analysis.models import PromptTemplate
 from .models import ChatSettings
@@ -96,3 +100,53 @@ class ChatAssistant:
                 print(f"Chat stream error: {e}")
                 if not self._switch_key():
                     yield "Сервис временно недоступен."
+
+class CryptomusService:
+    API_URL = "https://api.cryptomus.com/v1"
+    
+    def __init__(self):
+        self.merchant_id = os.environ.get("CRYPTOMUS_MERCHANT_ID")
+        self.payment_key = os.environ.get("CRYPTOMUS_API_KEY")
+
+    def _get_signature(self, payload: dict) -> str:
+        # Cryptomus требует md5 от base64(json) + API_KEY
+        json_str = json.dumps(payload, separators=(',', ':'))
+        encoded_payload = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+        return hashlib.md5(f"{encoded_payload}{self.payment_key}".encode('utf-8')).hexdigest()
+
+    def create_payment(self, order_id: str, amount: str, email: str) -> str:
+        """Создает платеж и возвращает URL для редиректа юзера"""
+        payload = {
+            "amount": str(amount),
+            "currency": "USD",
+            "order_id": str(order_id),
+            "url_return": "https://твой_домен/dashboard", # Куда вернуть юзера после оплаты
+            "url_callback": "https://твой_домен/api/premium/payment/webhook" # Куда придет Webhook
+        }
+        
+        headers = {
+            "merchant": self.merchant_id,
+            "sign": self._get_signature(payload),
+            "Content-Type": "application/json"
+        }
+        
+        response = requests.post(f"{self.API_URL}/payment", json=payload, headers=headers)
+        data = response.json()
+        
+        if data.get("state") == 0:
+            return data["result"]["url"] # Возвращаем ссылку на оплату
+        raise Exception(f"Cryptomus error: {data}")
+
+    def verify_webhook(self, data: dict, sign: str) -> bool:
+        """Проверяет подлинность вебхука"""
+        dict_copy = data.copy()
+        dict_copy.pop('sign', None) # Удаляем подпись из тела перед проверкой
+        
+        # Сортируем ключи и собираем обратно (требование Cryptomus)
+        # Для упрощения: в проде лучше использовать raw_body + API_KEY, если фреймворк позволяет.
+        # В нашем случае полагаемся на логику md5(json + key)
+        json_str = json.dumps(dict_copy, separators=(',', ':'))
+        encoded = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+        expected_sign = hashlib.md5(f"{encoded}{self.payment_key}".encode('utf-8')).hexdigest()
+        
+        return sign == expected_sign

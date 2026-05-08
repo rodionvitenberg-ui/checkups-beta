@@ -1,4 +1,5 @@
 import uuid
+from django.utils import timezone
 import datetime
 from django.db import models
 from django.contrib.auth.models import AbstractUser, BaseUserManager
@@ -25,6 +26,12 @@ class User(AbstractUser):
     username = None
     email = models.EmailField(_('Email address'), unique=True)
     phone = models.CharField(max_length=20, blank=True, null=True)
+    pro_expires_at = models.DateTimeField(null=True, blank=True, verbose_name=_("PRO до"))
+
+    @property
+    def is_pro(self):
+        """Возвращает True, если подписка активна"""
+        return bool(self.pro_expires_at and self.pro_expires_at > timezone.now())
     
     USERNAME_FIELD = 'email'
     REQUIRED_FIELDS = []
@@ -127,3 +134,4 @@ class SystemAnalytics(MedicalAnalysis):
         proxy = True
         verbose_name = _("📈 Дашборд Аналитики")
         verbose_name_plural = _("📈 Дашборд Аналитики")
+        

@@ -1,3 +1,4 @@
+import uuid
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from core.models import PatientProfile, User, MedicalAnalysis
@@ -115,3 +116,17 @@ class ChatSettings(models.Model):
 
     def __str__(self):
         return "Глобальные настройки чата"
+    
+class Transaction(models.Model):
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='transactions')
+    order_id = models.CharField(max_length=100, unique=True, default=uuid.uuid4)
+    amount = models.DecimalField(max_digits=10, decimal_places=2, verbose_name=_("Сумма (USD)"))
+    status = models.CharField(max_length=20, default='pending', verbose_name=_("Статус")) # pending, paid, fail
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = _("Транзакция")
+        verbose_name_plural = _("Транзакции")
+
+    def __str__(self):
+        return f"{self.user.email} - ${self.amount} ({self.status})"

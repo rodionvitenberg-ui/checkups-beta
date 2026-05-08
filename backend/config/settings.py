@@ -49,11 +49,11 @@ INSTALLED_APPS = [
     'core',
     'analysis',
     'premium',
-    "anymail",
 ]
 
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware'
     'corsheaders.middleware.CorsMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.locale.LocaleMiddleware',
@@ -155,7 +155,10 @@ MEDIA_ROOT = BASE_DIR / 'media'
 
 # Для статики (CSS админки и прочее)
 STATIC_URL = '/static/'
-STATIC_ROOT = BASE_DIR / 'staticfiles'
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Папка, куда соберется статика
+
+# Включаем сжатие и кэширование (добавляет уникальные хэши к именам файлов)
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
 
 # CELERY SETTINGS
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')

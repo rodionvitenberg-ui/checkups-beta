@@ -9,6 +9,7 @@ from ninja.errors import HttpError
 from ninja_jwt.authentication import JWTAuth
 
 # Django imports
+from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.http import FileResponse, Http404, HttpRequest, StreamingHttpResponse
@@ -188,35 +189,50 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
                 
                 # Если у анализа есть профиль-сирота, привязываем его к юзеру
                 if analysis.patient and analysis.patient.user is None:
-                    # Проверяем, нет ли уже у юзера профиля с таким же именем
                     existing_profile = PatientProfile.objects.filter(user=user, full_name=analysis.patient.full_name).first()
                     
                     if existing_profile:
-                        # Если профиль с таким именем уже есть (например, юзер создал его вручную), 
-                        # перепривязываем анализ к существующему, а сироту удаляем
                         old_orphan = analysis.patient
                         analysis.patient = existing_profile
                         analysis.save(update_fields=['user', 'patient'])
                         old_orphan.delete()
                     else:
-                        # Если такого профиля нет, просто "усыновляем" сироту
                         analysis.patient.user = user
                         analysis.patient.save(update_fields=['user'])
                         analysis.save(update_fields=['user'])
                 else:
-                    # Если профиля не было совсем, привязываем к основному
                     main_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
                     analysis.patient = main_profile
                     analysis.save(update_fields=['user', 'patient'])
 
-                # Обновляем записи в истории, чтобы они тоже принадлежали пациенту
                 AnalysisIndicator.objects.filter(analysis=analysis).update(patient=analysis.patient)
 
-    first_pending = analyses.filter(status=MedicalAnalysis.Status.PENDING).first()
-    if first_pending:
-        # Прокидываем текущий язык в таску!
-        lang = getattr(request, 'LANGUAGE_CODE', 'en')
-        transaction.on_commit(lambda: process_analysis_task.delay(first_pending.uid, lang))
+    # === ИЗМЕНЕНИЕ: ПРОВЕРКА ЛИМИТОВ ПЕРЕД ЗАПУСКОМ ИИ ===
+    from .tasks import process_analysis_task
+    today = timezone.now().date()
+    limit = 10 if getattr(user, 'is_pro', False) else 2
+    lang = getattr(request, 'LANGUAGE_CODE', 'en')
+
+    # Получаем все анализы этого юзера за сегодня (чтобы понять, по счету ли они)
+    todays_analyses = list(MedicalAnalysis.objects.filter(user=user, created_at__date=today).order_by('created_at'))
+    
+    # Берем только те, которые еще ждут обработки
+    pending_analyses = analyses.filter(status=MedicalAnalysis.Status.PENDING)
+    
+    for pending in pending_analyses:
+        try:
+            position = todays_analyses.index(pending) + 1
+        except ValueError:
+            position = 999
+            
+        if position <= limit:
+            # Вписывается в лимит — запускаем нейросеть
+            process_analysis_task.delay(pending.uid, lang)
+        else:
+            # ЖЕСТКАЯ ЗАЩИТА: Лимит превышен! Блокируем обработку, не тратим деньги
+            pending.status = MedicalAnalysis.Status.FAILED
+            pending.ai_result = {"summary": {"general_comment": _("Превышен дневной лимит бесплатных анализов. Пожалуйста, оформите PRO-подписку.")}}
+            pending.save(update_fields=['status', 'ai_result'])
 
     refresh = RefreshToken.for_user(user)
     return {
@@ -321,6 +337,20 @@ def upload_analysis(
     print(f"🕵️ ДЕБАГ ЗАГРУЗКИ: user={user}, patient_id='{patient_id}', guest_name='{guest_name}'")
             
     if user and user.is_authenticated:
+        today = timezone.now().date()
+        analyses_count = MedicalAnalysis.objects.filter(
+            user=user, created_at__date=today
+        ).count()
+        
+        limit = 10 if getattr(user, 'is_pro', False) else 2
+        
+        if analyses_count >= limit:
+            return api.create_response(
+                request, 
+                {"message": "limit_reached", "limit": limit}, 
+                status=403
+            )
+        
         if patient_id and patient_id != 'new':
             # Выбрали существующего пациента
             try:
@@ -355,8 +385,12 @@ def upload_analysis(
         status=MedicalAnalysis.Status.PENDING
     )
     
-    if is_first:
+    # === ИЗМЕНЕНИЕ: ЛЕНИВАЯ ЗАГРУЗКА (LAZY PROCESSING) ===
+    # Мы запускаем Celery-таску ТОЛЬКО если юзер авторизован!
+    # Если это гость, файл просто лежит в БД и ждет привязки (claim_verify).
+    if is_first and user and user.is_authenticated:
         lang = getattr(request, 'LANGUAGE_CODE', 'en')
+        from .tasks import process_analysis_task
         transaction.on_commit(lambda: process_analysis_task.delay(analysis.uid, lang))
         
     return analysis
@@ -385,7 +419,25 @@ def download_analysis_file(request, uid: uuid.UUID):
 
 @api.post("/analyses/{uid}/reanalyze", response=AnalysisResponseSchema, auth=None)
 def reanalyze_document(request, uid: uuid.UUID):
-    old_analysis = get_object_or_404(MedicalAnalysis, uid=uid)
+    user = request.user
+    
+    # --- ПРОВЕРКА ЛИМИТОВ ПРИ ПЕРЕСЧЕТЕ ---
+    today = timezone.now().date()
+    analyses_count = MedicalAnalysis.objects.filter(
+        user=user, created_at__date=today
+    ).count()
+    
+    limit = 10 if getattr(user, 'is_pro', False) else 2
+    
+    if analyses_count >= limit:
+        return api.create_response(
+            request, 
+            {"message": "limit_reached", "limit": limit}, 
+            status=403
+        )
+    # --------------------------------------
+
+    old_analysis = get_object_or_404(MedicalAnalysis, uid=uid, user=user)
     
     new_analysis = MedicalAnalysis.objects.create(
         file=old_analysis.file,
@@ -442,8 +494,6 @@ def create_profile(request, payload: CreateProfileSchema):
         gender=payload.gender,
         weight=payload.weight,
         height=payload.height,
-        lifestyle=payload.lifestyle,
-        chronic_diseases=payload.chronic_diseases
     )
     return profile
 
@@ -462,8 +512,6 @@ def update_profile(request, profile_id: int, payload: UpdateProfileSchema):
     profile.gender = payload.gender
     profile.weight = payload.weight
     profile.height = payload.height
-    profile.lifestyle = payload.lifestyle
-    profile.chronic_diseases = payload.chronic_diseases
     profile.save()
     return profile
 

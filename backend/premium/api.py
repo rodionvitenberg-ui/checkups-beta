@@ -1,6 +1,11 @@
-import uuid # Исправлено: импортируем стандартный uuid, а не из celery
+import uuid
+from django.utils import timezone
+from datetime import timedelta
+import json
+from .models import Transaction
+from .services import CryptomusService
 from typing import List
-from django.http import StreamingHttpResponse
+from django.http import StreamingHttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
 from django.utils.translation import gettext as _
 from ninja import Router
@@ -80,10 +85,23 @@ def get_chat_history(request, uid: str):
 @router.post("/analyses/{uid}/chat")
 def chat_with_analysis(request, uid: str, payload: ChatRequestSchema):
     """Отправка сообщения ИИ и получение потокового ответа со сохранением в БД"""
+    today = timezone.now().date()
+    msg_count = ChatMessage.objects.filter(
+        analysis__user=request.user,
+        role='user',
+        created_at__date=today
+    ).count()
+    
+    limit = 50 if request.user.is_pro else 5
+    if msg_count >= limit:
+        return JsonResponse(
+            {"message": "limit_reached", "limit": limit}, 
+            status=403
+        )
     analysis = get_object_or_404(MedicalAnalysis, uid=uid, user=request.user)
     
     if not analysis.ai_result:
-        return api.create_response(request, {"message": _("Анализ еще не расшифрован")}, status=400)
+        return JsonResponse({"message": _("Анализ еще не расшифрован")}, status=400)
 
     # 1. Сохраняем новое сообщение пользователя в БД
     user_msg_content = payload.messages[-1].content
@@ -142,3 +160,59 @@ def chat_with_analysis(request, uid: str, payload: ChatRequestSchema):
             summarize_chat_history_task.delay(analysis.uid)
             
         yield "data: [DONE]\n\n"
+
+    return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
+
+@router.post("/payment/create")
+def create_subscription_payment(request):
+    user = request.user
+    
+    # Создаем транзакцию в БД
+    tx = Transaction.objects.create(
+        user=user,
+        amount=10.00, # Цена подписки
+        status='pending'
+    )
+    
+    try:
+        service = CryptomusService()
+        payment_url = service.create_payment(
+            order_id=tx.order_id, 
+            amount="10.00", 
+            email=user.email
+        )
+        return {"payment_url": payment_url}
+    except Exception as e:
+        tx.status = 'fail'
+        tx.save()
+        return JsonResponse({"message": str(e)}, status=500)
+
+
+# Эндпоинт для Вебхука (auth=None, так как сюда стучится сервер Cryptomus, а не юзер)
+@router.post("/payment/webhook", auth=None)
+def payment_webhook(request):
+    try:
+        data = json.loads(request.body)
+        sign = data.get('sign')
+        
+        service = CryptomusService()
+        if not service.verify_webhook(data, sign):
+            return JsonResponse({"error": "Invalid signature"}, status=400)
+            
+        order_id = data.get('order_id')
+        status = data.get('status') # 'paid', 'paid_over', etc.
+        
+        if status in ['paid', 'paid_over']:
+            tx = Transaction.objects.get(order_id=order_id)
+            if tx.status != 'paid':
+                tx.status = 'paid'
+                tx.save()
+                
+                # ВЫДАЕМ PRO НА 30 ДНЕЙ!
+                user = tx.user
+                user.pro_expires_at = timezone.now() + timedelta(days=30)
+                user.save(update_fields=['pro_expires_at'])
+                
+        return JsonResponse({"status": "ok"})
+    except Exception as e:
+        return JsonResponse({"error": str(e)}, status=400)
