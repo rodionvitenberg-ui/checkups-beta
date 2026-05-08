@@ -101,7 +101,7 @@ def register(request, payload: RegisterSchema):
         user.save()
         
         # Переводим название дефолтного профиля
-        PatientProfile.objects.create(user=user, full_name=_("Основной профиль"))
+        PatientProfile.objects.create(user=user, full_name=_("Мой профиль"))
         
         if not payload.password:
             try:
@@ -153,7 +153,7 @@ def claim_request(request, payload: ClaimRequestOTPSchema):
             pin_code = get_random_string(6, allowed_chars='0123456789')
             user.set_password(pin_code)
             user.save()
-            PatientProfile.objects.create(user=user, full_name=_("Основной профиль"))
+            PatientProfile.objects.create(user=user, full_name=_("Мой профиль"))
 
             try:
                 mail_subject = _("Код доступа к результатам | DataDoctor.pro")
@@ -499,14 +499,7 @@ def create_profile(request, payload: CreateProfileSchema):
 
 @api.put("/profiles/{profile_id}", response=PatientProfileSchema, auth=JWTAuth())
 def update_profile(request, profile_id: int, payload: UpdateProfileSchema):
-    profile = get_object_or_404(PatientProfile, id=profile_id, user=request.user)
-    
-    # ИСПРАВЛЕНИЕ УЯЗВИМОСТИ: Проверяем по дате создания, а не по названию
-    first_profile = PatientProfile.objects.filter(user=request.user).order_by('created_at').first()
-    
-    if profile.id == first_profile.id and profile.full_name != payload.full_name:
-        return api.create_response(request, {"message": _("Базовый профиль переименовать нельзя")}, status=400)
-        
+    profile = get_object_or_404(PatientProfile, id=profile_id, user=request.user)    
     profile.full_name = payload.full_name
     profile.birth_date = payload.birth_date
     profile.gender = payload.gender
