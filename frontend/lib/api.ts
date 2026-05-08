@@ -169,7 +169,10 @@ export const downloadFile = async (uid: string, filename: string) => {
 
 export const viewOriginalFile = async (uid: string): Promise<string> => {
     const response = await api.get(`/analyses/${uid}/download`, { responseType: 'blob' });
-    const contentType = response.headers['content-type'];
+    
+    // Явно указываем TS, что это строка, и даем фолбэк (дефолтное значение) на всякий случай
+    const contentType = (response.headers['content-type'] as string) || 'application/octet-stream';
+    
     const blob = new Blob([response.data], { type: contentType });
     return window.URL.createObjectURL(blob);
 };
@@ -320,4 +323,11 @@ export const streamAnalysisChat = async (
             }
         }
     }
+};
+
+
+export const createPayment = async (): Promise<{ payment_url: string }> => {
+    // В axios интерсепторе уже подмешивается токен, так что auth-заголовок уйдет сам
+    const response = await api.post('/premium/payment/create');
+    return response.data;
 };

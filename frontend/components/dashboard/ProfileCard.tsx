@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { 
-    FolderOpen, User, Check, Edit2, X, ChevronDown, 
+    User, Check, Edit2, X, ChevronDown, 
     List, Activity, Loader2, Trash2, FileText, AlertCircle, Settings 
 } from 'lucide-react';
 import { clsx } from 'clsx';
@@ -36,7 +36,8 @@ export function ProfileCard({ profile, isExpanded, onToggle }: { profile: Patien
     const queryClient = useQueryClient();
     const t = useTranslations('Dashboard.ProfileCard');
 
-    const isDefaultProfile = profile.full_name === "Анализы" || profile.full_name.includes("Основной");
+    // Оставляем только для того, чтобы скрывать кнопку удаления для дефолтных имен и менять описание
+    const isDefaultProfile = profile.full_name === "Анализы" || profile.full_name.includes("Основной") || profile.full_name === "Мой профиль";
 
     const { data: analyses = [], isLoading: isLoadingAnalyses } = useQuery({
         queryKey: ['analyses', profile.id],
@@ -47,7 +48,7 @@ export function ProfileCard({ profile, isExpanded, onToggle }: { profile: Patien
     const { data: history = [], isLoading: isLoadingHistory } = useQuery({
         queryKey: ['history', profile.id],
         queryFn: () => getPatientHistory(profile.id),
-        enabled: isExpanded && !isDefaultProfile,
+        enabled: isExpanded, // Теперь графики грузятся для ВСЕХ профилей
     });
 
     const updateNameMutation = useMutation({
@@ -103,42 +104,36 @@ export function ProfileCard({ profile, isExpanded, onToggle }: { profile: Patien
                 >
                     <div className="flex items-center gap-4 sm:gap-5 w-full overflow-hidden">
                         
-                        {/* ИКОНКА / КНОПКА РЕДАКТИРОВАНИЯ */}
+                        {/* ИКОНКА / КНОПКА РЕДАКТИРОВАНИЯ (Теперь единая для всех) */}
                         <div className={clsx(
                             "w-10 h-10 sm:w-10 sm:h-10 rounded-2xl flex items-center justify-center text-lg transition-all duration-300 shrink-0",
                             isExpanded 
                                 ? "bg-gradient-to-br from-[#3f94ca] to-secondary text-white scale-100" 
                                 : "bg-white/60 text-slate-500 group-hover:bg-[#3f94ca]/10 group-hover:text-[#3f94ca]",
-                            isEditing && !isDefaultProfile && "max-sm:!bg-gradient-to-br max-sm:!from-[#00be64] max-sm:!to-[#00a859] max-sm:!text-white max-sm:!shadow-lg max-sm:!shadow-[#00be64]/30 max-sm:!scale-100"
+                            isEditing && "max-sm:!bg-gradient-to-br max-sm:!from-[#00be64] max-sm:!to-[#00a859] max-sm:!text-white max-sm:!shadow-lg max-sm:!shadow-[#00be64]/30 max-sm:!scale-100"
                         )}>
-                            {isDefaultProfile ? (
-                                <FolderOpen className="w-6 h-6 sm:w-7 sm:h-7" />
-                            ) : (
-                                <>
-                                    <User className="hidden sm:block w-6 h-6 sm:w-7 sm:h-7" />
-                                    
-                                    <div 
-                                        className="sm:hidden w-full h-full flex items-center justify-center"
-                                        onClick={(e) => {
-                                            e.stopPropagation(); 
-                                            if (isEditing) {
-                                                handleSaveName(e);
-                                            } else {
-                                                setIsEditing(true);
-                                                setEditName(profile.full_name);
-                                            }
-                                        }}
-                                    >
-                                        {updateNameMutation.isPending ? (
-                                            <Loader2 className="w-5 h-5 animate-spin" />
-                                        ) : isEditing ? (
-                                            <Check className="w-5 h-5" />
-                                        ) : (
-                                            <Edit2 className="w-5 h-5" />
-                                        )}
-                                    </div>
-                                </>
-                            )}
+                            <User className="hidden sm:block w-6 h-6 sm:w-7 sm:h-7" />
+                            
+                            <div 
+                                className="sm:hidden w-full h-full flex items-center justify-center"
+                                onClick={(e) => {
+                                    e.stopPropagation(); 
+                                    if (isEditing) {
+                                        handleSaveName(e);
+                                    } else {
+                                        setIsEditing(true);
+                                        setEditName(profile.full_name);
+                                    }
+                                }}
+                            >
+                                {updateNameMutation.isPending ? (
+                                    <Loader2 className="w-5 h-5 animate-spin" />
+                                ) : isEditing ? (
+                                    <Check className="w-5 h-5" />
+                                ) : (
+                                    <Edit2 className="w-5 h-5" />
+                                )}
+                            </div>
                         </div>
                         
                         {/* ТЕКСТ / ПОЛЕ ВВОДА */}
@@ -166,17 +161,16 @@ export function ProfileCard({ profile, isExpanded, onToggle }: { profile: Patien
                             ) : (
                                 <div className="flex items-center gap-2">
                                     <h3 className="font-bold text-slate-900 text-lg sm:text-xl tracking-tight truncate">
-                                        {isDefaultProfile ? t('defaultName') : profile.full_name}
+                                        {profile.full_name}
                                     </h3>
-                                    {!isDefaultProfile && (
-                                        <button
-                                            onClick={(e) => { e.stopPropagation(); setIsEditing(true); setEditName(profile.full_name); }}
-                                            className="hidden sm:block p-1.5 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-[#3f94ca] hover:bg-[#3f94ca]/10 rounded-xl transition-all shrink-0"
-                                            title={t('titles.rename')}
-                                        >
-                                            <Edit2 className="w-4 h-4" />
-                                        </button>
-                                    )}
+                                    {/* Кнопка переименования теперь доступна ВСЕМ профилям */}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setIsEditing(true); setEditName(profile.full_name); }}
+                                        className="hidden sm:block p-1.5 text-slate-400 opacity-0 group-hover:opacity-100 hover:text-[#3f94ca] hover:bg-[#3f94ca]/10 rounded-xl transition-all shrink-0"
+                                        title={t('titles.rename')}
+                                    >
+                                        <Edit2 className="w-4 h-4" />
+                                    </button>
                                 </div>
                             )}
                             <div className="text-xs sm:text-sm text-slate-500 mt-1 font-medium truncate">
@@ -208,14 +202,12 @@ export function ProfileCard({ profile, isExpanded, onToggle }: { profile: Patien
                                 {activeTab === 'history' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#3f94ca] rounded-t-full" />}
                             </button>
                             
-                            {!isDefaultProfile && (
-                                <button onClick={() => setActiveTab('dynamics')} className={clsx("pb-3 text-sm font-semibold transition-all flex items-center gap-2 relative", activeTab === 'dynamics' ? "text-[#3f94ca]" : "text-slate-500 hover:text-slate-800")}>
-                                    <Activity className="w-4 h-4" /> {t('tabDynamics')}
-                                    {activeTab === 'dynamics' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#3f94ca] rounded-t-full" />}
-                                </button>
-                            )}
+                            {/* Вкладка динамики теперь доступна ВСЕМ */}
+                            <button onClick={() => setActiveTab('dynamics')} className={clsx("pb-3 text-sm font-semibold transition-all flex items-center gap-2 relative", activeTab === 'dynamics' ? "text-[#3f94ca]" : "text-slate-500 hover:text-slate-800")}>
+                                <Activity className="w-4 h-4" /> {t('tabDynamics')}
+                                {activeTab === 'dynamics' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#3f94ca] rounded-t-full" />}
+                            </button>
 
-                            {/* НОВАЯ ВКЛАДКА: ПАРАМЕТРЫ */}
                             <button onClick={() => setActiveTab('settings')} className={clsx("pb-3 text-sm font-semibold transition-all flex items-center gap-2 relative", activeTab === 'settings' ? "text-[#3f94ca]" : "text-slate-500 hover:text-slate-800")}>
                                 <Settings className="w-4 h-4" /> {t('tabSettings', { fallback: 'Параметры' })}
                                 {activeTab === 'settings' && <span className="absolute bottom-0 left-0 w-full h-0.5 bg-[#3f94ca] rounded-t-full" />}
@@ -246,19 +238,20 @@ export function ProfileCard({ profile, isExpanded, onToggle }: { profile: Patien
                                     </div>
                                 )}
                                 
-                                {activeTab === 'dynamics' && !isDefaultProfile && (
+                                {/* Графики теперь отрисовываются для ВСЕХ профилей */}
+                                {activeTab === 'dynamics' && (
                                     <div className="animate-in fade-in slide-in-from-bottom-2 duration-500 bg-white/80 backdrop-blur-md p-5 sm:p-7 rounded-3xl border border-white/60 shadow-sm">
                                         <PatientChart history={history} />
                                     </div>
                                 )}
 
-                                {/* ВЫВОД КОМПОНЕНТА ПАРАМЕТРОВ */}
                                 {activeTab === 'settings' && (
                                     <PatientSettings profile={profile} />
                                 )}
                             </>
                         )}
 
+                        {/* Кнопка удаления скрыта только для базовых имен профиля для безопасности UI */}
                         {!isDefaultProfile && (
                             <div className="mt-8 pt-5 border-t border-white/60 flex justify-end">
                                 <button 

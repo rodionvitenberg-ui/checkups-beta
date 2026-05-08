@@ -57,11 +57,13 @@
     ]
   },
   "Footer": {
-    "logoAlt": "Logotipo de DataDoctor",
-    "copyright": "© {year} DataDoctor. Todos los derechos reservados.",
-    "about": "Sobre el proyecto",
-    "legal": "Información legal"
-  },
+  "logoAlt": "Logotipo de Checkups",
+  "copyright": "© {year} webdoc.life. Todos los derechos reservados.",
+  "privacy": "Privacidad",
+  "terms": "Términos de servicio",
+  "cookies": "Política de Cookies",
+  "disclaimer": "Descargo de responsabilidad"
+},
   "Upload": {
     "createNew": "Agregar nuevo paciente",
     "newProfileHint": "El nuevo perfil se guardará automáticamente en su cuenta personal.",
@@ -180,7 +182,7 @@
     },
     "ProfileCard": {
     "defaultName": "Análisis (Sin vincular)",
-    "defaultDesc": "Análisis de documentos sin nombre",
+    "defaultDesc": "Mis análisis",
     "patientDesc": "Análisis de este paciente",
     "tabHistory": "Lista de documentos",
     "tabDynamics": "Evolución de indicadores",
@@ -270,6 +272,11 @@
   }
   },
   "Analysis": {
+    "Chat": {
+    "greeting": "¡Hola! Soy su asistente médico de IA. Estoy listo para responder cualquier pregunta sobre su análisis.",
+    "inputPlaceholder": "Pregunte sobre sus indicadores...",
+    "errorMsg": "Ocurrió un error al recibir la respuesta."
+  },
     "Loading": {
       "title": "La IA está trabajando",
       "defaultText": "Preparando el análisis...",
@@ -427,5 +434,23 @@
   "privacyLink": "Política de privacidad",
   "accept": "Aceptar todo",
   "decline": "Rechazar"
-}
+},
+"Cookies": {
+  "pageTitle": "Política de Cookies",
+  "pageSubtitle": "Cómo utilizamos las tecnologías de seguimiento",
+  "lastUpdated": "Última actualización"
+},
+"Disclaimer": {
+  "pageTitle": "Descargo de responsabilidad médica",
+  "pageSubtitle": "Información importante sobre las limitaciones del servicio",
+  "lastUpdated": "Última actualización"
+},
+"About": {
+    "title": "Sobre la tecnología de webdoc.life",
+    "description": "Este proyecto fue creado como una demostración de las capacidades actuales de la IA en la medicina. Utilizamos un sistema híbrido de OCR y modelos LLM para transformar formularios de análisis complejos en informes comprensibles.",
+    "techTitle": "La seguridad es lo primero",
+    "techDescription": "No nos limitamos a enviar sus datos a una red neuronal. Primero, nuestro servidor elimina localmente todos los datos personales (nombre completo, contactos) mediante algoritmos de anonimización NLP. La IA solo ve las cifras y los indicadores.",
+    "supportText": "Este proyecto es desarrollado por un único desarrollador. Si el servicio le ha sido de ayuda, puede apoyar su crecimiento.",
+    "supportButton": "Apoyar el proyecto"
+  }
 }

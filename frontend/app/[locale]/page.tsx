@@ -7,6 +7,7 @@ import { FeaturesSection } from '@/components/home/FeaturesSection';
 import { ExampleButtonSection } from '@/components/home/ExampleButtonSection';
 import FAQSection from '@/components/home/FAQ';
 import { AnimatedTestimonialsSection } from '@/components/home/AnimatedTestimonialsSection';
+import { AboutSection } from '@/components/home/AboutSection';
 
 export default function Home() {
   return (
@@ -31,6 +32,7 @@ export default function Home() {
 
         {/* 4. КНОПКА ПРИМЕРА */}
         <ExampleButtonSection />
+        <AboutSection />
 
         {/* 5. FAQ */}
         <section>

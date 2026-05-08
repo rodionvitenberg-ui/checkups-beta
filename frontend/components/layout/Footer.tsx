@@ -1,4 +1,4 @@
-import { Link } from '@/i18n/routing'; // Меняем импорт Link на локализованный
+import { Link } from '@/i18n/routing';
 import Image from "next/image";
 import { useTranslations } from 'next-intl';
 
@@ -7,9 +7,9 @@ export function Footer() {
   const currentYear = new Date().getFullYear();
 
   return (
-    <footer className="w-full backdrop-blur-md mt-auto">
+    <footer className="w-full backdrop-blur-md mt-auto border-t border-accent/10">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8 md:py-12">
-        <div className="flex flex-col md:flex-row justify-between items-center md:items-end gap-6">
+        <div className="flex flex-col md:flex-row justify-between items-center md:items-center gap-8">
           
           {/* Левая часть: Логотип и копирайт */}
           <div className="flex flex-col items-center md:items-start gap-4">
@@ -23,21 +23,29 @@ export function Footer() {
                 unoptimized
               />
             </Link>
-            <p className="text-sm text-accent">
-              {/* Передаем текущий год как переменную в JSON */}
+            <p className="text-sm text-accent/60 font-medium">
               {t('copyright', { year: currentYear })}
             </p>
           </div>
 
-          {/* Правая часть: Ссылки */}
-          <div className="flex flex-wrap justify-center md:justify-end gap-6 text-sm font-bold text-secondary tracking-wide">
-            <Link href="/" className="hover:text-accent transition-colors uppercase">
-              {t('about')}
-            </Link>
-            
-            <Link href="/legal" className="hover:text-accent transition-colors uppercase">
-              {t('legal')}
-            </Link>
+          {/* Правая часть: Ссылки в две колонки */}
+          <div className="grid grid-cols-2 gap-x-8 gap-y-3 text-sm font-bold text-secondary tracking-wide uppercase">
+            <div className="flex flex-col gap-3">
+              <Link href="/legal" className="hover:text-accent transition-colors">
+                {t('privacy')}
+              </Link>
+              <Link href="/terms" className="hover:text-accent transition-colors">
+                {t('terms')}
+              </Link>
+            </div>
+            <div className="flex flex-col gap-3">
+              <Link href="/cookies" className="hover:text-accent transition-colors">
+                {t('cookies')}
+              </Link>
+              <Link href="/disclaimer" className="hover:text-accent transition-colors">
+                {t('disclaimer')}
+              </Link>
+            </div>
           </div>
 
         </div>

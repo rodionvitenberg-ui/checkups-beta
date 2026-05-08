@@ -94,6 +94,7 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
     const handleSaveBase = async () => {
         if (!currentProfile) return;
         const payload: Partial<PatientProfile> = {
+            full_name: currentProfile.full_name,
             gender: (formData.gender as 'M' | 'F') || null,
             birth_date: formData.birth_date || null,
             weight: formData.weight ? parseFloat(formData.weight) : null,

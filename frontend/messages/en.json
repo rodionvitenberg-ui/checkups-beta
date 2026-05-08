@@ -57,11 +57,13 @@
     ]
   },
   "Footer": {
-    "logoAlt": "DataDoctor Logo",
-    "copyright": "© {year} DataDoctor. All rights reserved.",
-    "about": "About the project",
-    "legal": "Legal Information"
-  },
+  "logoAlt": "Checkups Logo",
+  "copyright": "© {year} webdoc.life. All rights reserved.",
+  "privacy": "Privacy Policy",
+  "terms": "Terms of Service",
+  "cookies": "Cookie Policy",
+  "disclaimer": "Disclaimer"
+},
   "Upload": {
     "title": "Send for Analysis",
     "subtitle": "Maximum of {max} file at a time",
@@ -178,7 +180,7 @@
     },
     "ProfileCard": {
       "defaultName": "Analyses (Unlinked)",
-      "defaultDesc": "Document analyses without a name",
+      "defaultDesc": "Your analyses",
       "patientDesc": "Analyses for this patient",
       "tabHistory": "Document List",
       "tabSettings": "Settings",
@@ -268,6 +270,11 @@
   }
   },
   "Analysis": {
+    "Chat": {
+    "greeting": "Hello! I am your medical AI assistant. I am ready to answer any questions regarding your analysis.",
+    "inputPlaceholder": "Ask about your indicators...",
+    "errorMsg": "An error occurred while receiving the response."
+  },
     "Loading": {
       "title": "AI is working",
       "defaultText": "Preparing for analysis...",
@@ -425,5 +432,23 @@
   "privacyLink": "Privacy Policy",
   "accept": "Accept All",
   "decline": "Decline"
-}
+},
+"Cookies": {
+  "pageTitle": "Cookie Policy",
+  "pageSubtitle": "How we use tracking technologies",
+  "lastUpdated": "Last Updated"
+},
+"Disclaimer": {
+  "pageTitle": "Medical Disclaimer",
+  "pageSubtitle": "Important information about service limitations",
+  "lastUpdated": "Last Updated"
+},
+"About": {
+    "title": "About webdoc.life Technology",
+    "description": "This project was created as a demonstration of modern AI capabilities in medicine. We use a hybrid system of OCR and LLM models to transform complex laboratory forms into clear, understandable reports.",
+    "techTitle": "Security First",
+    "techDescription": "We don't just send your data to an AI. First, our server locally strips all personal information (Full Name, contact details) using NLP anonymization algorithms. The AI only sees the numbers and indicators.",
+    "supportText": "This project is developed by a solo developer. If this service has helped you, you can support its growth.",
+    "supportButton": "Support the Project"
+  }
 }
