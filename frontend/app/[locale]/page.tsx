@@ -1,6 +1,8 @@
 // Обрати внимание: 'use client' удален! Теперь это сверхбыстрый серверный компонент.
 
 import StaticBackground from '@/components/background/StaticBackground';
+import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
 import { HeroSection } from '@/components/home/HeroSection';
 import { FileUploader } from '@/components/home/FileUploader';
 import { FeaturesSection } from '@/components/home/FeaturesSection';
@@ -8,6 +10,16 @@ import { ExampleButtonSection } from '@/components/home/ExampleButtonSection';
 import FAQSection from '@/components/home/FAQ';
 import { AnimatedTestimonialsSection } from '@/components/home/AnimatedTestimonialsSection';
 import { AboutSection } from '@/components/home/AboutSection';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+
+  return {
+    title: t('homeTitle'),
+    description: t('description'),
+  };
+}
 
 export default function Home() {
   return (

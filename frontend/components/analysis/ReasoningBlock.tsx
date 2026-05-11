@@ -1,12 +1,14 @@
 import { BrainCircuit, ChevronDown, ChevronUp, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { clsx } from 'clsx';
+import { useTranslations } from 'next-intl';
 
 interface ReasoningBlockProps {
     text: string;
 }
 
 export function ReasoningBlock({ text }: ReasoningBlockProps) {
+    const t = useTranslations('ReasoningBlock');
     const [isOpen, setIsOpen] = useState(true);
 
     return (
@@ -20,8 +22,8 @@ export function ReasoningBlock({ text }: ReasoningBlockProps) {
                         <BrainCircuit className="w-5 h-5" />
                     </div>
                     <div>
-                        <h3 className="font-semibold text-indigo-950 text-sm">Клиническое мышление AI</h3>
-                        <p className="text-xs text-indigo-600/80">Логика постановки диагноза</p>
+                        <h3 className="font-semibold text-indigo-950 text-sm">{t('title')}</h3>
+                        <p className="text-xs text-indigo-600/80">{t('subtitle')}</p>
                     </div>
                 </div>
                 {isOpen ? <ChevronUp className="w-4 h-4 text-indigo-400" /> : <ChevronDown className="w-4 h-4 text-indigo-400" />}

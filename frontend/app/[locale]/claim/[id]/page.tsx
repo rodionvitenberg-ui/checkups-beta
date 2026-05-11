@@ -4,8 +4,7 @@ import { useEffect, useState } from 'react';
 import { useParams } from 'next/navigation';
 import { useRouter, Link } from '@/i18n/routing';
 import { getAnalysisResult, claimRequest, claimVerify } from '@/lib/api';
-// Удалили импорт Phone из lucide-react
-import { BrainCircuit, CheckCircle2, Mail, ArrowRight, Loader2, KeyRound, ExternalLink } from 'lucide-react';
+import { CheckCircle2, Mail, ArrowRight, Loader2, KeyRound, ExternalLink } from 'lucide-react';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
 
@@ -20,14 +19,11 @@ export default function ClaimPage() {
     const rawIds = decodeURIComponent(params.id as string);
     const ids = rawIds ? rawIds.split(',').map(id => id.trim()).filter(Boolean) : [];
 
-    const [step, setStep] = useState<'analyzing' | 'form' | 'verify' | 'results'>('analyzing');
+    // ИЗМЕНЕНИЕ 1: Сразу начинаем с шага form
+    const [step, setStep] = useState<'form' | 'verify' | 'results'>('form');
     const [isAuth, setIsAuth] = useState(false);
     const [statuses, setStatuses] = useState<Record<string, string>>({});
     
-    const [progress, setProgress] = useState(0);
-    const [loadingText, setLoadingText] = useState(t('defaultLoading'));
-
-    // Удалили стейт телефона
     const [email, setEmail] = useState('');
     const [code, setCode] = useState(''); 
     const [isSubmitting, setIsSubmitting] = useState(false);
@@ -38,67 +34,11 @@ export default function ClaimPage() {
         }
     }, []);
 
-    // УДАЛЕНА ФУНКЦИЯ handlePhoneChange
+    // ИЗМЕНЕНИЕ 2: Убраны старые useEffect, которые фейково крутили прогресс 
+    // и блокировали показ формы, ожидая completed от бэкенда.
 
-    useEffect(() => {
-        if (step !== 'analyzing') return;
-
-        let isFinished = false;
-        const texts = [
-            t('loadingTexts.0'),
-            t('loadingTexts.1'),
-            t('loadingTexts.2'),
-            t('loadingTexts.3'),
-            t('loadingTexts.4'),
-            t('loadingTexts.5')
-        ];
-
-        let currentProgress = 0;
-        const interval = setInterval(() => {
-            if (isFinished) return;
-            currentProgress += Math.floor(Math.random() * 4) + 2; 
-            if (currentProgress > 98) currentProgress = 98; 
-            setProgress(currentProgress);
-
-            if (currentProgress < 20) setLoadingText(texts[0]);
-            else if (currentProgress < 40) setLoadingText(texts[1]);
-            else if (currentProgress < 60) setLoadingText(texts[2]);
-            else if (currentProgress < 80) setLoadingText(texts[3]);
-            else if (currentProgress < 90) setLoadingText(texts[4]);
-            else setLoadingText(texts[5]);
-        }, 1500);
-
-        return () => { isFinished = true; clearInterval(interval); };
-    }, [step, t]);
-
-    useEffect(() => {
-        if (step !== 'analyzing' || ids.length === 0) return;
-
-        const pollFirst = async () => {
-            try {
-                const result = await getAnalysisResult(ids[0]);
-                setStatuses(prev => ({ ...prev, [ids[0]]: result.status }));
-
-                if (result.status === 'completed' || result.status === 'failed') {
-                    setProgress(100);
-                    setLoadingText(t('loadingDone'));
-                    
-                    setTimeout(() => {
-                        if (isAuth) {
-                            setStep('results');
-                        } else {
-                            setStep('form');
-                        }
-                    }, 1000);
-                }
-            } catch (error) { console.error(error); }
-        };
-
-        const interval = setInterval(pollFirst, 3000);
-        pollFirst(); 
-        return () => clearInterval(interval);
-    }, [step, ids, isAuth, t]);
-
+    // Этот useEffect работает только на шаге results (ПОСЛЕ ввода кода),
+    // когда бэкенд уже честно запустил Celery таски.
     useEffect(() => {
         if (step !== 'results' || ids.length === 0) return;
 
@@ -136,7 +76,6 @@ export default function ClaimPage() {
     const handleRequestSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         
-        // Убрали проверку телефона
         if (!email) {
             toast({ title: t('toasts.errorTitle'), description: t('toasts.validationError'), variant: "destructive" });
             return;
@@ -144,7 +83,6 @@ export default function ClaimPage() {
 
         setIsSubmitting(true);
         try {
-            // Убрали передачу телефона
             await claimRequest(ids, email);
             setStep('verify');
             toast({ title: t('toasts.codeSentTitle'), description: t('toasts.codeSentDesc'), variant: "default" });
@@ -164,51 +102,26 @@ export default function ClaimPage() {
 
         setIsSubmitting(true);
         try {
-            // Убрали передачу телефона (теперь передаем только ids, email, code, password)
             await claimVerify(ids, email, code, code);
             toast({ title: t('toasts.successTitle'), description: t('toasts.successDesc'), variant: "success" });
             
             localStorage.setItem('new_analysis_ids', JSON.stringify(ids));
             setIsAuth(true);
+            
+            // ИЗМЕНЕНИЕ 3: После успешного ввода кода, бэкенд запустил таски,
+            // и мы переводим юзера на шаг ожидания результатов.
             setStep('results');
         } catch (error: any) {
             toast({ title: t('toasts.errorTitle'), description: error.response?.data?.message || t('toasts.invalidCode'), variant: "destructive" });
         } finally { setIsSubmitting(false); }
     };
 
-    const allCompleted = ids.every(id => statuses[id] === 'completed' || statuses[id] === 'failed');
+    const allCompleted = ids.length > 0 && ids.every(id => statuses[id] === 'completed' || statuses[id] === 'failed');
 
     return (
         <main className="relative min-h-screen flex flex-col items-center justify-center pt-20 px-4">
             
             <StaticBackground imageUrl="/background/claim.png" />
-
-            {step === 'analyzing' && (
-                <div className="relative z-10 bg-white/80 backdrop-blur-md border border-white/40 rounded-3xl shadow-xl shadow-slate-200/20 p-8 sm:p-12 flex flex-col items-center max-w-md w-full animate-in zoom-in-95 duration-500">
-                    <div className="relative w-40 h-40 mb-8 flex items-center justify-center">
-                        <svg className="absolute inset-0 w-full h-full transform -rotate-90">
-                            <circle cx="80" cy="80" r={60} stroke="currentColor" strokeWidth="12" fill="transparent" className="text-slate-100/50" />
-                            <circle 
-                                cx="80" cy="80" r={60} stroke="currentColor" strokeWidth="12" fill="transparent"
-                                className="text-[#00be64] transition-all duration-500 ease-out"
-                                strokeDasharray={2 * Math.PI * 60}
-                                strokeDashoffset={(2 * Math.PI * 60) - (progress / 100) * (2 * Math.PI * 60)}
-                                strokeLinecap="round"
-                            />
-                        </svg>
-                        <div className="absolute flex flex-col items-center justify-center">
-                            <span className="text-4xl font-extrabold text-slate-800">{progress}%</span>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-3 mb-2">
-                        <BrainCircuit className="w-5 h-5 text-[#3f94ca] animate-pulse" />
-                        <h3 className="text-lg font-bold text-slate-900 text-center">{t('analyzing.title')}</h3>
-                    </div>
-                    <p className="text-slate-500 text-center font-medium h-6 transition-all duration-300">
-                        {loadingText}
-                    </p>
-                </div>
-            )}
 
             {step === 'form' && (
                 <div className="relative z-10 bg-transparent backdrop-blur-md rounded-3xl shadow-xl transition-shadow p-6 sm:p-10 overflow-hidden max-w-xl w-full animate-in fade-in zoom-in-95 duration-500">
@@ -229,7 +142,6 @@ export default function ClaimPage() {
                                 <input required type="email" placeholder={t('form.emailPlaceholder')} value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-12 pr-4 py-3 bg-transparent backdrop-blur-md shadow-md transition-shadow rounded-xl focus:ring-2 focus:ring-[#00be64]/20 focus:border-accent outline-none transition-all font-medium placeholder:text-slate-400" />
                             </div>
                         </div>
-                        {/* ПОЛЕ ВВОДА ТЕЛЕФОНА УДАЛЕНО */}
                         <button type="submit" disabled={isSubmitting || !email} className="w-full group flex items-center justify-center gap-2 bg-secondary text-white px-6 py-4 rounded-xl hover:bg-accent disabled:bg-slate-300 disabled:cursor-not-allowed transition-all font-bold text-lg mt-6 shadow-lg shadow-[#3f94ca]/30">
                             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t('form.submitButton')} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}
                         </button>

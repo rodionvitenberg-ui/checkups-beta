@@ -417,7 +417,7 @@ def download_analysis_file(request, uid: uuid.UUID):
     response['Content-Disposition'] = f'inline; filename="{fname}"'
     return response
 
-@api.post("/analyses/{uid}/reanalyze", response=AnalysisResponseSchema, auth=None)
+@api.post("/analyses/{uid}/reanalyze", response=AnalysisResponseSchema, auth=JWTAuth())
 def reanalyze_document(request, uid: uuid.UUID):
     user = request.user
     

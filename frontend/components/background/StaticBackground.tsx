@@ -15,14 +15,11 @@ export default function StaticBackground({ imageUrl }: StaticBackgroundProps) {
         alt="Background"
         fill
         priority
-        // object-cover гарантирует, что картинка не будет сжиматься/растягиваться
-        // object-center центрирует её
         className="object-cover object-center sm:object-top"
-        sizes="100vw"
-        quality={90}
+        unoptimized
       />
       {/* Легкое наложение, чтобы текст лучше читался */}
-      <div className="absolute inset-0 bg-white/10 backdrop-blur-[2px]" />
+      <div className="absolute inset-0 bg-white/10 backdrop-blur-[0px]" />
     </div>
   );
 }

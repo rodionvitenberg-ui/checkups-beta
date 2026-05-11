@@ -1,7 +1,13 @@
 {
   "Metadata": {
-    "title": "DataDoctor.pro | Intérprete de Resultados con IA",
-    "description": "Sube el PDF de tus análisis de sangre y obtén una explicación clara impulsada por IA."
+  "title": "Webdoc.life | Interpretación de Análisis con IA",
+    "homeTitle": "Webdoc.life | Interpretación de Análisis con IA",
+    "uploadTitle": "Subir análisis",
+    "dashboardTitle": "Panel de control",
+    "legalTitle": "Política de privacidad",
+    "termsTitle": "Términos de servicio",
+    "faqTitle": "Preguntas frecuentes",
+    "description": "Interpretación instantánea de análisis médicos mediante IA"
   },
   "Hero": {
     "title": "SOBRE EL PROYECTO",
@@ -452,5 +458,22 @@
     "techDescription": "No nos limitamos a enviar sus datos a una red neuronal. Primero, nuestro servidor elimina localmente todos los datos personales (nombre completo, contactos) mediante algoritmos de anonimización NLP. La IA solo ve las cifras y los indicadores.",
     "supportText": "Este proyecto es desarrollado por un único desarrollador. Si el servicio le ha sido de ayuda, puede apoyar su crecimiento.",
     "supportButton": "Apoyar el proyecto"
-  }
+  },
+  "ReasoningBlock": {
+  "title": "Razonamiento Clínico de IA",
+  "subtitle": "Lógica de diagnóstico"
+},
+"Paywall": {
+  "title": "Mejora a PRO",
+  "subtitle": "Has alcanzado el límite gratuito. Desbloquea acceso completo al asistente de IA y análisis ilimitados.",
+  "feature1Title": "10 análisis por día",
+  "feature1Desc": "Sube formularios para toda la familia",
+  "feature2Title": "Chat de IA ilimitado",
+  "feature2Desc": "Hasta 50 preguntas detalladas por formulario",
+  "feature3Title": "Analítica inteligente",
+  "feature3Desc": "Gráficos de dinámica y seguimiento de rasgos personales",
+  "buttonText": "Obtén PRO por $10 / mes",
+  "securePayment": "Pago seguro a través de Cryptomus",
+  "paymentError": "Se produjo un error al crear el pago. Por favor, inténtalo de nuevo más tarde."
+}
 }

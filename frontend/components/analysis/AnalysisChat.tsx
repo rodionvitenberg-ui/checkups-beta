@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from 'react';
 import { createPortal } from 'react-dom';
 import { Send, MessageSquare, X, Loader2, Bot, User } from 'lucide-react';
 import { clsx } from 'clsx';
-import { streamAnalysisChat, getChatHistory } from '@/lib/api'; // Добавили getChatHistory
+import { streamAnalysisChat, getChatHistory } from '@/lib/api'; 
 import { useTranslations } from 'next-intl';
 
 interface Message {
@@ -12,14 +12,32 @@ interface Message {
     content: string;
 }
 
+// Функция-парсер для обработки Markdown (жирного текста)
+const formatContent = (content: string) => {
+    // Разбиваем строку по двойным звездочкам
+    const parts = content.split(/(\*\*[\s\S]*?\*\*)/g);
+    
+    return parts.map((part, index) => {
+        if (part.startsWith('**') && part.endsWith('**')) {
+            // Убираем звездочки и оборачиваем в <strong>
+            return (
+                <strong key={index} className="font-bold">
+                    {part.slice(2, -2)}
+                </strong>
+            );
+        }
+        return <span key={index}>{part}</span>;
+    });
+};
+
 export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
     const t = useTranslations('Analysis.Chat');
     const [mounted, setMounted] = useState(false);
     const [isOpen, setIsOpen] = useState(false);
     const [input, setInput] = useState('');
-    const [messages, setMessages] = useState<Message[]>([]); // Изначально пусто
+    const [messages, setMessages] = useState<Message[]>([]);
     const [isLoading, setIsLoading] = useState(false);
-    const [isInitialLoading, setIsInitialLoading] = useState(true); // Состояние загрузки истории
+    const [isInitialLoading, setIsInitialLoading] = useState(true); 
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -160,7 +178,8 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
                                             ? "bg-blue-600 text-white rounded-tr-sm" 
                                             : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm"
                                     )}>
-                                        {msg.content}
+                                        {/* ПРИМЕНЯЕМ ФУНКЦИЮ ЗДЕСЬ */}
+                                        {formatContent(msg.content)}
                                     </div>
                                     {msg.role === 'user' && (
                                         <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center shrink-0 text-slate-500 mt-1">

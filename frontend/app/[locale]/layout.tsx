@@ -33,13 +33,38 @@ interface Props {
 
 // Динамические метаданные
 export async function generateMetadata({ params }: Omit<Props, 'children'>): Promise<Metadata> {
+  // 1. Правильное извлечение локали через await
   const { locale } = await params;
   const t = await getTranslations({ locale, namespace: 'Metadata' });
 
+  const title = t('title', { fallback: 'webdoc.life' });
+  const description = t('description', { fallback: 'AI Blood Test Interpreter' });
+
   return {
-    metadataBase: new URL('https://webdoc.life'), // Важно для корректного SEO и путей OpenGraph
-    title: t('title', { fallback: 'DataDoctor.pro' }),
-    description: t('description', { fallback: 'AI Blood Test Interpreter' }),
+    // 2. Базовый URL для всех мета-ссылок
+    metadataBase: new URL('https://webdoc.life'), 
+    title,
+    description,
+    
+    // 3. Красивые превью для Telegram, LinkedIn и др.
+    openGraph: {
+      title,
+      description,
+      url: `/${locale}`,
+      siteName: 'webdoc.life',
+      locale: locale,
+      type: 'website',
+      // Картинка подхватится автоматически, если добавить metadataBase
+      images: [
+        {
+          url: '/opengraph-image.png', 
+          width: 1200,
+          height: 630,
+        },
+      ],
+    },
+
+    // 4. Защита от дублей контента (SEO)
     alternates: {
       canonical: `/${locale}`,
       languages: {

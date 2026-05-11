@@ -1,7 +1,13 @@
 {
   "Metadata": {
-    "title": "DataDoctor.pro | AI Lab Results Interpreter",
-    "description": "Upload your blood test PDF and get a clear explanation powered by AI."
+    "title": "Webdoc.life | AI Lab Test Interpretation",
+    "homeTitle": "Webdoc.life | AI Lab Test Interpretation",
+    "uploadTitle": "Upload Analyses",
+    "dashboardTitle": "Dashboard",
+    "legalTitle": "Privacy Policy",
+    "termsTitle": "Terms of Service",
+    "faqTitle": "Frequently Asked Questions",
+    "description": "Instant interpretation of medical lab tests using AI"
   },
   "Hero": {
     "title": "ABOUT THE PROJECT",
@@ -450,5 +456,22 @@
     "techDescription": "We don't just send your data to an AI. First, our server locally strips all personal information (Full Name, contact details) using NLP anonymization algorithms. The AI only sees the numbers and indicators.",
     "supportText": "This project is developed by a solo developer. If this service has helped you, you can support its growth.",
     "supportButton": "Support the Project"
-  }
+  },
+  "ReasoningBlock": {
+  "title": "AI Clinical Reasoning",
+  "subtitle": "Diagnostic logic"
+},
+"Paywall": {
+  "title": "Upgrade to PRO",
+  "subtitle": "You have reached the free limit. Unlock full access to the AI assistant and unlimited analytics.",
+  "feature1Title": "10 analyses per day",
+  "feature1Desc": "Upload forms for the whole family",
+  "feature2Title": "Unlimited AI Chat",
+  "feature2Desc": "Up to 50 detailed questions per form",
+  "feature3Title": "Smart Analytics",
+  "feature3Desc": "Dynamics charts and personal traits tracking",
+  "buttonText": "Get PRO for $10 / mo",
+  "securePayment": "Secure payment via Cryptomus",
+  "paymentError": "An error occurred while creating the payment. Please try again later."
+}
 }

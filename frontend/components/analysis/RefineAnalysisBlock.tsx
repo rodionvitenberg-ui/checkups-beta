@@ -13,11 +13,17 @@ import { getProfiles, updateProfile, getPatientTraits, removePatientTrait, reana
 import { AnalysisResponse, PatientProfile, PatientTraitLink } from '@/lib/types';
 import { TraitModal } from '@/components/dashboard/TraitModal';
 
+// ИМПОРТ STORE ДЛЯ PAYWALL
+import { useStore } from '@/lib/store';
+
 export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }) {
     const t = useTranslations('Analysis.RefineBlock');
     const router = useRouter();
     const { toast } = useToast();
     const queryClient = useQueryClient();
+
+    // ДОСТАЕМ ФУНКЦИЮ ОТКРЫТИЯ PAYWALL
+    const setPaywallOpen = useStore((state) => state.setPaywallOpen);
 
     const [mounted, setMounted] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -86,8 +92,14 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
             toast({ title: t('reanalyzeSuccessTitle'), description: t('reanalyzeSuccessDesc'), variant: "success" });
             router.push(`/analysis/${newAnalysis.uid}`);
         },
-        onError: () => {
-            toast({ title: t('errorTitle'), description: t('errorDesc'), variant: "destructive" });
+        onError: (error: any) => {
+            // === ПЕРЕХВАТ ЛИМИТОВ И ОТКРЫТИЕ PAYWALL ===
+            if (error.response?.status === 403 && error.response?.data?.message === 'limit_reached') {
+                setIsModalOpen(false); // Закрываем модалку настроек
+                setPaywallOpen(true);  // Открываем модалку оплаты
+            } else {
+                toast({ title: t('errorTitle'), description: t('errorDesc'), variant: "destructive" });
+            }
         }
     });
 
