@@ -1,6 +1,6 @@
 import React from 'react';
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
-import { AnalysisResponse } from '@/lib/api';
+import { AnalysisResponse } from '@/lib/types';
 
 // Используем 100% проверенные ссылки на полные шрифты Roboto (с кириллицей)
 Font.register({
