@@ -1,24 +1,19 @@
-# frontend/Dockerfile
 FROM node:22-alpine AS builder
 
 WORKDIR /app
 
-# libc6-compat нужен для некоторых бинарных зависимостей (например, sharp/recharts) под Alpine
-RUN apk add --no-cache libc6-compat
+# 1. ДОБАВЛЯЕМ python3, make и g++ (нужно для компиляции некоторых пакетов под Alpine)
+RUN apk add --no-cache libc6-compat python3 make g++
 
-# Копируем манифесты
 COPY package.json package-lock.json ./
 
-# Устанавливаем зависимости чисто и строго по лок-файлу
-RUN npm ci
+# 2. МЕНЯЕМ npm ci НА npm install (он более гибкий и сам исправит несоответствия)
+RUN npm install
 
-# Копируем исходный код
 COPY . .
 
-# Отключаем телеметрию Next.js для ускорения сборки
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Собираем проект
 RUN npm run build
 
 # --- ФИНАЛЬНЫЙ СЛОЙ (RUNNER) ---
@@ -28,13 +23,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
 
-# Копируем статику и скомпилированные standalone-файлы из слоя builder
 COPY --from=builder /app/public ./public
-# standalone папка создается Next.js автоматически (если output: 'standalone')
 COPY --from=builder /app/.next/standalone ./
 COPY --from=builder /app/.next/static ./.next/static
 
 EXPOSE 3000
 
-# Запускаем встроенный сервер Next.js
 CMD ["node", "server.js"]
