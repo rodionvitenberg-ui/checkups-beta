@@ -10,7 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-rus \
     tesseract-ocr-eng \
     tesseract-ocr-spa \
-    libgl1-mesa-glx \
+    libgl1 \
     libpq-dev \
     gcc \
     && rm -rf /var/lib/apt/lists/*
