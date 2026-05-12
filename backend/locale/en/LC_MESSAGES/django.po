@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-08 19:12+0000\n"
+"POT-Creation-Date: 2026-05-11 07:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -20,67 +20,67 @@ msgstr ""
 
 #: analysis/models.py:11
 msgid "Экстрактор (Извлечение)"
-msgstr ""
+msgstr "Extractor (Extraction)"
 
 #: analysis/models.py:12
 msgid "Интерпретатор (Анализ)"
-msgstr ""
+msgstr "Interpreter (Analysis)"
 
 #: analysis/models.py:13
 msgid "Чат-ассистент"
-msgstr ""
+msgstr "Chat Assistant"
 
 #: analysis/models.py:15
 msgid "Название (для админки)"
-msgstr ""
+msgstr "Name (for admin)"
 
 #: analysis/models.py:16
 msgid "Роль в пайплайне"
-msgstr ""
+msgstr "Role in pipeline"
 
 #: analysis/models.py:19
 msgid "Системный промпт"
-msgstr ""
+msgstr "System prompt"
 
 #: analysis/models.py:22
 msgid "Дополнительный контекст/Примеры"
-msgstr ""
+msgstr "Additional context/Examples"
 
 #: analysis/models.py:24
 msgid "Активен"
-msgstr ""
+msgstr "Active"
 
 #: analysis/models.py:29
 msgid "Шаблон промпта"
-msgstr ""
+msgstr "Prompt template"
 
 #: analysis/models.py:30
 msgid "Шаблоны промптов"
-msgstr ""
+msgstr "Prompt templates"
 
 #: config/settings.py:134
 msgid "English"
-msgstr ""
+msgstr "English"
 
 #: config/settings.py:135
 msgid "Spanish"
-msgstr ""
+msgstr "Spanish"
 
 #: config/settings.py:136
 msgid "Russian"
-msgstr ""
+msgstr "Russian"
 
 #: core/api.py:95
 msgid "Пользователь с таким email уже существует"
-msgstr ""
+msgstr "User with this email already exists"
 
 #: core/api.py:104 core/api.py:156
 msgid "Мой профиль"
-msgstr ""
+msgstr "My profile"
 
 #: core/api.py:109
 msgid "Регистрация в DataDoctor.pro"
-msgstr ""
+msgstr "Registration at DataDoctor.pro"
 
 #: core/api.py:110
 #, python-brace-format
@@ -93,18 +93,25 @@ msgid ""
 "\n"
 "Пожалуйста, сохраните эти данные или смените пароль в личном кабинете."
 msgstr ""
+"Welcome to DataDoctor.pro!\n"
+"\n"
+"Your login details:\n"
+"Login: {email}\n"
+"Your password: {password}\n"
+"\n"
+"Please save these details or change your password in your personal account."
 
 #: core/api.py:133
 msgid "Неверный email или пароль"
-msgstr ""
+msgstr "Invalid email or password"
 
 #: core/api.py:146
 msgid "Анализы не найдены"
-msgstr ""
+msgstr "Analyses not found"
 
 #: core/api.py:159
 msgid "Код доступа к результатам | DataDoctor.pro"
-msgstr ""
+msgstr "Access code to results | DataDoctor.pro"
 
 #: core/api.py:160
 #, python-brace-format
@@ -115,36 +122,43 @@ msgid ""
 "\n"
 "Никому не сообщайте этот код."
 msgstr ""
+"Your test results are ready!\n"
+"\n"
+"Your PIN code to view the results: {pin_code}\n"
+"\n"
+"Do not share this code with anyone."
 
 #: core/api.py:172
 msgid "PIN-код отправлен на почту"
-msgstr ""
+msgstr "PIN code sent to email"
 
 #: core/api.py:174
 msgid "Email найден. Введите пароль."
-msgstr ""
+msgstr "Email found. Enter password."
 
 #: core/api.py:181
 msgid "Неверный код или пароль"
-msgstr ""
+msgstr "Invalid code or password"
 
 #: core/api.py:234
 msgid ""
 "Превышен дневной лимит бесплатных анализов. Пожалуйста, оформите PRO-"
 "подписку."
 msgstr ""
+"Daily limit for free analyses exceeded. Please subscribe to a PRO "
+"subscription."
 
 #: core/api.py:251
 msgid "Токен устарел или недействителен"
-msgstr ""
+msgstr "Token is expired or invalid"
 
 #: core/api.py:260
 msgid "Если такой email существует, мы отправили инструкцию."
-msgstr ""
+msgstr "If this email exists, we have sent instructions."
 
 #: core/api.py:269
 msgid "Восстановление пароля DataDoctor.pro"
-msgstr ""
+msgstr "DataDoctor.pro password recovery"
 
 #: core/api.py:270
 #, python-brace-format
@@ -155,231 +169,236 @@ msgid ""
 "\n"
 "Если вы не запрашивали это действие, просто проигнорируйте письмо."
 msgstr ""
+"You requested a password reset.\n"
+"To set a new password, follow the link:\n"
+"{reset_link}\n"
+"\n"
+"If you did not request this action, simply ignore this email."
 
 #: core/api.py:282
 msgid "Инструкция по сбросу пароля отправлена на Email."
-msgstr ""
+msgstr "Password reset instructions sent to Email."
 
 #: core/api.py:290
 msgid "Неверная ссылка"
-msgstr ""
+msgstr "Invalid link"
 
 #: core/api.py:293
 msgid "Ссылка устарела или недействительна"
-msgstr ""
+msgstr "The link is expired or invalid"
 
 #: core/api.py:297
 msgid "Пароль успешно изменен. Теперь вы можете войти."
-msgstr ""
+msgstr "Password successfully changed. You can now log in."
 
 #: core/api.py:304
 msgid "Неверный текущий пароль"
-msgstr ""
+msgstr "Invalid current password"
 
 #: core/api.py:309
 msgid "Пароль успешно изменен"
-msgstr ""
+msgstr "Password successfully changed"
 
 #: core/api.py:404
 msgid "Анализ не найден"
-msgstr ""
+msgstr "Analysis not found"
 
 #: core/api.py:413
 msgid "Файл не найден"
-msgstr ""
+msgstr "File not found"
 
 #: core/api.py:521
 msgid "Основной профиль нельзя удалить"
-msgstr ""
+msgstr "Main profile cannot be deleted"
 
 #: core/api.py:529
 msgid "Профиль успешно удален"
-msgstr ""
+msgstr "Profile successfully deleted"
 
 #: core/api.py:568
 msgid "Доступ запрещен"
-msgstr ""
+msgstr "Access denied"
 
 #: core/models.py:12
 msgid "Email обязателен"
-msgstr ""
+msgstr "Email is required"
 
 #: core/models.py:27
 #: venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1920
 msgid "Email address"
-msgstr ""
+msgstr "Email address"
 
 #: core/models.py:29
 msgid "PRO до"
-msgstr ""
+msgstr "PRO until"
 
 #: core/models.py:54
 msgid "ФИО"
-msgstr ""
+msgstr "Full name"
 
 #: core/models.py:56
 msgid "Дата рождения"
-msgstr ""
+msgstr "Date of birth"
 
 #: core/models.py:59
 msgid "Мужской"
-msgstr ""
+msgstr "Male"
 
 #: core/models.py:59
 msgid "Женский"
-msgstr ""
+msgstr "Female"
 
 #: core/models.py:61
 msgid "Пол"
-msgstr ""
+msgstr "Gender"
 
 #: core/models.py:64
 msgid "Вес в кг"
-msgstr ""
+msgstr "Weight in kg"
 
 #: core/models.py:64
 msgid "Вес"
-msgstr ""
+msgstr "Weight"
 
 #: core/models.py:65
 msgid "Рост в см"
-msgstr ""
+msgstr "Height in cm"
 
 #: core/models.py:65
 msgid "Рост"
-msgstr ""
+msgstr "Height"
 
 #: core/models.py:71
 msgid "Гость"
-msgstr ""
+msgstr "Guest"
 
 #: core/models.py:79
 msgid "Файл анализа"
-msgstr ""
+msgstr "Analysis file"
 
 #: core/models.py:86
 msgid "Оригинальный анализ"
-msgstr ""
+msgstr "Original analysis"
 
 #: core/models.py:92
 msgid "Ожидает"
-msgstr ""
+msgstr "Pending"
 
 #: core/models.py:93
 msgid "В работе"
-msgstr ""
+msgstr "In progress"
 
 #: core/models.py:94
 msgid "Готово"
-msgstr ""
+msgstr "Done"
 
 #: core/models.py:95
 msgid "Ошибка"
-msgstr ""
+msgstr "Error"
 
 #: core/models.py:97 premium/models.py:124
 msgid "Статус"
-msgstr ""
+msgstr "Status"
 
 #: core/models.py:98
 msgid "Результат ИИ"
-msgstr ""
+msgstr "AI result"
 
 #: core/models.py:102
 msgid "Краткое содержание чата (Архив)"
-msgstr ""
+msgstr "Chat summary (Archive)"
 
 #: core/models.py:113 premium/models.py:14
 msgid "Название"
-msgstr ""
+msgstr "Title"
 
 #: core/models.py:114
 msgid "Значение"
-msgstr ""
+msgstr "Value"
 
 #: core/models.py:116
 msgid "Ед. измерения"
-msgstr ""
+msgstr "Unit of measurement"
 
 #: core/models.py:117
 msgid "Дата"
-msgstr ""
+msgstr "Date"
 
 #: core/models.py:135 core/models.py:136
 msgid "📈 Дашборд Аналитики"
-msgstr ""
+msgstr "📈 Analytics Dashboard"
 
 #: premium/api.py:104
 msgid "Анализ еще не расшифрован"
-msgstr ""
+msgstr "Analysis is not yet interpreted"
 
 #: premium/models.py:9
 msgid "Заболевание"
-msgstr ""
+msgstr "Disease"
 
 #: premium/models.py:10
 msgid "Вредная привычка"
-msgstr ""
+msgstr "Bad habit"
 
 #: premium/models.py:11
 msgid "Полезная привычка"
-msgstr ""
+msgstr "Good habit"
 
 #: premium/models.py:12
 msgid "Особенность организма"
-msgstr ""
+msgstr "Physiological feature"
 
 #: premium/models.py:18
 msgid "Категория"
-msgstr ""
+msgstr "Category"
 
 #: premium/models.py:22
 msgid "Кастомная?"
-msgstr ""
+msgstr "Custom?"
 
 #: premium/models.py:56
 msgid "Детали (стаж, частота, дозировки)"
-msgstr ""
+msgstr "Details (duration, frequency, dosages)"
 
 #: premium/models.py:71
 msgid "Пользователь"
-msgstr ""
+msgstr "User"
 
 #: premium/models.py:72
 msgid "Ассистент"
-msgstr ""
+msgstr "Assistant"
 
 #: premium/models.py:84
 msgid "Архивировано"
-msgstr ""
+msgstr "Archived"
 
 #: premium/models.py:88
 msgid "Сообщение чата"
-msgstr ""
+msgstr "Chat message"
 
 #: premium/models.py:89
 msgid "Сообщения чата"
-msgstr ""
+msgstr "Chat messages"
 
 #: premium/models.py:101
 msgid "Оптимизация токенов (JSON-диета и Суммаризация)"
-msgstr ""
+msgstr "Token optimization (JSON diet and Summarization)"
 
 #: premium/models.py:105 premium/models.py:106
 msgid "Настройки чата"
-msgstr ""
+msgstr "Chat settings"
 
 #: premium/models.py:123
 msgid "Сумма (USD)"
-msgstr ""
+msgstr "Amount (USD)"
 
 #: premium/models.py:128
 msgid "Транзакция"
-msgstr ""
+msgstr "Transaction"
 
 #: premium/models.py:129
 msgid "Транзакции"
-msgstr ""
+msgstr "Transactions"
 
 #: venv/lib/python3.13/site-packages/click/_termui_impl.py:613
 #, python-brace-format

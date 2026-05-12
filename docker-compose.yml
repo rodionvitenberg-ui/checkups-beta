@@ -1,0 +1,86 @@
+# docker-compose.yml
+version: '3.8'
+
+services:
+  # --- База данных PostgreSQL ---
+  db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: ${DB_NAME:-checkups}
+      POSTGRES_USER: ${DB_USER:-postgres}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-postgres}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    restart: unless-stopped
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-postgres} -d ${DB_NAME:-checkups}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  # --- Redis (Брокер сообщений для Celery и кэш) ---
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redis_data:/data
+
+  # --- Backend (Django API) ---
+  backend:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    command: gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application
+    volumes:
+      # Пробрасываем медиа-файлы, если локально (пока не перешли на R2 полностью)
+      - backend_media:/app/media
+    environment:
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    ports:
+      - "8000:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_started
+    restart: unless-stopped
+
+  # --- Celery Worker (Асинхронные задачи OCR и ИИ) ---
+  celery:
+    build: 
+      context: ./backend
+      dockerfile: Dockerfile
+    command: celery -A config worker -l INFO
+    volumes:
+      - backend_media:/app/media
+    environment:
+      - DB_HOST=db
+      - REDIS_URL=redis://redis:6379/0
+      - CELERY_BROKER_URL=redis://redis:6379/0
+    env_file:
+      - ./backend/.env
+    depends_on:
+      - backend
+      - redis
+    restart: unless-stopped
+
+  # --- Frontend (Next.js 16) ---
+  frontend:
+    build: 
+      context: ./frontend
+      dockerfile: Dockerfile
+    ports:
+      - "3000:3000"
+    environment:
+      # Для серверных компонентов Next.js должен знать, куда слать запросы
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000/api}
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  redis_data:
+  backend_media: # Общий том для бэкенда и celery, если загружают файлы до ухода в R2

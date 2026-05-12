@@ -8,7 +8,7 @@ msgid ""
 msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2026-05-08 19:12+0000\n"
+"POT-Creation-Date: 2026-05-11 07:47+0000\n"
 "PO-Revision-Date: YEAR-MO-DA HO:MI+ZONE\n"
 "Last-Translator: FULL NAME <EMAIL@ADDRESS>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
@@ -21,67 +21,67 @@ msgstr ""
 
 #: analysis/models.py:11
 msgid "Экстрактор (Извлечение)"
-msgstr ""
+msgstr "Extractor (Extracción)"
 
 #: analysis/models.py:12
 msgid "Интерпретатор (Анализ)"
-msgstr ""
+msgstr "Intérprete (Análisis)"
 
 #: analysis/models.py:13
 msgid "Чат-ассистент"
-msgstr ""
+msgstr "Asistente de chat"
 
 #: analysis/models.py:15
 msgid "Название (для админки)"
-msgstr ""
+msgstr "Nombre (para administración)"
 
 #: analysis/models.py:16
 msgid "Роль в пайплайне"
-msgstr ""
+msgstr "Rol en el pipeline"
 
 #: analysis/models.py:19
 msgid "Системный промпт"
-msgstr ""
+msgstr "Prompt del sistema"
 
 #: analysis/models.py:22
 msgid "Дополнительный контекст/Примеры"
-msgstr ""
+msgstr "Contexto adicional/Ejemplos"
 
 #: analysis/models.py:24
 msgid "Активен"
-msgstr ""
+msgstr "Activo"
 
 #: analysis/models.py:29
 msgid "Шаблон промпта"
-msgstr ""
+msgstr "Plantilla de prompt"
 
 #: analysis/models.py:30
 msgid "Шаблоны промптов"
-msgstr ""
+msgstr "Plantillas de prompts"
 
 #: config/settings.py:134
 msgid "English"
-msgstr ""
+msgstr "Inglés"
 
 #: config/settings.py:135
 msgid "Spanish"
-msgstr ""
+msgstr "Español"
 
 #: config/settings.py:136
 msgid "Russian"
-msgstr ""
+msgstr "Ruso"
 
 #: core/api.py:95
 msgid "Пользователь с таким email уже существует"
-msgstr ""
+msgstr "Ya existe un usuario con este correo electrónico"
 
 #: core/api.py:104 core/api.py:156
 msgid "Мой профиль"
-msgstr ""
+msgstr "Mi perfil"
 
 #: core/api.py:109
 msgid "Регистрация в DataDoctor.pro"
-msgstr ""
+msgstr "Registro en DataDoctor.pro"
 
 #: core/api.py:110
 #, python-brace-format
@@ -94,18 +94,25 @@ msgid ""
 "\n"
 "Пожалуйста, сохраните эти данные или смените пароль в личном кабинете."
 msgstr ""
+"¡Bienvenido a DataDoctor.pro!\n"
+"\n"
+"Sus datos de acceso:\n"
+"Usuario: {email}\n"
+"Su contraseña: {password}\n"
+"\n"
+"Por favor, guarde estos datos o cambie su contraseña en su cuenta personal."
 
 #: core/api.py:133
 msgid "Неверный email или пароль"
-msgstr ""
+msgstr "Correo electrónico o contraseña incorrectos"
 
 #: core/api.py:146
 msgid "Анализы не найдены"
-msgstr ""
+msgstr "Análisis no encontrados"
 
 #: core/api.py:159
 msgid "Код доступа к результатам | DataDoctor.pro"
-msgstr ""
+msgstr "Código de acceso a los resultados | DataDoctor.pro"
 
 #: core/api.py:160
 #, python-brace-format
@@ -116,36 +123,43 @@ msgid ""
 "\n"
 "Никому не сообщайте этот код."
 msgstr ""
+"¡Sus análisis están listos!\n"
+"\n"
+"Su código PIN para ver los resultados: {pin_code}\n"
+"\n"
+"No comparta este código con nadie."
 
 #: core/api.py:172
 msgid "PIN-код отправлен на почту"
-msgstr ""
+msgstr "Código PIN enviado al correo"
 
 #: core/api.py:174
 msgid "Email найден. Введите пароль."
-msgstr ""
+msgstr "Correo electrónico encontrado. Ingrese la contraseña."
 
 #: core/api.py:181
 msgid "Неверный код или пароль"
-msgstr ""
+msgstr "Código o contraseña incorrectos"
 
 #: core/api.py:234
 msgid ""
 "Превышен дневной лимит бесплатных анализов. Пожалуйста, оформите PRO-"
 "подписку."
 msgstr ""
+"Se ha excedido el límite diario de análisis gratuitos. Por favor, adquiera una "
+"suscripción PRO."
 
 #: core/api.py:251
 msgid "Токен устарел или недействителен"
-msgstr ""
+msgstr "El token ha caducado o no es válido"
 
 #: core/api.py:260
 msgid "Если такой email существует, мы отправили инструкцию."
-msgstr ""
+msgstr "Si este correo electrónico existe, hemos enviado las instrucciones."
 
 #: core/api.py:269
 msgid "Восстановление пароля DataDoctor.pro"
-msgstr ""
+msgstr "Recuperación de contraseña de DataDoctor.pro"
 
 #: core/api.py:270
 #, python-brace-format
@@ -156,231 +170,236 @@ msgid ""
 "\n"
 "Если вы не запрашивали это действие, просто проигнорируйте письмо."
 msgstr ""
+"Ha solicitado restablecer su contraseña.\n"
+"Para establecer una nueva contraseña, siga el enlace:\n"
+"{reset_link}\n"
+"\n"
+"Si no ha solicitado esta acción, simplemente ignore este correo."
 
 #: core/api.py:282
 msgid "Инструкция по сбросу пароля отправлена на Email."
-msgstr ""
+msgstr "Las instrucciones para restablecer la contraseña se han enviado al correo."
 
 #: core/api.py:290
 msgid "Неверная ссылка"
-msgstr ""
+msgstr "Enlace no válido"
 
 #: core/api.py:293
 msgid "Ссылка устарела или недействительна"
-msgstr ""
+msgstr "El enlace ha caducado o no es válido"
 
 #: core/api.py:297
 msgid "Пароль успешно изменен. Теперь вы можете войти."
-msgstr ""
+msgstr "Contraseña cambiada con éxito. Ahora puede iniciar sesión."
 
 #: core/api.py:304
 msgid "Неверный текущий пароль"
-msgstr ""
+msgstr "Contraseña actual incorrecta"
 
 #: core/api.py:309
 msgid "Пароль успешно изменен"
-msgstr ""
+msgstr "Contraseña cambiada con éxito"
 
 #: core/api.py:404
 msgid "Анализ не найден"
-msgstr ""
+msgstr "Análisis no encontrado"
 
 #: core/api.py:413
 msgid "Файл не найден"
-msgstr ""
+msgstr "Archivo no encontrado"
 
 #: core/api.py:521
 msgid "Основной профиль нельзя удалить"
-msgstr ""
+msgstr "El perfil principal no se puede eliminar"
 
 #: core/api.py:529
 msgid "Профиль успешно удален"
-msgstr ""
+msgstr "Perfil eliminado con éxito"
 
 #: core/api.py:568
 msgid "Доступ запрещен"
-msgstr ""
+msgstr "Acceso denegado"
 
 #: core/models.py:12
 msgid "Email обязателен"
-msgstr ""
+msgstr "El correo electrónico es obligatorio"
 
 #: core/models.py:27
 #: venv/lib/python3.13/site-packages/django/db/models/fields/__init__.py:1920
 msgid "Email address"
-msgstr ""
+msgstr "Dirección de correo electrónico"
 
 #: core/models.py:29
 msgid "PRO до"
-msgstr ""
+msgstr "PRO hasta"
 
 #: core/models.py:54
 msgid "ФИО"
-msgstr ""
+msgstr "Nombre completo"
 
 #: core/models.py:56
 msgid "Дата рождения"
-msgstr ""
+msgstr "Fecha de nacimiento"
 
 #: core/models.py:59
 msgid "Мужской"
-msgstr ""
+msgstr "Masculino"
 
 #: core/models.py:59
 msgid "Женский"
-msgstr ""
+msgstr "Femenino"
 
 #: core/models.py:61
 msgid "Пол"
-msgstr ""
+msgstr "Género"
 
 #: core/models.py:64
 msgid "Вес в кг"
-msgstr ""
+msgstr "Peso en kg"
 
 #: core/models.py:64
 msgid "Вес"
-msgstr ""
+msgstr "Peso"
 
 #: core/models.py:65
 msgid "Рост в см"
-msgstr ""
+msgstr "Estatura en cm"
 
 #: core/models.py:65
 msgid "Рост"
-msgstr ""
+msgstr "Estatura"
 
 #: core/models.py:71
 msgid "Гость"
-msgstr ""
+msgstr "Invitado"
 
 #: core/models.py:79
 msgid "Файл анализа"
-msgstr ""
+msgstr "Archivo de análisis"
 
 #: core/models.py:86
 msgid "Оригинальный анализ"
-msgstr ""
+msgstr "Análisis original"
 
 #: core/models.py:92
 msgid "Ожидает"
-msgstr ""
+msgstr "Pendiente"
 
 #: core/models.py:93
 msgid "В работе"
-msgstr ""
+msgstr "En progreso"
 
 #: core/models.py:94
 msgid "Готово"
-msgstr ""
+msgstr "Listo"
 
 #: core/models.py:95
 msgid "Ошибка"
-msgstr ""
+msgstr "Error"
 
 #: core/models.py:97 premium/models.py:124
 msgid "Статус"
-msgstr ""
+msgstr "Estado"
 
 #: core/models.py:98
 msgid "Результат ИИ"
-msgstr ""
+msgstr "Resultado de IA"
 
 #: core/models.py:102
 msgid "Краткое содержание чата (Архив)"
-msgstr ""
+msgstr "Resumen del chat (Archivo)"
 
 #: core/models.py:113 premium/models.py:14
 msgid "Название"
-msgstr ""
+msgstr "Título"
 
 #: core/models.py:114
 msgid "Значение"
-msgstr ""
+msgstr "Valor"
 
 #: core/models.py:116
 msgid "Ед. измерения"
-msgstr ""
+msgstr "Unidad de medida"
 
 #: core/models.py:117
 msgid "Дата"
-msgstr ""
+msgstr "Fecha"
 
 #: core/models.py:135 core/models.py:136
 msgid "📈 Дашборд Аналитики"
-msgstr ""
+msgstr "📈 Panel de Análisis"
 
 #: premium/api.py:104
 msgid "Анализ еще не расшифрован"
-msgstr ""
+msgstr "El análisis aún no ha sido descifrado"
 
 #: premium/models.py:9
 msgid "Заболевание"
-msgstr ""
+msgstr "Enfermedad"
 
 #: premium/models.py:10
 msgid "Вредная привычка"
-msgstr ""
+msgstr "Mal hábito"
 
 #: premium/models.py:11
 msgid "Полезная привычка"
-msgstr ""
+msgstr "Buen hábito"
 
 #: premium/models.py:12
 msgid "Особенность организма"
-msgstr ""
+msgstr "Característica fisiológica"
 
 #: premium/models.py:18
 msgid "Категория"
-msgstr ""
+msgstr "Categoría"
 
 #: premium/models.py:22
 msgid "Кастомная?"
-msgstr ""
+msgstr "¿Personalizada?"
 
 #: premium/models.py:56
 msgid "Детали (стаж, частота, дозировки)"
-msgstr ""
+msgstr "Detalles (duración, frecuencia, dosis)"
 
 #: premium/models.py:71
 msgid "Пользователь"
-msgstr ""
+msgstr "Usuario"
 
 #: premium/models.py:72
 msgid "Ассистент"
-msgstr ""
+msgstr "Asistente"
 
 #: premium/models.py:84
 msgid "Архивировано"
-msgstr ""
+msgstr "Archivado"
 
 #: premium/models.py:88
 msgid "Сообщение чата"
-msgstr ""
+msgstr "Mensaje de chat"
 
 #: premium/models.py:89
 msgid "Сообщения чата"
-msgstr ""
+msgstr "Mensajes de chat"
 
 #: premium/models.py:101
 msgid "Оптимизация токенов (JSON-диета и Суммаризация)"
-msgstr ""
+msgstr "Optimización de tokens (dieta JSON y Resumen)"
 
 #: premium/models.py:105 premium/models.py:106
 msgid "Настройки чата"
-msgstr ""
+msgstr "Configuración de chat"
 
 #: premium/models.py:123
 msgid "Сумма (USD)"
-msgstr ""
+msgstr "Monto (USD)"
 
 #: premium/models.py:128
 msgid "Транзакция"
-msgstr ""
+msgstr "Transacción"
 
 #: premium/models.py:129
 msgid "Транзакции"
-msgstr ""
+msgstr "Transacciones"
 
 #: venv/lib/python3.13/site-packages/click/_termui_impl.py:613
 #, python-brace-format
@@ -410,7 +429,6 @@ msgid "Got unexpected extra argument ({args})"
 msgid_plural "Got unexpected extra arguments ({args})"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/click/core.py:1264
 msgid "DeprecationWarning: The command {name!r} is deprecated.{extra_message}"
@@ -444,7 +462,6 @@ msgid "Takes {nargs} values but 1 was given."
 msgid_plural "Takes {nargs} values but {len} were given."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/click/core.py:2567
 msgid ""
@@ -536,7 +553,6 @@ msgid "Did you mean {possibility}?"
 msgid_plural "(Possible options: {possibilities})"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/click/exceptions.py:282
 msgid "unknown error"
@@ -563,7 +579,6 @@ msgid "Option {name!r} requires an argument."
 msgid_plural "Option {name!r} requires {nargs} arguments."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/click/shell_completion.py:332
 msgid "Shell completion is not supported for Bash versions older than 4.4."
@@ -610,14 +625,12 @@ msgid "{value!r} is not {choice}."
 msgid_plural "{value!r} is not one of {choices}."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/click/types.py:460
 msgid "{value!r} does not match the format {format}."
 msgid_plural "{value!r} does not match the formats {formats}."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/click/types.py:482
 msgid "{value!r} is not a valid {number_type}."
@@ -678,7 +691,6 @@ msgid "{len_type} values are required, but {len_value} was given."
 msgid_plural "{len_type} values are required, but {len_value} were given."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/contrib/messages/apps.py:16
 msgid "Messages"
@@ -809,7 +821,6 @@ msgid_plural ""
 "%(show_value)d)."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/core/validators.py:491
 #, python-format
@@ -821,7 +832,6 @@ msgid_plural ""
 "%(show_value)d)."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/core/validators.py:514
 #: venv/lib/python3.13/site-packages/django/forms/fields.py:365
@@ -835,7 +845,6 @@ msgid "Ensure that there are no more than %(max)s digit in total."
 msgid_plural "Ensure that there are no more than %(max)s digits in total."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/core/validators.py:521
 #, python-format
@@ -843,7 +852,6 @@ msgid "Ensure that there are no more than %(max)s decimal place."
 msgid_plural "Ensure that there are no more than %(max)s decimal places."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/core/validators.py:526
 #, python-format
@@ -853,7 +861,6 @@ msgid_plural ""
 "Ensure that there are no more than %(max)s digits before the decimal point."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/core/validators.py:597
 #, python-format
@@ -1200,7 +1207,6 @@ msgid_plural ""
 "Ensure this filename has at most %(max)d characters (it has %(length)d)."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/forms/fields.py:648
 msgid "Please either submit a file or check the clear checkbox, not both."
@@ -1260,7 +1266,6 @@ msgid "Please submit at most %(num)d form."
 msgid_plural "Please submit at most %(num)d forms."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/forms/formsets.py:70
 #, python-format
@@ -1268,7 +1273,6 @@ msgid "Please submit at least %(num)d form."
 msgid_plural "Please submit at least %(num)d forms."
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/forms/formsets.py:484
 #: venv/lib/python3.13/site-packages/django/forms/formsets.py:491
@@ -1376,7 +1380,6 @@ msgid "%(size)d byte"
 msgid_plural "%(size)d bytes"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/template/defaultfilters.py:927
 #, python-format
@@ -1725,7 +1728,6 @@ msgid "%(num)d year"
 msgid_plural "%(num)d years"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/utils/timesince.py:9
 #, python-format
@@ -1733,7 +1735,6 @@ msgid "%(num)d month"
 msgid_plural "%(num)d months"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/utils/timesince.py:10
 #, python-format
@@ -1741,7 +1742,6 @@ msgid "%(num)d week"
 msgid_plural "%(num)d weeks"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/utils/timesince.py:11
 #, python-format
@@ -1749,7 +1749,6 @@ msgid "%(num)d day"
 msgid_plural "%(num)d days"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/utils/timesince.py:12
 #, python-format
@@ -1757,7 +1756,6 @@ msgid "%(num)d hour"
 msgid_plural "%(num)d hours"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/utils/timesince.py:13
 #, python-format
@@ -1765,7 +1763,6 @@ msgid "%(num)d minute"
 msgid_plural "%(num)d minutes"
 msgstr[0] ""
 msgstr[1] ""
-msgstr[2] ""
 
 #: venv/lib/python3.13/site-packages/django/views/csrf.py:29
 msgid "Forbidden"

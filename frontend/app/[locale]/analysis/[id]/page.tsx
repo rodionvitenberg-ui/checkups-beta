@@ -21,6 +21,18 @@ import { AnalysisLoading } from '@/components/analysis/AnalysisLoading';
 import { AnalysisHeader } from '@/components/analysis/AnalysisHeader';
 import { IndicatorsTable } from '@/components/analysis/IndicatorsTable';
 import { CausesAndRecommendations } from '@/components/analysis/CausesAndRecommendations';
+import { Metadata } from 'next';
+import { getTranslations } from 'next-intl/server';
+
+export async function generateMetadata({ params }: { params: Promise<{ locale: string }> }): Promise<Metadata> {
+  const { locale } = await params;
+  const t = await getTranslations({ locale, namespace: 'Metadata' });
+
+  return {
+    title: `Результат анализа | webdoc.life`, 
+    robots: { index: false, follow: false } // Анализы не должны попадать в поиск!
+  };
+}
 
 export default function AnalysisPage() {
   const params = useParams();
