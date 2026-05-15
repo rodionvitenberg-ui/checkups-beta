@@ -19,7 +19,6 @@ export default function ClaimPage() {
     const rawIds = decodeURIComponent(params.id as string);
     const ids = rawIds ? rawIds.split(',').map(id => id.trim()).filter(Boolean) : [];
 
-    // ИЗМЕНЕНИЕ 1: Сразу начинаем с шага form
     const [step, setStep] = useState<'form' | 'verify' | 'results'>('form');
     const [isAuth, setIsAuth] = useState(false);
     const [statuses, setStatuses] = useState<Record<string, string>>({});
@@ -34,11 +33,6 @@ export default function ClaimPage() {
         }
     }, []);
 
-    // ИЗМЕНЕНИЕ 2: Убраны старые useEffect, которые фейково крутили прогресс 
-    // и блокировали показ формы, ожидая completed от бэкенда.
-
-    // Этот useEffect работает только на шаге results (ПОСЛЕ ввода кода),
-    // когда бэкенд уже честно запустил Celery таски.
     useEffect(() => {
         if (step !== 'results' || ids.length === 0) return;
 
@@ -108,8 +102,6 @@ export default function ClaimPage() {
             localStorage.setItem('new_analysis_ids', JSON.stringify(ids));
             setIsAuth(true);
             
-            // ИЗМЕНЕНИЕ 3: После успешного ввода кода, бэкенд запустил таски,
-            // и мы переводим юзера на шаг ожидания результатов.
             setStep('results');
         } catch (error: any) {
             toast({ title: t('toasts.errorTitle'), description: error.response?.data?.message || t('toasts.invalidCode'), variant: "destructive" });
@@ -142,7 +134,7 @@ export default function ClaimPage() {
                                 <input required type="email" placeholder={t('form.emailPlaceholder')} value={email} onChange={e => setEmail(e.target.value)} className="w-full pl-12 pr-4 py-3 bg-transparent backdrop-blur-md shadow-md transition-shadow rounded-xl focus:ring-2 focus:ring-[#00be64]/20 focus:border-accent outline-none transition-all font-medium placeholder:text-slate-400" />
                             </div>
                         </div>
-                        <button type="submit" disabled={isSubmitting || !email} className="w-full group flex items-center justify-center gap-2 bg-secondary text-white px-6 py-4 rounded-xl hover:bg-accent disabled:bg-slate-300 disabled:cursor-not-allowed transition-all font-bold text-lg mt-6 shadow-lg shadow-[#3f94ca]/30">
+                        <button type="submit" disabled={isSubmitting || !email} className="w-full group flex items-center justify-center gap-2 bg-secondary text-white px-6 py-4 rounded-xl hover:bg-accent disabled:bg-slate-300 disabled:cursor-not-allowed transition-all font-bold text-lg mt-6 shadow-lg shadow-secondary/30">
                             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t('form.submitButton')} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}
                         </button>
                     </form>
@@ -152,12 +144,16 @@ export default function ClaimPage() {
             {step === 'verify' && (
                 <div className="relative z-10 bg-transparent backdrop-blur-md rounded-3xl shadow-xl transition-shadow p-6 sm:p-10 overflow-hidden max-w-xl w-full animate-in slide-in-from-right-8 fade-in duration-500">
                     <div className="relative z-10 text-center mb-8">
-                        <div className="w-16 h-16 bg-[#3f94ca]/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-[#3f94ca]/20">
-                            <KeyRound className="w-8 h-8 text-[#3f94ca]" />
+                        <div className="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 border border-secondary/20">
+                            <KeyRound className="w-8 h-8 text-secondary" />
                         </div>
                         <h3 className="text-2xl sm:text-3xl font-extrabold text-slate-900 mb-4 tracking-tight">{t('verify.title')}</h3>
                         <p className="text-slate-700 text-sm sm:text-base leading-relaxed text-center">
-                            <span dangerouslySetInnerHTML={{ __html: t('verify.descLine1', { email }) }} /> <br/>
+                            {t.rich('verify.descLine1', { 
+                                email: email,
+                                b: (chunks) => <b className="font-semibold text-slate-900">{chunks}</b>
+                            })} 
+                            <br/>
                             {t('verify.descLine2')}
                         </p>
                     </div>
@@ -166,10 +162,10 @@ export default function ClaimPage() {
                             <label className="block text-sm font-semibold text-slate-700 mb-1.5">{t('verify.codeLabel')}</label>
                             <div className="relative">
                                 <KeyRound className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-                                <input required type="text" placeholder={t('verify.codePlaceholder')} value={code} onChange={e => setCode(e.target.value)} className="w-full pl-12 pr-4 py-3 bg-transparent backdrop-blur-md shadow-md transition-shadow rounded-xl focus:ring-2 focus:ring-[#3f94ca]/20 focus:border-accent outline-none transition-all font-medium placeholder:text-slate-400" />
+                                <input required type="text" placeholder={t('verify.codePlaceholder')} value={code} onChange={e => setCode(e.target.value)} className="w-full pl-12 pr-4 py-3 bg-transparent backdrop-blur-md shadow-md transition-shadow rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-accent outline-none transition-all font-medium placeholder:text-slate-400" />
                             </div>
                         </div>
-                        <button type="submit" disabled={isSubmitting || !code} className="w-full group flex items-center justify-center gap-2 bg-secondary text-white px-6 py-4 rounded-xl hover:bg-accent disabled:bg-slate-300 disabled:cursor-not-allowed transition-all font-bold text-lg mt-6 shadow-lg shadow-[#3f94ca]/30">
+                        <button type="submit" disabled={isSubmitting || !code} className="w-full group flex items-center justify-center gap-2 bg-secondary text-white px-6 py-4 rounded-xl hover:bg-accent disabled:bg-slate-300 disabled:cursor-not-allowed transition-all font-bold text-lg mt-6 shadow-lg shadow-secondary/30">
                             {isSubmitting ? <Loader2 className="w-5 h-5 animate-spin" /> : <>{t('verify.submitButton')} <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition-transform" /></>}
                         </button>
                     </form>
@@ -182,8 +178,8 @@ export default function ClaimPage() {
                         {allCompleted ? (
                             <img src="/done.png" alt="Готово" className="w-24 h-24 mx-auto mb-4 drop-shadow-md animate-in zoom-in duration-300" />
                         ) : (
-                            <div className="w-20 h-20 bg-blue-50 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
-                                <Loader2 className="w-10 h-10 text-blue-500 animate-spin" />
+                            <div className="w-20 h-20 bg-secondary/10 rounded-full flex items-center justify-center mx-auto mb-4 shadow-inner">
+                                <Loader2 className="w-10 h-10 text-secondary animate-spin" />
                             </div>
                         )}
                         <h3 className="text-2xl font-extrabold text-slate-900 mb-2">
@@ -205,13 +201,13 @@ export default function ClaimPage() {
                                         {isDone ? (
                                             <CheckCircle2 className="w-6 h-6 text-[#00be64]" />
                                         ) : (
-                                            <Loader2 className="w-5 h-5 text-blue-500 animate-spin" />
+                                            <Loader2 className="w-5 h-5 text-secondary animate-spin" />
                                         )}
                                         <span className="font-bold text-slate-800">{t('results.document', { index: idx + 1 })}</span>
                                     </div>
                                     
                                     {isDone ? (
-                                        <Link href={`/analysis/${id}`} className="flex items-center gap-1.5 text-sm font-bold bg-white border border-slate-200 px-4 py-2 rounded-lg text-[#3f94ca] hover:bg-blue-50 hover:border-blue-200 transition-colors shadow-sm">
+                                        <Link href={`/analysis/${id}`} className="flex items-center gap-1.5 text-sm font-bold bg-white border border-slate-200 px-4 py-2 rounded-lg text-secondary hover:bg-secondary/10 hover:border-secondary/20 transition-colors shadow-sm">
                                             {t('results.viewButton')} <ExternalLink className="w-4 h-4" />
                                         </Link>
                                     ) : (

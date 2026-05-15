@@ -128,7 +128,7 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
             <button
                 onClick={() => setIsOpen(true)}
                 className={clsx(
-                    "absolute bottom-6 right-6 p-4 bg-blue-600 hover:bg-blue-700 text-white rounded-full shadow-2xl transition-all duration-300 pointer-events-auto flex items-center justify-center hover:scale-110",
+                    "absolute bottom-6 right-6 p-4 bg-secondary hover:opacity-90 text-white rounded-full shadow-2xl transition-all duration-300 pointer-events-auto flex items-center justify-center hover:scale-110",
                     isOpen ? "opacity-0 scale-50 pointer-events-none" : "opacity-100"
                 )}
             >
@@ -141,14 +141,14 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
                 isOpen ? "scale-100 opacity-100" : "scale-50 opacity-0 pointer-events-none"
             )}>
                 {/* ХЕДЕР */}
-                <div className="bg-gradient-to-r from-blue-600 to-indigo-600 p-4 flex justify-between items-center shrink-0">
+                <div className="bg-gradient-to-r from-secondary to-card p-4 flex justify-between items-center shrink-0">
                     <div className="flex items-center gap-3">
                         <div className="w-8 h-8 bg-white/20 rounded-full flex items-center justify-center text-white backdrop-blur-sm">
                             <Bot className="w-5 h-5" />
                         </div>
                         <div>
                             <h3 className="text-sm font-bold text-white">AI Health Assistant</h3>
-                            <p className="text-[10px] text-blue-100 font-medium">Контекст анализа подключен</p>
+                            <p className="text-[10px] text-white/80 font-medium">Контекст анализа подключен</p>
                         </div>
                     </div>
                     <button onClick={() => setIsOpen(false)} className="text-white/80 hover:text-white p-1 rounded-full hover:bg-white/20 transition-colors">
@@ -168,14 +168,14 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
                             {messages.map((msg, idx) => (
                                 <div key={idx} className={clsx("flex gap-3", msg.role === 'user' ? "justify-end" : "justify-start")}>
                                     {msg.role === 'assistant' && (
-                                        <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center shrink-0 text-blue-600 mt-1">
+                                        <div className="w-8 h-8 bg-secondary/10 rounded-full flex items-center justify-center shrink-0 text-secondary mt-1">
                                             <Bot className="w-4 h-4" />
                                         </div>
                                     )}
                                     <div className={clsx(
                                         "max-w-[80%] rounded-2xl p-3 text-sm whitespace-pre-wrap leading-relaxed shadow-sm",
                                         msg.role === 'user' 
-                                            ? "bg-blue-600 text-white rounded-tr-sm" 
+                                            ? "bg-secondary text-white rounded-tr-sm" 
                                             : "bg-white border border-slate-200 text-slate-800 rounded-tl-sm"
                                     )}>
                                         {/* ПРИМЕНЯЕМ ФУНКЦИЮ ЗДЕСЬ */}
@@ -195,7 +195,7 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
 
                 {/* ИНПУТ */}
                 <div className="p-3 bg-white border-t border-slate-100 shrink-0">
-                    <div className="relative flex items-end gap-2 bg-slate-50 rounded-2xl border border-slate-200 focus-within:border-blue-400 focus-within:ring-2 focus-within:ring-blue-100 p-1.5 transition-all">
+                    <div className="relative flex items-end gap-2 bg-slate-50 rounded-2xl border border-slate-200 focus-within:border-secondary/50 focus-within:ring-2 focus-within:ring-secondary/20 p-1.5 transition-all">
                         <textarea
                             value={input}
                             onChange={(e) => setInput(e.target.value)}
@@ -208,7 +208,7 @@ export function AnalysisChat({ analysisUid }: { analysisUid: string }) {
                         <button
                             onClick={handleSend}
                             disabled={!input.trim() || isLoading || isInitialLoading}
-                            className="p-2.5 bg-blue-600 text-white rounded-xl hover:bg-blue-700 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 transition-colors mb-0.5 mr-0.5"
+                            className="p-2.5 bg-secondary text-white rounded-xl hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed shrink-0 transition-colors mb-0.5 mr-0.5"
                         >
                             {isLoading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
                         </button>

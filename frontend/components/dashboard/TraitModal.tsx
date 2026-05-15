@@ -96,7 +96,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
         disease: <Activity className="w-4 h-4 text-red-500" />,
         bad_habit: <ShieldAlert className="w-4 h-4 text-orange-500" />,
         good_habit: <Heart className="w-4 h-4 text-green-500" />,
-        feature: <Coffee className="w-4 h-4 text-blue-500" />
+        feature: <Coffee className="w-4 h-4 text-secondary" />
     };
 
     if (!mounted || !isOpen) return null;
@@ -121,7 +121,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                 <div className="p-5 overflow-y-auto flex-1">
                     {step === 'select' && (
                         isLoadingTraits ? (
-                            <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-[#3f94ca]" /></div>
+                            <div className="flex justify-center py-10"><Loader2 className="w-8 h-8 animate-spin text-secondary" /></div>
                         ) : (
                             <div className="space-y-6">
                                 {Object.entries(groupedTraits).map(([category, traits]) => (
@@ -134,7 +134,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                                                 <button 
                                                     key={trait.id}
                                                     onClick={() => { setSelectedTrait(trait); setStep('details'); }}
-                                                    className="text-sm px-4 py-2 bg-slate-100 hover:bg-[#3f94ca] hover:text-white text-slate-700 rounded-xl transition-colors text-left"
+                                                    className="text-sm px-4 py-2 bg-slate-100 hover:bg-secondary hover:text-white text-slate-700 rounded-xl transition-colors text-left"
                                                 >
                                                     {trait.name}
                                                 </button>
@@ -147,7 +147,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                                 <div className="pt-4 border-t border-slate-100 flex justify-center">
                                     <button 
                                         onClick={() => setStep('custom')}
-                                        className="text-sm font-semibold text-[#3f94ca] hover:text-white hover:bg-[#3f94ca] border border-[#3f94ca] px-5 py-2.5 rounded-xl transition-all flex items-center gap-2"
+                                        className="text-sm font-semibold text-secondary hover:text-white hover:bg-secondary border border-secondary px-5 py-2.5 rounded-xl transition-all flex items-center gap-2"
                                     >
                                         <Plus className="w-4 h-4" />
                                         {t('createCustomBtn', { fallback: 'Нет в списке? Добавить свое' })}
@@ -159,7 +159,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
 
                     {step === 'details' && selectedTrait && (
                         <div className="space-y-4 animate-in slide-in-from-right-4">
-                            <div className="flex items-center gap-3 p-4 bg-blue-50 text-blue-800 rounded-2xl border border-blue-100 mb-6">
+                            <div className="flex items-center gap-3 p-4 bg-secondary/10 text-secondary rounded-2xl border border-secondary/20 mb-6">
                                 {categoryIcons[selectedTrait.category]}
                                 <span className="font-bold text-lg">{selectedTrait.name}</span>
                             </div>
@@ -168,7 +168,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                                 <textarea
                                     autoFocus rows={4} placeholder={t('detailsPlaceholder')}
                                     value={traitDetails} onChange={(e) => setTraitDetails(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-[#3f94ca] focus:ring-2 focus:ring-[#3f94ca]/20 rounded-xl p-4 outline-none resize-none"
+                                    className="w-full bg-slate-50 border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 rounded-xl p-4 outline-none resize-none"
                                 />
                                 <p className="text-xs text-slate-400 ml-1">{t('detailsHint')}</p>
                             </div>
@@ -182,7 +182,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                                 <input
                                     autoFocus type="text" placeholder={t('customNamePlaceholder', { fallback: 'Например: Пью протеин' })}
                                     value={customName} onChange={(e) => setCustomName(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-[#3f94ca] focus:ring-2 focus:ring-[#3f94ca]/20 rounded-xl px-4 py-2.5 outline-none"
+                                    className="w-full bg-slate-50 border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 rounded-xl px-4 py-2.5 outline-none"
                                 />
                             </div>
 
@@ -196,7 +196,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                                             className={clsx(
                                                 "flex items-center gap-2 px-3 py-2.5 rounded-xl border text-sm font-medium transition-all",
                                                 customCategory === cat 
-                                                    ? "bg-blue-50 border-blue-200 text-blue-700" 
+                                                    ? "bg-secondary/10 border-secondary/30 text-secondary" 
                                                     : "bg-slate-50 border-slate-200 text-slate-600 hover:bg-slate-100"
                                             )}
                                         >
@@ -211,7 +211,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                                 <textarea
                                     rows={3} placeholder={t('detailsPlaceholder')}
                                     value={traitDetails} onChange={(e) => setTraitDetails(e.target.value)}
-                                    className="w-full bg-slate-50 border border-slate-200 focus:border-[#3f94ca] focus:ring-2 focus:ring-[#3f94ca]/20 rounded-xl p-4 outline-none resize-none"
+                                    className="w-full bg-slate-50 border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 rounded-xl p-4 outline-none resize-none"
                                 />
                             </div>
                         </div>
@@ -227,7 +227,7 @@ export function TraitModal({ isOpen, onClose, patientId }: TraitModalProps) {
                         <button 
                             onClick={handleSave} 
                             disabled={linkTraitMutation.isPending || createCustomMutation.isPending || (step === 'custom' && !customName.trim())}
-                            className="px-6 py-2.5 bg-[#3f94ca] hover:bg-[#327ba8] text-white text-sm font-bold rounded-xl shadow-lg shadow-[#3f94ca]/30 transition-all flex items-center gap-2 disabled:opacity-70"
+                            className="px-6 py-2.5 bg-secondary hover:opacity-90 text-white text-sm font-bold rounded-xl shadow-lg shadow-secondary/30 transition-all flex items-center gap-2 disabled:opacity-70"
                         >
                             {(linkTraitMutation.isPending || createCustomMutation.isPending) ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             {t('saveTraitBtn')}

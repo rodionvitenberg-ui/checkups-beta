@@ -1,13 +1,12 @@
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import { clsx } from 'clsx';
 import { useTranslations } from 'next-intl';
 
-// Описываем тип для элемента FAQ, чтобы TypeScript был счастлив
 interface FAQItemType {
   question: string;
   answer: string;
@@ -15,7 +14,6 @@ interface FAQItemType {
 
 export default function FAQSection() {
   const t = useTranslations('FAQ');
-  // Достаем массив вопросов из JSON и говорим TS, как он выглядит
   const faqData = t.raw('items') as FAQItemType[];
 
   const [openItems, setOpenItems] = useState<number[]>([]);
@@ -28,9 +26,13 @@ export default function FAQSection() {
     );
   };
 
+  const imageScale = useMemo(() => {
+    return 1 + (openItems.length * 0.1);
+  }, [openItems.length]);
+
   return (
-    <section className="py-5 md:py-5">
-      <div className="max-w-6xl mx-auto">
+    <section className="py-5 md:py-10">
+      <div className="max-w-6xl mx-auto px-4">
           
           <div className="mb-12">
             <h2 className="text-4xl md:text-5xl font-bold text-secondary tracking-tighter uppercase">
@@ -42,13 +44,13 @@ export default function FAQSection() {
           </div>
 
           <LayoutGroup>
-              <div className="flex flex-col lg:flex-row gap-8 items-start">
+              <div className="flex flex-col lg:flex-row gap-12 items-start">
                   
                   {/* ЛЕВАЯ КОЛОНКА (Аккордеон) */}
                   <div className="w-full lg:max-w-2xl flex flex-col gap-4">
                       {faqData.map((item, index) => (
                           <FAQItem 
-                            key={index} // Используем индекс как ключ
+                            key={index}
                             item={item} 
                             isOpen={openItems.includes(index)}
                             toggle={() => toggleItem(index)}
@@ -56,16 +58,31 @@ export default function FAQSection() {
                       ))}
                   </div>
 
-                  {/* ПРАВАЯ КОЛОНКА (Изображение) */}
-                  <div className="hidden lg:block flex-1 relative self-stretch min-h-[400px] group">
-                      <div className="sticky top-24 w-full h-full overflow-hidden flex items-center justify-center">
-                          <Image 
-                            src="/arts/6.png"
-                            alt="FAQ Art"
-                            fill
-                            className="object-contain transition-transform duration-700 ease-out"
-                            sizes="(max-w-1024px) 100vw, 40vw"
-                          />
+                  {/* ПРАВАЯ КОЛОНКА (Динамическое изображение) */}
+                  {/* Добавлены justify-end и lg:pl-16 для начального смещения */}
+                  <div className="hidden lg:flex flex-1 relative self-stretch justify-end lg:pl-16">
+                      <div className="sticky top-32 w-full h-[500px] flex items-center justify-end">
+                          <motion.div 
+                            layout
+                            animate={{ 
+                                scale: imageScale,
+                                // Динамически отодвигаем изображение вправо за каждую вкладку
+                                x: openItems.length * 16, 
+                                rotate: openItems.length > 0 ? 2 : 0 
+                            }}
+                            transition={{ type: "spring", stiffness: 100, damping: 15 }}
+                            // origin-right заставляет картинку масштабироваться от правого края, а не из центра
+                            className="relative w-full h-full origin-right"
+                          >
+                              <Image 
+                                src="/arts/6.png"
+                                alt="FAQ Art"
+                                fill
+                                className="object-contain will-change-transform"
+                                sizes="40vw"
+                                priority
+                              />
+                          </motion.div>
                       </div>
                   </div>
 
@@ -106,12 +123,13 @@ function FAQItem({ item, isOpen, toggle }: { item: FAQItemType, isOpen: boolean,
                 </div>
             </motion.div>
 
-            <AnimatePresence>
+            <AnimatePresence mode="wait">
                 {isOpen && (
                     <motion.div
                         initial={{ opacity: 0, height: 0 }}
                         animate={{ opacity: 1, height: "auto" }}
                         exit={{ opacity: 0, height: 0 }}
+                        transition={{ duration: 0.3, ease: "easeInOut" }}
                         className="overflow-hidden"
                     >
                         <div className="pt-5 text-base text-accent font-medium leading-relaxed">

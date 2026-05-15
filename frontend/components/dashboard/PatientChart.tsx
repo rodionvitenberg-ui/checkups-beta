@@ -4,22 +4,27 @@ import { useState, useMemo } from 'react';
 import { 
   AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer 
 } from 'recharts';
-// ИСПРАВЛЕНИЕ: Импортируем из types, а не из api
 import { ChartData } from '@/lib/types'; 
 import { format, parseISO } from 'date-fns';
 import { ru } from 'date-fns/locale';
 import { Activity } from 'lucide-react';
+import { useTranslations } from 'next-intl';
 
 interface PatientChartProps {
   history: ChartData[];
 }
 
 export function PatientChart({ history }: PatientChartProps) {
+  const t = useTranslations('PatientChart');
+  
+  // Задаем HEX-код твоего secondary цвета для передачи в SVG-графики (recharts)
+  const chartColor = "#3f94ca"; 
+
   if (!history || history.length === 0) {
     return (
         <div className="text-center flex flex-col items-center justify-center text-slate-400 py-16 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
             <Activity className="w-10 h-10 mb-3 text-slate-300" />
-            <p className="font-medium">Нет данных для построения графиков</p>
+            <p className="font-medium">{t('noData')}</p>
         </div>
     );
   }
@@ -33,7 +38,6 @@ export function PatientChart({ history }: PatientChartProps) {
   const chartData = useMemo(() => {
     if (!activeChart) return [];
     return activeChart.data.map(point => {
-      // ИСПРАВЛЕНИЕ: Безопасный парсинг даты
       const dateVal = point.date ? parseISO(point.date) : new Date();
       return {
         ...point,
@@ -47,10 +51,10 @@ export function PatientChart({ history }: PatientChartProps) {
   const CustomTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/95 backdrop-blur-md border border-slate-100 p-4 rounded-2xl shadow-xl shadow-blue-900/5">
+        <div className="bg-white/95 backdrop-blur-md border border-slate-100 p-4 rounded-2xl shadow-xl shadow-secondary/10">
           <p className="text-xs font-semibold text-slate-400 mb-1.5 uppercase tracking-wider">{label}</p>
           <div className="flex items-baseline gap-1.5">
-            <span className="text-2xl font-bold text-blue-600 tracking-tight">
+            <span className="text-2xl font-bold text-secondary tracking-tight">
               {payload[0].value}
             </span>
             <span className="text-sm font-medium text-slate-500">
@@ -68,11 +72,11 @@ export function PatientChart({ history }: PatientChartProps) {
       {/* Шапка графика: Заголовок и Селектор */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
         <div className="flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 shadow-sm shrink-0">
+          <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center text-secondary shadow-sm shrink-0">
             <Activity className="w-5 h-5" />
           </div>
           <h4 className="text-base sm:text-lg font-bold text-slate-900 leading-tight">
-            Аналитика показателя
+            {t('title')}
           </h4>
         </div>
 
@@ -81,7 +85,7 @@ export function PatientChart({ history }: PatientChartProps) {
           <select 
             value={selectedSlug}
             onChange={(e) => setSelectedSlug(e.target.value)}
-            className="w-full sm:w-[260px] appearance-none bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500 block py-2.5 pl-4 pr-10 cursor-pointer transition-all hover:border-blue-300 hover:bg-slate-50 shadow-sm"
+            className="w-full sm:w-[260px] appearance-none bg-white border border-slate-200 text-slate-700 text-sm font-semibold rounded-xl focus:ring-2 focus:ring-secondary/20 focus:border-secondary block py-2.5 pl-4 pr-10 cursor-pointer transition-all hover:border-secondary/50 hover:bg-slate-50 shadow-sm outline-none"
           >
             {history.map(item => (
               <option key={item.slug} value={item.slug}>
@@ -104,8 +108,8 @@ export function PatientChart({ history }: PatientChartProps) {
           <AreaChart data={chartData} margin={{ top: 10, right: 10, bottom: 0, left: -20 }}>
             <defs>
               <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#2563eb" stopOpacity={0.25}/>
-                <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                <stop offset="5%" stopColor={chartColor} stopOpacity={0.25}/>
+                <stop offset="95%" stopColor={chartColor} stopOpacity={0}/>
               </linearGradient>
             </defs>
             
@@ -138,11 +142,11 @@ export function PatientChart({ history }: PatientChartProps) {
             <Area 
               type="monotone" 
               dataKey="value" 
-              stroke="#2563eb" 
+              stroke={chartColor} 
               strokeWidth={3}
               fillOpacity={1} 
               fill="url(#colorValue)" 
-              activeDot={{ r: 6, strokeWidth: 0, fill: '#2563eb', className: 'drop-shadow-md' }} 
+              activeDot={{ r: 6, strokeWidth: 0, fill: chartColor, className: 'drop-shadow-md' }} 
             />
           </AreaChart>
         </ResponsiveContainer>

@@ -43,7 +43,7 @@ export function ExampleButtonSection() {
               />
               <div className="absolute inset-0 flex flex-col items-center justify-center text-center px-8 z-10">
                 <div className="flex items-center justify-center gap-2">
-                  <span className="text-lg font-bold text-accent uppercase tracking-tight">
+                  <span className="text-lg font-bold text-secondary uppercase tracking-tight">
                       {t('title')}
                   </span>
                   <ArrowRight className="w-5 h-5 text-accent group-hover:translate-x-1 transition-transform duration-300 transform-gpu" />

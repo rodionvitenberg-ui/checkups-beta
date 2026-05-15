@@ -126,7 +126,7 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
         disease: <Activity className="w-3 h-3 text-red-500" />,
         bad_habit: <ShieldAlert className="w-3 h-3 text-orange-500" />,
         good_habit: <Heart className="w-3 h-3 text-green-500" />,
-        feature: <Coffee className="w-3 h-3 text-blue-500" />
+        feature: <Coffee className="w-3 h-3 text-secondary" />
     };
 
     if (!analysis.patient_profile_id) return null;
@@ -163,7 +163,7 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
                         <div className="grid grid-cols-2 gap-4">
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-600">{t('gender')}</label>
-                                <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-[#3f94ca] rounded-lg px-3 py-2 text-sm outline-none">
+                                <select value={formData.gender} onChange={e => setFormData({...formData, gender: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-secondary rounded-lg px-3 py-2 text-sm outline-none transition-colors">
                                     <option value="">{t('notSelected')}</option>
                                     <option value="M">{t('male')}</option>
                                     <option value="F">{t('female')}</option>
@@ -171,25 +171,25 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-600">{t('dob')}</label>
-                                <input type="date" value={formData.birth_date} onChange={e => setFormData({...formData, birth_date: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-[#3f94ca] rounded-lg px-3 py-2 text-sm outline-none" />
+                                <input type="date" value={formData.birth_date} onChange={e => setFormData({...formData, birth_date: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-secondary rounded-lg px-3 py-2 text-sm outline-none transition-colors" />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-600">{t('height')}</label>
-                                <input type="number" placeholder="175" value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-[#3f94ca] rounded-lg px-3 py-2 text-sm outline-none" />
+                                <input type="number" placeholder="175" value={formData.height} onChange={e => setFormData({...formData, height: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-secondary rounded-lg px-3 py-2 text-sm outline-none transition-colors" />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-xs font-semibold text-slate-600">{t('weight')}</label>
-                                <input type="number" step="0.1" placeholder="70.5" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-[#3f94ca] rounded-lg px-3 py-2 text-sm outline-none" />
+                                <input type="number" step="0.1" placeholder="70.5" value={formData.weight} onChange={e => setFormData({...formData, weight: e.target.value})} className="w-full bg-slate-50 border border-slate-200 focus:border-secondary rounded-lg px-3 py-2 text-sm outline-none transition-colors" />
                             </div>
                         </div>
                     </div>
 
                     {/* ПРЕМИУМ ХАРАКТЕРИСТИКИ */}
-                    <div className="bg-gradient-to-br from-blue-50 to-indigo-50/30 p-5 rounded-2xl border border-blue-100 shadow-sm">
+                    <div className="bg-gradient-to-br from-secondary/5 to-card/5 p-5 rounded-2xl border border-secondary/20 shadow-sm">
                         <h4 className="text-sm font-bold text-slate-800 mb-3">{t('healthTraits')}</h4>
                         
                         {isLoadingTraits ? (
-                            <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-blue-500" /></div>
+                            <div className="flex justify-center py-4"><Loader2 className="w-5 h-5 animate-spin text-secondary" /></div>
                         ) : (
                             <div className="flex flex-wrap gap-2 mb-4">
                                 {patientTraits.length === 0 ? (
@@ -208,7 +208,7 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
                             </div>
                         )}
                         
-                        <button onClick={() => setIsTraitModalOpen(true)} className="flex items-center gap-1.5 text-xs font-bold text-blue-600 bg-blue-100 hover:bg-blue-200 px-3 py-1.5 rounded-lg transition-colors">
+                        <button onClick={() => setIsTraitModalOpen(true)} className="flex items-center gap-1.5 text-xs font-bold text-secondary bg-secondary/10 hover:bg-secondary/20 px-3 py-1.5 rounded-lg transition-colors">
                             <Plus className="w-3 h-3" /> {t('addTraitBtn')}
                         </button>
                     </div>
@@ -223,7 +223,7 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
                     <button 
                         onClick={() => reanalyzeMutation.mutate()}
                         disabled={reanalyzeMutation.isPending || hasChanges}
-                        className="w-full py-3.5 bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-700 hover:to-indigo-700 text-white font-bold rounded-xl shadow-lg shadow-blue-500/30 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full py-3.5 bg-gradient-to-r from-secondary to-card hover:opacity-90 text-white font-bold rounded-xl shadow-lg shadow-secondary/30 transition-all flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {reanalyzeMutation.isPending ? <Loader2 className="w-5 h-5 animate-spin" /> : <RefreshCw className="w-5 h-5" />}
                         {hasChanges ? t('saveBeforeReanalyze') : t('startReanalyzeBtn')}
@@ -237,19 +237,16 @@ export function RefineAnalysisBlock({ analysis }: { analysis: AnalysisResponse }
     return (
         <>
             {/* КАРТОЧКА В САЙДБАРЕ */}
-            <div className="mt-6 bg-gradient-to-br from-blue-50 to-indigo-50/50 rounded-2xl p-5 border border-blue-100 shadow-sm relative overflow-hidden group">
-                <div className="absolute top-0 right-0 bg-gradient-to-bl from-blue-500 to-indigo-600 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl shadow-md">
-                    PRO
-                </div>
+            <div className="mt-6 bg-gradient-to-br from-secondary/5 to-card/5 rounded-2xl p-5 border border-secondary/20 shadow-sm relative overflow-hidden group">
                 <h4 className="text-sm font-bold text-slate-800 mb-2 flex items-center gap-2">
-                    <Settings2 className="w-4 h-4 text-blue-600" /> {t('cardTitle')}
+                    <Settings2 className="w-4 h-4 text-secondary" /> {t('cardTitle')}
                 </h4>
                 <p className="text-xs text-slate-500 mb-4 leading-relaxed">
                     {t('cardDesc')}
                 </p>
                 <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-blue-600 hover:text-white text-blue-600 text-sm font-bold border border-blue-200 hover:border-blue-600 rounded-xl transition-all shadow-sm"
+                    className="w-full flex items-center justify-center gap-2 py-2.5 bg-white hover:bg-secondary hover:text-white text-secondary text-sm font-bold border border-secondary/20 hover:border-secondary rounded-xl transition-all shadow-sm"
                 >
                     <RefreshCw className="w-4 h-4" /> {t('openModalBtn')}
                 </button>

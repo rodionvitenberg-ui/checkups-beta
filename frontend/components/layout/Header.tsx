@@ -20,7 +20,7 @@ function NavButton({ text, isActive, onClick }: NavButtonProps) {
   return (
     <button 
       onClick={onClick} 
-      className="relative flex items-center justify-center group focus:outline-none transform-gpu"
+      className="relative flex items-center justify-center group focus:outline-none transform-gpu cursor-pointer"
     >
       <Image 
         src="/buttons/smallbutton.png" 

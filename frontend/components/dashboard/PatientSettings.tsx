@@ -66,7 +66,7 @@ export function PatientSettings({ profile }: { profile: PatientProfile }) {
         disease: <Activity className="w-4 h-4 text-red-500" />,
         bad_habit: <ShieldAlert className="w-4 h-4 text-orange-500" />,
         good_habit: <Heart className="w-4 h-4 text-green-500" />,
-        feature: <Coffee className="w-4 h-4 text-blue-500" />
+        feature: <Coffee className="w-4 h-4 text-secondary" />
     };
 
     return (
@@ -85,7 +85,7 @@ export function PatientSettings({ profile }: { profile: PatientProfile }) {
                             id={`gender-${profile.id}`}
                             value={formData.gender}
                             onChange={(e) => setFormData(prev => ({ ...prev, gender: e.target.value }))}
-                            className="w-full bg-white/50 border border-slate-200 focus:border-[#3f94ca] focus:ring-2 focus:ring-[#3f94ca]/20 rounded-xl px-4 py-2.5 outline-none text-slate-700"
+                            className="w-full bg-white/50 border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 rounded-xl px-4 py-2.5 outline-none text-slate-700 transition-colors"
                         >
                             <option value="">{t('genderNotSelected', { fallback: 'Не указан' })}</option>
                             <option value="M">{t('genderMale', { fallback: 'Мужской' })}</option>
@@ -100,7 +100,7 @@ export function PatientSettings({ profile }: { profile: PatientProfile }) {
                             id={`dob-${profile.id}`} type="date"
                             value={formData.birth_date} 
                             onChange={(e) => setFormData(prev => ({ ...prev, birth_date: e.target.value }))}
-                            className="w-full bg-white/50 border border-slate-200 focus:border-[#3f94ca] focus:ring-2 focus:ring-[#3f94ca]/20 rounded-xl px-4 py-2.5 outline-none text-slate-700"
+                            className="w-full bg-white/50 border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 rounded-xl px-4 py-2.5 outline-none text-slate-700 transition-colors"
                         />
                     </div>
 
@@ -110,7 +110,7 @@ export function PatientSettings({ profile }: { profile: PatientProfile }) {
                         <input
                             id={`height-${profile.id}`} type="number" min="50" max="250" placeholder="175"
                             value={formData.height} onChange={(e) => setFormData(prev => ({ ...prev, height: e.target.value }))}
-                            className="w-full bg-white/50 border border-slate-200 focus:border-[#3f94ca] focus:ring-2 focus:ring-[#3f94ca]/20 rounded-xl px-4 py-2.5 outline-none"
+                            className="w-full bg-white/50 border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 rounded-xl px-4 py-2.5 outline-none transition-colors"
                         />
                     </div>
 
@@ -120,14 +120,14 @@ export function PatientSettings({ profile }: { profile: PatientProfile }) {
                         <input
                             id={`weight-${profile.id}`} type="number" min="10" max="300" step="0.1" placeholder="70.5"
                             value={formData.weight} onChange={(e) => setFormData(prev => ({ ...prev, weight: e.target.value }))}
-                            className="w-full bg-white/50 border border-slate-200 focus:border-[#3f94ca] focus:ring-2 focus:ring-[#3f94ca]/20 rounded-xl px-4 py-2.5 outline-none"
+                            className="w-full bg-white/50 border border-slate-200 focus:border-secondary focus:ring-2 focus:ring-secondary/20 rounded-xl px-4 py-2.5 outline-none transition-colors"
                         />
                     </div>
                 </div>
 
                 {hasChanges && (
                     <div className="mt-6 flex justify-end">
-                        <button onClick={handleSaveBase} disabled={updateSettingsMutation.isPending} className="bg-[#3f94ca] hover:bg-[#327ba8] text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all">
+                        <button onClick={handleSaveBase} disabled={updateSettingsMutation.isPending} className="bg-secondary hover:opacity-90 text-white px-6 py-2.5 rounded-xl font-semibold flex items-center gap-2 transition-all">
                             {updateSettingsMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                             {t('saveBtn')}
                         </button>
@@ -136,16 +136,12 @@ export function PatientSettings({ profile }: { profile: PatientProfile }) {
             </div>
 
             {/* ПРЕМИУМ ХАРАКТЕРИСТИКИ */}
-            <div className="bg-gradient-to-br from-white/90 to-blue-50/50 backdrop-blur-md p-5 sm:p-7 rounded-3xl border border-blue-200 shadow-sm relative overflow-hidden">
-                <div className="absolute top-0 right-0 bg-gradient-to-bl from-blue-500 to-indigo-600 text-white text-xs font-bold px-4 py-1.5 rounded-bl-xl shadow-md">
-                    PRO
-                </div>
-                
+            <div className="bg-gradient-to-br from-white/90 to-secondary/5 backdrop-blur-md p-5 sm:p-7 rounded-3xl border border-secondary/20 shadow-sm relative overflow-hidden">
                 <h4 className="text-lg font-bold text-slate-800 mb-2">{t('premiumTitle')}</h4>
                 <p className="text-sm text-slate-500 mb-6 max-w-3xl">{t('premiumDesc')}</p>
 
                 {isLoadingPatientTraits ? (
-                    <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-blue-500" /></div>
+                    <div className="flex justify-center py-6"><Loader2 className="w-6 h-6 animate-spin text-secondary" /></div>
                 ) : (
                     <div className="flex flex-wrap gap-3 mb-6">
                         {patientTraits.length === 0 ? (
@@ -173,7 +169,7 @@ export function PatientSettings({ profile }: { profile: PatientProfile }) {
 
                 <button 
                     onClick={() => setIsModalOpen(true)}
-                    className="flex items-center gap-2 text-sm font-bold text-[#3f94ca] bg-blue-100 hover:bg-[#3f94ca] hover:text-white border border-[#3f94ca]/20 px-5 py-2.5 rounded-xl transition-all"
+                    className="flex items-center gap-2 text-sm font-bold text-secondary bg-secondary/10 hover:bg-secondary hover:text-white border border-secondary/20 px-5 py-2.5 rounded-xl transition-all"
                 >
                     <Plus className="w-4 h-4" /> {t('addTraitBtn')}
                 </button>

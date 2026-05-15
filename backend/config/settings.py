@@ -173,10 +173,10 @@ CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",
     "http://localhost:8000",
     "http://127.0.0.1:3000",
-    "http://92.113.146.158:3000",
-    "http://92.113.146.158",
-    "https://datadoctor.pro",
-    "https://www.datadoctor.pro",
+    "http://193.180.211.104:3000",
+    "http://193.180.211.104",
+    "https://webdoc.life",
+    "https://www.webdoc.life",
 ]
 if os.getenv('CORS_ALLOWED_ORIGIN'):
     CORS_ALLOWED_ORIGINS.append(os.getenv('CORS_ALLOWED_ORIGIN'))
@@ -201,9 +201,10 @@ EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')
 DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 
 CSRF_TRUSTED_ORIGINS = [
-    "https://datadoctor.pro",
-    "https://www.datadoctor.pro",
-    "http://92.113.146.158",
+    "https://webdoc.life",
+    "https://www.webdoc.life",
+    "http://193.180.211.104:3000",
+    "http://193.180.211.104",
     "http://localhost:3000",
     "http://127.0.0.1:3000",
 ]

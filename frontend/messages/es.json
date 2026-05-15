@@ -11,9 +11,9 @@
   },
   "Hero": {
     "title": "SOBRE EL PROYECTO",
-    "description": "Checkups es un servicio gratuito de IA inteligente para la interpretación de análisis médicos...",
-    "imageAlt": "Sobre el proyecto"
-  },
+    "description": "WebDoc.life es un servicio de IA inteligente y gratuito para la interpretación de análisis médicos. Los algoritmos de reconocimiento avanzados leen al instante los datos de sus fotos o documentos PDF. Obtenga un desglose estructurado, detallado y fácil de entender de sus resultados de laboratorio en segundos, sin colas ni complejos manuales médicos.",
+    "imageAlt": "Tecnología de escaneo de documentos médicos"
+},
   "FileUploader": {
     "dropHere": "Suelte los archivos aquí",
     "uploadTitle": "Subir análisis",
@@ -46,22 +46,30 @@
   },
   "FAQ": {
     "title": "Preguntas y Respuestas",
-    "subtitle": "Conozca más sobre el funcionamiento de nuestro servicio y cómo cuidamos de su salud.",
+    "subtitle": "Obtenga más información sobre cómo funciona nuestro servicio y cómo cuidamos de su salud.",
     "items": [
       {
         "question": "¿Cómo funciona la interpretación de los análisis?",
-        "answer": "Extraemos los valores numéricos de su archivo PDF, los anonimizamos y los enviamos a una IA médica que los compara con los valores de referencia y el historial de sus resultados anteriores."
+        "answer": "Extraemos datos numéricos de su archivo PDF o foto utilizando tecnología de reconocimiento óptico de caracteres (OCR), los anonimizamos y los pasamos a una IA médica. El sistema compara los datos con los valores de referencia generalmente aceptados y ayuda a estructurar la información."
       },
       {
-        "question": "¿Es seguro? ¿Guardan mis datos?",
-        "answer": "Totalmente. Antes del análisis, eliminamos su nombre y datos de contacto. Usted tiene el control total de su perfil y puede eliminar todos los archivos subidos en cualquier momento."
+        "question": "¿Es seguro? ¿Almacenan mis datos?",
+        "answer": "La seguridad es nuestra prioridad. Antes de procesarlos, eliminamos la información personal (nombre, contactos) de los documentos. Todos los archivos subidos se almacenan de forma cifrada y puede eliminarlos por completo de su perfil en cualquier momento."
       },
       {
-        "question": "¿Reemplaza esto la visita al médico?",
-        "answer": "No. Nuestro servicio proporciona información de referencia y ayuda a comprender la compleja terminología médica. Consulte siempre a un especialista para obtener un diagnóstico y un plan de tratamiento."
+        "question": "¿Sustituye esto a una visita al médico?",
+        "answer": "En absoluto. WebDoc.life proporciona información de referencia para la autoeducación y la preparación para una consulta. Para obtener un diagnóstico, prescribir un tratamiento o interpretar patologías complejas, debe consultar a un médico cualificado."
+      },
+      {
+        "question": "¿Qué tipos de análisis y formatos son compatibles?",
+        "answer": "El servicio funciona mejor con análisis de sangre y orina generales y bioquímicos, así como con pruebas hormonales. Puede subir archivos en formato PDF, JPG y PNG. Lo principal es que el texto de la imagen sea claro y legible."
+      },
+      {
+        "question": "¿Cuánto cuesta usar el servicio?",
+        "answer": "En la etapa actual, WebDoc.life es un proyecto completamente gratuito. Nuestro objetivo es hacer que la información médica compleja sea accesible para todos, ayudando a las personas a comprender mejor las métricas de su cuerpo."
       }
     ]
-  },
+},
   "Footer": {
   "logoAlt": "Logotipo de Checkups",
   "copyright": "© {year} webdoc.life. Todos los derechos reservados.",
@@ -475,5 +483,79 @@
   "buttonText": "Obtén PRO por $10 / mes",
   "securePayment": "Pago seguro a través de Cryptomus",
   "paymentError": "Se produjo un error al crear el pago. Por favor, inténtalo de nuevo más tarde."
+},
+"ExampleAnalysis": {
+    "pageTitle": "Ejemplo de interpretación",
+    "badgeWarning": "Requiere atención",
+    "ownAnalysisBtn": "Mi análisis",
+    "originalBtn": "Original",
+    "downloadPdfBtn": "Descargar PDF",
+    "indicatorsTitle": "Indicadores",
+    "valuesCount": "{count} valores",
+    "causesTitle": "Causas de las desviaciones",
+    "recommendationsTitle": "Recomendaciones",
+    "disclaimer": "Atención: Este informe está generado por inteligencia artificial, no es un diagnóstico médico y tiene un propósito exclusivamente informativo. Por favor, asegúrese de consultar a un médico cualificado para obtener un diagnóstico y tratamiento precisos.",
+    "demoOriginalAlert": "Este es un análisis de demostración. La visualización del formulario de prueba original no está disponible.",
+    "statusCritical": "Crítico",
+    "statusHigh": "Por encima",
+    "statusLow": "Por debajo",
+    "reference": "Referencia",
+    "mockData": {
+        "patientName": "Anónimo (Paciente demo)",
+        "birthDate": "Desconocido",
+        "gender": "No especificado",
+        "generalComment": "ATENCIÓN: Se han detectado desviaciones significativas en los parámetros del metabolismo de carbohidratos y lípidos, así como signos moderados de daño hepático (probablemente esteatosis hepática). La condición no es crítica, pero requiere una consulta médica de rutina para ajustar el estilo de vida y prescribir terapia de apoyo.",
+        "reasoning": "Un nivel elevado de glucosa en ayunas (6.8 mmol/L) indica una tolerancia alterada a los carbohidratos (prediabetes) o el desarrollo de diabetes tipo 2. En este contexto, se observa una dislipidemia pronunciada (colesterol LDL elevado) y un aumento moderado de las enzimas hepáticas (ALT, AST), lo cual es una imagen clásica del síndrome metabólico y la enfermedad del hígado graso no alcohólico. La proteína C reactiva (12 mg/L) refleja la presencia de una inflamación sistémica de bajo grado asociada con el exceso de peso o un trastorno metabólico.",
+        "causes": [
+            {
+                "title": "Resistencia a la insulina / Prediabetes",
+                "description": "Disminución de la sensibilidad de las células del cuerpo a la insulina, lo que hace que la glucosa no se absorba adecuadamente y se acumule en la sangre."
+            },
+            {
+                "title": "Esteatosis hepática (Hígado graso)",
+                "description": "Acumulación de exceso de grasa en las células hepáticas, lo que lleva a su lenta destrucción y liberación de ALT y AST en la sangre."
+            },
+            {
+                "title": "Dislipidemia",
+                "description": "Trastorno del metabolismo de los lípidos con predominio del colesterol 'malo' (LDL), lo que aumenta el riesgo de placas ateroscleróticas."
+            }
+        ],
+        "recommendations": [
+            {
+                "type": "medical",
+                "text": "Programar una consulta de rutina con un médico general y un endocrinólogo para evaluar los riesgos de la diabetes tipo 2."
+            },
+            {
+                "type": "medical",
+                "text": "Se recomienda una ecografía abdominal para confirmar la esteatosis hepática, así como una prueba de hemoglobina glicosilada (HbA1c)."
+            },
+            {
+                "type": "lifestyle",
+                "text": "Corrección estricta de la dieta: minimizar los carbohidratos simples (azúcar, productos horneados), añadir fibra y grasas saludables a la dieta."
+            },
+            {
+                "type": "lifestyle",
+                "text": "Introducción gradual de actividad física regular (caminar, nadar) para aumentar la sensibilidad de los tejidos a la insulina y reducir el peso."
+            }
+        ],
+        "indicators": [
+            { "name": "Glucosa", "value": "6.8", "unit": "mmol/L", "ref_range": "4.1 - 5.9", "status": "high", "comment": "Prediabetes / Tolerancia alterada" },
+            { "name": "ALT (Alanino Aminotransferasa)", "value": "85", "unit": "U/L", "ref_range": "< 41", "status": "high", "comment": "Signo de daño celular hepático" },
+            { "name": "AST (Aspartato Aminotransferasa)", "value": "60", "unit": "U/L", "ref_range": "< 37", "status": "high", "comment": "Desviación moderada" },
+            { "name": "Colesterol LDL", "value": "4.8", "unit": "mmol/L", "ref_range": "1.7 - 3.5", "status": "high", "comment": "Alto riesgo de aterosclerosis" },
+            { "name": "Proteína C reactiva (PCR)", "value": "12", "unit": "mg/L", "ref_range": "< 5", "status": "high", "comment": "Inflamación sistémica" },
+            { "name": "Hemoglobina", "value": "145", "unit": "g/L", "ref_range": "130 - 160", "status": "normal", "comment": "" },
+            { "name": "TSH", "value": "2.1", "unit": "µIU/mL", "ref_range": "0.4 - 4.0", "status": "normal", "comment": "" }
+        ]
+    }
+},
+"PatientChart": {
+    "noData": "No hay datos para construir gráficos",
+    "title": "Analítica del indicador"
+},
+"Legal": {
+    "pageTitle": "Información Legal",
+    "pageSubtitle": "Términos y condiciones de uso de nuestro servicio",
+    "privacyTitle": "Política de Privacidad"
 }
 }
