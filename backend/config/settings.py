@@ -203,6 +203,7 @@ DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL')
 CSRF_TRUSTED_ORIGINS = [
     "https://webdoc.life",
     "https://www.webdoc.life",
+    "https://api.webdoc.life",
     "http://193.180.211.104:3000",
     "http://193.180.211.104",
     "http://localhost:3000",
@@ -216,3 +217,5 @@ ANYMAIL = {
 # Говорим Django использовать API вместо стандартного SMTP
 
 DEFAULT_FROM_EMAIL = 'noreply@bimark.org'
+
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')

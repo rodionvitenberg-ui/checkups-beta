@@ -9,7 +9,7 @@ urlpatterns = [
     path('admin/', admin.site.urls),
     
     # Все запросы к /api/ делегируются объекту NinjaAPI из core
-    path('api/', api.urls), 
+    path('', api.urls), 
 ]
 
 if settings.DEBUG:
