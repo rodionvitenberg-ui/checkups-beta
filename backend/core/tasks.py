@@ -18,8 +18,8 @@ from django.utils import translation
 nlp_configuration = {
     "nlp_engine_name": "spacy",
     "models": [
-        {"lang_code": "en", "model_name": "en_core_web_lg"},
-        {"lang_code": "ru", "model_name": "ru_core_news_lg"},
+        {"lang_code": "en", "model_name": "en_core_web_sm"},
+        {"lang_code": "ru", "model_name": "ru_core_news_sm"},
         {"lang_code": "es", "model_name": "es_core_news_md"},
     ]
 }
