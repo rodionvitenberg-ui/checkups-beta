@@ -169,17 +169,7 @@ CELERY_RESULT_SERIALIZER = 'json'
 CELERY_TIMEZONE = 'UTC'
 
 # CORS CONFIGURATION
-CORS_ALLOWED_ORIGINS = [
-    "http://localhost:3000",
-    "http://localhost:8000",
-    "http://127.0.0.1:3000",
-    "http://193.180.211.104:3000",
-    "http://193.180.211.104",
-    "https://webdoc.life",
-    "https://www.webdoc.life",
-]
-if os.getenv('CORS_ALLOWED_ORIGIN'):
-    CORS_ALLOWED_ORIGINS.append(os.getenv('CORS_ALLOWED_ORIGIN'))
+CORS_ALLOWED_ORIGINS = os.getenv('CORS_ALLOWED_ORIGIN', '').split(',')
 
 # Разрешаем передачу кук/токенов (важно для авторизации)
 CORS_ALLOW_CREDENTIALS = True
