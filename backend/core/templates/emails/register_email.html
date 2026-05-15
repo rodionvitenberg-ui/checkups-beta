@@ -1,0 +1,30 @@
+{% load i18n %}
+<!DOCTYPE html>
+<html>
+<body style="margin: 0; padding: 0; background-color: #f8fafc; font-family: sans-serif;">
+    <div style="max-width: 600px; margin: 20px auto; background-color: #ffffff; padding: 40px; border-radius: 24px; border: 1px solid #e2e8f0;">
+        <div style="text-align: center; margin-bottom: 32px;">
+            <img src="https://webdoc.life/logo.png" alt="WebDoc Logo" style="height: 48px; width: auto; display: block; margin: 0 auto;">
+        </div>
+        
+        <h2 style="color: #0f172a; font-size: 20px; font-weight: 700; text-align: center; margin-bottom: 16px;">{% trans "Добро пожаловать!" %}</h2>
+        
+        <p style="color: #475569; font-size: 16px; line-height: 1.6; margin-bottom: 24px;">
+            {% trans "Вы успешно зарегистрировались в сервисе. Мы создали для вас временные учетные данные:" %}
+        </p>
+        
+        <div style="background-color: #f8fafc; border-radius: 16px; padding: 24px; margin-bottom: 24px; border: 1px solid #f1f5f9;">
+            <p style="margin: 0 0 8px 0; font-size: 14px; color: #64748b;">{% trans "Ваш логин:" %} <strong style="color: #0f172a;">{{ email }}</strong></p>
+            <p style="margin: 0; font-size: 14px; color: #64748b;">{% trans "Ваш пароль:" %} <strong style="color: #0f172a;">{{ password }}</strong></p>
+        </div>
+        
+        <p style="color: #64748b; font-size: 14px; text-align: center; margin-bottom: 32px;">
+            {% trans "Рекомендуем сменить пароль в настройках личного кабинета после первого входа." %}
+        </p>
+        
+        <div style="border-top: 1px solid #f1f5f9; padding-top: 24px; text-align: center;">
+            <p style="color: #94a3b8; font-size: 12px; margin: 0;">{% trans "Команда WebDoc" %}</p>
+        </div>
+    </div>
+</body>
+</html>

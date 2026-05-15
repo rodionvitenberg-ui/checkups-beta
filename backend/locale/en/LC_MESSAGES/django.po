@@ -79,13 +79,13 @@ msgid "Мой профиль"
 msgstr "My profile"
 
 #: core/api.py:109
-msgid "Регистрация в DataDoctor.pro"
-msgstr "Registration at DataDoctor.pro"
+msgid "Регистрация в WebDoc.life"
+msgstr "Registration at WebDoc.life"
 
 #: core/api.py:110
 #, python-brace-format
 msgid ""
-"Добро пожаловать в DataDoctor.pro!\n"
+"Добро пожаловать в WebDoc.life!\n"
 "\n"
 "Ваши данные для входа:\n"
 "Логин: {email}\n"
@@ -93,7 +93,7 @@ msgid ""
 "\n"
 "Пожалуйста, сохраните эти данные или смените пароль в личном кабинете."
 msgstr ""
-"Welcome to DataDoctor.pro!\n"
+"Welcome to WebDoc.life!\n"
 "\n"
 "Your login details:\n"
 "Login: {email}\n"
@@ -110,8 +110,8 @@ msgid "Анализы не найдены"
 msgstr "Analyses not found"
 
 #: core/api.py:159
-msgid "Код доступа к результатам | DataDoctor.pro"
-msgstr "Access code to results | DataDoctor.pro"
+msgid "Код доступа к результатам | WebDoc.life"
+msgstr "Access code to results | WebDoc.life"
 
 #: core/api.py:160
 #, python-brace-format
@@ -157,8 +157,8 @@ msgid "Если такой email существует, мы отправили �
 msgstr "If this email exists, we have sent instructions."
 
 #: core/api.py:269
-msgid "Восстановление пароля DataDoctor.pro"
-msgstr "DataDoctor.pro password recovery"
+msgid "Восстановление пароля WebDoc.life"
+msgstr "WebDoc.life password recovery"
 
 #: core/api.py:270
 #, python-brace-format
@@ -399,6 +399,51 @@ msgstr "Transaction"
 #: premium/models.py:129
 msgid "Транзакции"
 msgstr "Transactions"
+
+msgid "Ваши анализы готовы!"
+msgstr "Your medical tests are ready!"
+
+msgid "Здравствуйте!"
+msgstr "Hello!"
+
+msgid "Ваши медицинские документы были успешно обработаны. Для просмотра результатов используйте этот PIN-код:"
+msgstr "Your medical documents have been successfully processed. Use this PIN code to view the results:"
+
+msgid "Никому не сообщайте этот код. Если вы не запрашивали расшифровку, просто проигнорируйте это письмо."
+msgstr "Do not share this code with anyone. If you did not request a decryption, simply ignore this email."
+
+msgid "С заботой о вашем здоровье,"
+msgstr "With care for your health,"
+
+msgid "Команда WebDoc"
+msgstr "The WebDoc Team"
+
+msgid "Добро пожаловать!"
+msgstr "Welcome!"
+
+msgid "Вы успешно зарегистрировались в сервисе. Мы создали для вас временные учетные данные:"
+msgstr "You have successfully registered. We have created temporary credentials for you:"
+
+msgid "Ваш логин:"
+msgstr "Your login:"
+
+msgid "Ваш пароль:"
+msgstr "Your password:"
+
+msgid "Рекомендуем сменить пароль в настройках личного кабинета после первого входа."
+msgstr "We recommend changing your password in the account settings after your first login."
+
+msgid "Восстановление пароля"
+msgstr "Password Recovery"
+
+msgid "Для установки нового пароля нажмите на кнопку ниже:"
+msgstr "To set a new password, click the button below:"
+
+msgid "Сбросить пароль"
+msgstr "Reset Password"
+
+msgid "Если вы не запрашивали это действие, просто проигнорируйте письмо. Ссылка действительна в течение 24 часов."
+msgstr "If you did not request this action, simply ignore the email. The link is valid for 24 hours."
 
 #: venv/lib/python3.13/site-packages/click/_termui_impl.py:613
 #, python-brace-format

@@ -44,6 +44,7 @@ from .schemas import (
     UpdateProfileSchema
 )
 from .tasks import process_analysis_task
+from django.template.loader import render_to_string
 
 # --- Схемы для Авторизации ---
 
@@ -105,13 +106,20 @@ def register(request, payload: RegisterSchema):
         
         if not payload.password:
             try:
-                # Шаблон письма вынесен в gettext
-                mail_subject = _("Регистрация в DataDoctor.pro")
-                mail_message = _("Добро пожаловать в DataDoctor.pro!\n\nВаши данные для входа:\nЛогин: {email}\nВаш пароль: {password}\n\nПожалуйста, сохраните эти данные или смените пароль в личном кабинете.").format(email=user.email, password=password)
+                # Оставляем текстовое сообщение как fallback (для старых почтовиков)
+                mail_subject = _("Регистрация в WebDoc.life")
+                mail_message = _("Добро пожаловать в WebDoc.life!\n\nВаши данные для входа:\nЛогин: {email}\nВаш пароль: {password}\n\nПожалуйста, сохраните эти данные или смените пароль в личном кабинете.").format(email=user.email, password=password)
+                
+                # Рендерим HTML
+                html_message = render_to_string('emails/register_email.html', {
+                    'email': user.email,
+                    'password': password
+                })
                 
                 send_mail(
                     subject=mail_subject,
-                    message=mail_message,
+                    message=mail_message, # Fallback
+                    html_message=html_message, # Красивый HTML
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=True, 
@@ -156,12 +164,18 @@ def claim_request(request, payload: ClaimRequestOTPSchema):
             PatientProfile.objects.create(user=user, full_name=_("Мой профиль"))
 
             try:
-                mail_subject = _("Код доступа к результатам | DataDoctor.pro")
+                mail_subject = _("Код доступа к результатам | WebDoc.life")
                 mail_message = _("Ваши анализы готовы!\n\nВаш PIN-код для просмотра результатов: {pin_code}\n\nНикому не сообщайте этот код.").format(pin_code=pin_code)
+                
+                # Рендерим HTML
+                html_message = render_to_string('emails/claim_code_email.html', {
+                    'pin_code': pin_code
+                })
                 
                 send_mail(
                     subject=mail_subject,
                     message=mail_message,
+                    html_message=html_message,
                     from_email=settings.DEFAULT_FROM_EMAIL,
                     recipient_list=[user.email],
                     fail_silently=True,
@@ -262,24 +276,28 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     
-    domain = "https://datadoctor.pro" # ИСПРАВЛЕНИЕ: Заменил bimark.org на предполагаемый твой
+    domain = "https://webdoc.life" # ИСПРАВЛЕНИЕ: Заменил bimark.org на предполагаемый твой
     reset_link = f"{domain}/auth/reset-password?uid={uid}&token={token}"
     
     try:
-        mail_subject = _("Восстановление пароля DataDoctor.pro")
+        mail_subject = _("Восстановление пароля WebDoc.life")
         mail_message = _("Вы запросили сброс пароля.\nДля установки нового пароля перейдите по ссылке:\n{reset_link}\n\nЕсли вы не запрашивали это действие, просто проигнорируйте письмо.").format(reset_link=reset_link)
+        
+        # Рендерим HTML
+        html_message = render_to_string('emails/reset_password_email.html', {
+            'reset_link': reset_link
+        })
         
         send_mail(
             subject=mail_subject,
             message=mail_message,
+            html_message=html_message,
             from_email=settings.DEFAULT_FROM_EMAIL,
             recipient_list=[user.email],
             fail_silently=True,
         )
     except Exception as e:
         print(f"❌ Ошибка отправки письма при сбросе: {e}")
-    
-    return {"message": _("Инструкция по сбросу пароля отправлена на Email.")}
 
 @api.post("/auth/reset-password-confirm")
 def reset_password_confirm(request, payload: ResetPasswordConfirmSchema):
