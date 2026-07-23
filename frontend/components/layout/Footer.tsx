@@ -48,6 +48,20 @@ export function Footer() {
             </div>
           </div>
 
+          {/* Powered by */}
+          <div className="pt-6 mt-8 border-t border-accent/10 text-center text-sm text-accent/60">
+            Powered by{' '}
+            <a 
+              href="https://busisart.space" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              className="hover:text-accent transition-colors"
+            >
+              busisart.space
+            </a>{' '}
+            &copy; 2026
+          </div>
+
         </div>
       </div>
     </footer>
