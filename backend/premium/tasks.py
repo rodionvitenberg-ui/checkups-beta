@@ -1,8 +1,7 @@
-import os
 from celery import shared_task
-from openai import OpenAI
 from django.db import transaction
 from core.models import MedicalAnalysis
+from core.llm import LLMClient
 from .models import ChatMessage, ChatSettings
 
 @shared_task
@@ -36,13 +35,11 @@ def summarize_chat_history_task(analysis_uid):
     if len(text_to_compress) < 2000:
         return "Context is still small"
 
-    # Подготавливаем ключи
-    api_key = os.environ.get("AI_API_KEY")
-    if not api_key:
+    # Делегируем LLM-клиенту (единый пул ключей/ротация/retry)
+    llm = LLMClient(base_url="https://api.deepseek.com", model_name="deepseek-chat")
+    if not llm.has_keys:
         return "No API key"
 
-    client = OpenAI(api_key=api_key, base_url="https://api.deepseek.com")
-    
     # Промпт для сжатия
     system_prompt = (
         "Ты — медицинский архивариус. Твоя задача — обновить краткое содержание истории болезни пациента. "
@@ -56,16 +53,7 @@ def summarize_chat_history_task(analysis_uid):
     user_prompt = f"ТЕКУЩЕЕ КРАТКОЕ СОДЕРЖАНИЕ:\n{current_summary}\n\nНОВЫЕ СООБЩЕНИЯ:\n{text_to_compress}"
 
     try:
-        response = client.chat.completions.create(
-            model="deepseek-chat", # Можно использовать более дешевую модель, если есть
-            messages=[
-                {"role": "system", "content": system_prompt},
-                {"role": "user", "content": user_prompt}
-            ],
-            temperature=0.1
-        )
-        
-        new_summary = response.choices[0].message.content
+        new_summary = llm.complete(system_prompt, user_prompt, temperature=0.1)
         
         # Сохраняем атомарно (чтобы избежать гонки данных)
         with transaction.atomic():

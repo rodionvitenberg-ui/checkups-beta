@@ -7,8 +7,7 @@ import { AnalysisResponse, AIIndicator } from '@/lib/types';
 import { ReasoningBlock } from '@/components/analysis/ReasoningBlock';
 import { pdf } from '@react-pdf/renderer';
 import { AnalysisPDF } from '@/components/analysis/AnalysisPDF';
-import { format } from 'date-fns';
-import { ru } from 'date-fns/locale';
+import { downloadBlob } from '@/lib/analysis-utils';
 
 import { 
   Activity, CheckCircle2, FileText, Loader2, User, Download, Eye, Plus, AlertCircle
@@ -54,18 +53,7 @@ export default function ExampleAnalysisPage() {
     setIsGeneratingPDF(true);
     try {
       const blob = await pdf(<AnalysisPDF data={data} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `checkups_demo_analysis.pdf`;
-      link.style.display = 'none'; 
-      document.body.appendChild(link);
-      link.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 1000);
+      downloadBlob(blob, `checkups_demo_analysis.pdf`);
     } catch (error) {
       console.error("Ошибка при генерации PDF:", error);
     } finally {
@@ -106,7 +94,7 @@ export default function ExampleAnalysisPage() {
                 </div>
 
                 <p className="text-sm text-slate-600 max-w-3xl leading-relaxed mt-3">
-                    {result.summary.general_comment}
+                    {result.summary?.general_comment}
                 </p>
             </div>
 

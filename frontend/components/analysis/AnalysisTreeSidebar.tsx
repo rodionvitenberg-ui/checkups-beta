@@ -5,8 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { getProfiles, getPatientAnalyses } from '@/lib/api';
 import { AnalysisResponse, PatientProfile } from '@/lib/types';
 import { FolderOpen, User, FileText, ChevronRight, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ru, enUS, es } from 'date-fns/locale';
+import { formatAnalysisDate } from '@/lib/analysis-utils';
 import { clsx } from 'clsx';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
@@ -108,9 +107,6 @@ export function AnalysisTreeSidebar({ currentId }: AnalysisTreeSidebarProps) {
 function FolderTreeItem({ profile, analyses, currentId }: { profile: PatientProfile, analyses: AnalysisResponse[], currentId: string }) {
     const t = useTranslations('TreeSidebar');
     const locale = useLocale();
-    
-    // Подбираем правильную локаль для date-fns в зависимости от языка приложения
-    const dateLocale = locale === 'ru' ? ru : locale === 'es' ? es : enUS;
 
     const isDefaultProfile = profile.full_name === "Анализы" || profile.full_name.includes("Основной") || profile.full_name.includes("Мой");
     const hasCurrentAnalysis = analyses.some(a => a.uid === currentId);
@@ -153,17 +149,14 @@ function FolderTreeItem({ profile, analyses, currentId }: { profile: PatientProf
                             const isCurrent = analysis.uid === currentId;
                             
                             // --- НОВАЯ ЛОГИКА ОПРЕДЕЛЕНИЯ ДАТЫ ---
-                            let dateStr = t('unknownDate');
-                            
-                            // 1. Сначала пытаемся взять реальную дату анализа из результатов ИИ
-                            if (analysis.ai_result?.patient_info?.extracted_date) {
-                                // Берем дату (отсекаем время, если ИИ вернул "30.10.2025 08:23")
-                                dateStr = analysis.ai_result.patient_info.extracted_date.split(' ')[0];
-                            } 
-                            // 2. Если ИИ не нашел дату, берем дату загрузки файла (фолбэк)
-                            else if (analysis.created_at) {
-                                dateStr = format(new Date(analysis.created_at), 'd MMM yyyy', { locale: dateLocale });
-                            }
+                            // Сначала дата от ИИ (короткий вид "d MMM yyyy"), затем фолбэк на created_at,
+                            // иначе — неизвестная дата (сохраняем прежнее поведение)
+                            const extractedDate = analysis.ai_result?.patient_info?.extracted_date;
+                            const displayDate = extractedDate
+                                ? extractedDate.split(' ')[0]
+                                : analysis.created_at
+                                    ? formatAnalysisDate(undefined, analysis.created_at, locale, 'd MMM yyyy')
+                                    : t('unknownDate');
                             // -------------------------------------
                             
                             return (
@@ -178,7 +171,7 @@ function FolderTreeItem({ profile, analyses, currentId }: { profile: PatientProf
                                     )}
                                 >
                                     <FileText className={clsx("w-3.5 h-3.5 shrink-0", isCurrent ? "text-[#3f94ca]" : "text-slate-400")} />
-                                    <span className="truncate">{t('datePrefix', { date: dateStr })}</span>
+                                    <span className="truncate">{t('datePrefix', { date: displayDate })}</span>
                                 </Link>
                             );
                         })

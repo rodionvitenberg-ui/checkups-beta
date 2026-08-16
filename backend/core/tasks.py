@@ -1,35 +1,12 @@
-import os
-import fitz # PyMuPDF
-import pytesseract
-from PIL import Image
-from pdf2image import convert_from_path
-from celery import shared_task
-from presidio_analyzer import AnalyzerEngine
-from presidio_analyzer.nlp_engine import NlpEngineProvider
-from presidio_anonymizer import AnonymizerEngine
-from django.utils import timezone
 from datetime import timedelta
-from .models import MedicalAnalysis, AnalysisIndicator, PatientProfile
-from analysis.services import AnalysisPipeline 
-from core.services import save_atomic_indicators
+from celery import shared_task
+from django.utils import timezone
 from django.utils import translation
+from .models import MedicalAnalysis, AnalysisIndicator, PatientProfile
+from analysis.services import AnalysisPipeline
+from analysis.document_processor import process_document
+from core.services import save_atomic_indicators
 
-# --- НАСТРОЙКА PRESIDIO ДЛЯ МУЛЬТИЯЗЫЧНОСТИ ---
-nlp_configuration = {
-    "nlp_engine_name": "spacy",
-    "models": [
-        {"lang_code": "en", "model_name": "en_core_web_sm"},
-        {"lang_code": "ru", "model_name": "ru_core_news_sm"},
-        {"lang_code": "es", "model_name": "es_core_news_md"},
-    ]
-}
-nlp_engine = NlpEngineProvider(nlp_configuration=nlp_configuration).create_engine()
-
-analyzer = AnalyzerEngine(
-    nlp_engine=nlp_engine, 
-    supported_languages=["en", "ru", "es"]
-)
-anonymizer = AnonymizerEngine()
 # ----------------------------------------------
 
 def trigger_next_analysis(analysis, language_code='en'):
@@ -48,43 +25,7 @@ def trigger_next_analysis(analysis, language_code='en'):
             # Обязательно прокидываем язык дальше!
             process_analysis_task.delay(next_pending.uid, language_code)
 
-def extract_text_from_document(file_path):
-    """
-    Универсальный экстрактор текста.
-    Читает векторные PDF напрямую. Сканы PDF и картинки читает через OCR.
-    """
-    ext = os.path.splitext(file_path)[1].lower()
-    text = ""
-    
-    # --- ОБРАБОТКА PDF ---
-    if ext == '.pdf':
-        try:
-            # 1. Пытаемся вытащить текст стандартно (векторный PDF)
-            doc = fitz.open(file_path)
-            text = "\n".join([page.get_text("text") for page in doc])
-            doc.close()
-            
-            # 2. Если текста почти нет (это скан или фото внутри PDF) -> включаем OCR
-            if len(text.strip()) < 100:
-                print("📄 PDF выглядит как скан. Запускаю OCR-движок...")
-                images = convert_from_path(file_path)
-                text = ""
-                for img in images:
-                    # lang='rus+eng' критически важно для мед. терминов на латыни
-                    text += pytesseract.image_to_string(img, lang='rus+eng') + "\n"
-        except Exception as e:
-            print(f"❌ Ошибка чтения PDF: {e}")
-            
-    # --- ОБРАБОТКА ИЗОБРАЖЕНИЙ (JPG, PNG) ---
-    elif ext in ['.jpg', '.jpeg', '.png']:
-        print("🖼️ Распознаю изображение через OCR...")
-        try:
-            img = Image.open(file_path)
-            text = pytesseract.image_to_string(img, lang='rus+eng')
-        except Exception as e:
-            print(f"❌ Ошибка чтения изображения: {e}")
-            
-    return text
+# (OCR + анонимизация вынесены в analysis.document_processor)
 
 @shared_task(bind=True, max_retries=5)
 def process_analysis_task(self, analysis_id, language_code='en'): 
@@ -101,29 +42,19 @@ def process_analysis_task(self, analysis_id, language_code='en'):
             analysis.status = MedicalAnalysis.Status.PROCESSING
             analysis.save(update_fields=['status'])
         
-        # --- ШАГ 1: Извлекаем сырой текст ---
-        raw_text = extract_text_from_document(analysis.file.path)
+        # --- ШАГ 1+2: OCR + анонимизация (единый модуль) ---
+        analysis.file.open('rb')
+        try:
+            file_data = analysis.file.read()
+        finally:
+            analysis.file.close()
+        safe_text = process_document(file_data, analysis.file.name)
 
-        if not raw_text.strip():
+        if not safe_text.strip():
             print("❌ Не удалось извлечь текст из документа.")
             analysis.status = MedicalAnalysis.Status.FAILED
             analysis.save(update_fields=['status'])
             return False
-        
-       # --- ШАГ 2: АНОНИМИЗАЦИЯ ---
-        # Явно указываем Presidio, ЧТО именно вырезать. 
-        # Мы НЕ включаем сюда 'DATE_TIME', чтобы даты дошли до нейросети!
-        MASKING_ENTITIES = ["PERSON", "EMAIL_ADDRESS", "PHONE_NUMBER", "LOCATION", "CREDIT_CARD", "CRYPTO"]
-        
-        pii_ru = analyzer.analyze(text=raw_text, language='ru', entities=MASKING_ENTITIES)
-        pii_en = analyzer.analyze(text=raw_text, language='en', entities=MASKING_ENTITIES)
-        pii_es = analyzer.analyze(text=raw_text, language='es', entities=MASKING_ENTITIES)
-        
-        anonymized_result = anonymizer.anonymize(
-            text=raw_text, 
-            analyzer_results=pii_ru + pii_en + pii_es
-        )
-        safe_text = anonymized_result.text
         
         # --- ШАГ 3: Сборка контекста прогрессии и профиля ---
         patient_context = ""
@@ -138,19 +69,8 @@ def process_analysis_task(self, analysis_id, language_code='en'):
                 
             if analysis.patient.birth_date:
                 dob = analysis.patient.birth_date
-                # Используем дату загрузки анализа как точку отсчета
-                analysis_date = analysis.created_at.date()
-                
-                # Точная математика: сколько полных лет
-                age_years = analysis_date.year - dob.year - ((analysis_date.month, analysis_date.day) < (dob.month, dob.day))
-                
-                if age_years > 0:
-                    age_str = f"{age_years} лет/года"
-                else:
-                    # Если ребенку меньше года, считаем месяцы
-                    age_months = (analysis_date.year - dob.year) * 12 + analysis_date.month - dob.month - int((analysis_date.day) < (dob.day))
-                    age_str = f"{age_months} месяцев"
-                    
+                # Централизованный расчёт через PatientProfile.age_display
+                age_str = analysis.patient.age_display(analysis.created_at.date()) or "возраст неизвестен"
                 context_lines.append(f"Дата рождения: {dob} (ТОЧНЫЙ ВОЗРАСТ НА МОМЕНТ АНАЛИЗА: {age_str})")
             
             # 3.2. Физические параметры и расчет ИМТ (Новая логика)

@@ -8,6 +8,7 @@ import Link from 'next/link';
 import { clsx } from 'clsx';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
+import { API_BASE_URL } from '@/lib/api';
 
 // Импортируем наш фон
 import StaticBackground from '@/components/background/StaticBackground';
@@ -27,12 +28,10 @@ export default function AuthPage() {
         e.preventDefault();
         setIsLoading(true);
 
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-        
         try {
             if (mode === 'register') {
                 // --- РЕГИСТРАЦИЯ ---
-                await axios.post(`${baseUrl}/auth/register`, { email });
+                await axios.post(`${API_BASE_URL}/auth/register`, { email });
                 
                 toast({
                     title: t('toast.codeSentTitle'),
@@ -44,7 +43,7 @@ export default function AuthPage() {
                 setPassword(''); 
             } else {
                 // --- ВХОД ИЛИ ПОДТВЕРЖДЕНИЕ КОДА ---
-                const response = await axios.post(`${baseUrl}/auth/login`, {
+                const response = await axios.post(`${API_BASE_URL}/auth/login`, {
                     email,
                     password
                 });

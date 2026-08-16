@@ -28,7 +28,7 @@ services:
     build: 
       context: ./backend
       dockerfile: Dockerfile
-    command: gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application
+    command: sh -c "python manage.py migrate --noinput && gunicorn --bind 0.0.0.0:8000 --workers 3 config.wsgi:application"
     volumes:
       # Пробрасываем медиа-файлы, если локально (пока не перешли на R2 полностью)
       - backend_media:/app/media
@@ -71,11 +71,17 @@ services:
     build: 
       context: ./frontend
       dockerfile: Dockerfile
+      args:
+        # Вшивается в КЛИЕНТСКИЙ бандл на этапе сборки => нужен публичный адрес,
+        # доступный с телефона (не http://backend:8000 — это внутренний хост Docker).
+        # Без '/api': бэкенд монтирует маршруты в корне.
+        - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-https://api.webdoc.life}
     ports:
       - "3000:3000"
     environment:
-      # Для серверных компонентов Next.js должен знать, куда слать запросы
-      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000/api}
+      # Для серверных компонентов Next.js (SSR) — внутренний адрес Docker-сети.
+      # Без '/api': бэкенд монтирует маршруты в корне.
+      - NEXT_PUBLIC_API_URL=${NEXT_PUBLIC_API_URL:-http://backend:8000}
     restart: unless-stopped
 
 volumes:

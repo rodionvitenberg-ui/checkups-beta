@@ -8,8 +8,14 @@ import {
     PatientTraitLink 
 } from './types';
 
+// Единственный источник адреса API.
+// ВАЖНО: бэкенд монтирует маршруты в КОРНЕ (https://api.webdoc.life/profiles),
+// а НЕ под /api. Поэтому здесь нет '/api' — добавление ломает все запросы.
+// В Docker значение вшивается через ARG NEXT_PUBLIC_API_URL на этапе сборки.
+export const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'https://api.webdoc.life';
+
 const api = axios.create({
-    baseURL: process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api',
+    baseURL: API_BASE_URL,
     headers: { 'Content-Type': 'application/json' },
 });
 
@@ -282,7 +288,7 @@ export const streamAnalysisChat = async (
     const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
     const locale = typeof window !== 'undefined' ? document.documentElement.lang : 'en';
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api'}/premium/analyses/${uid}/chat`, {
+    const response = await fetch(`${API_BASE_URL}/premium/analyses/${uid}/chat`, {
         method: 'POST',
         headers: {
             'Content-Type': 'application/json',

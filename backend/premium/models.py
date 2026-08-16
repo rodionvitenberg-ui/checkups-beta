@@ -1,4 +1,5 @@
 import uuid
+from functools import lru_cache
 from django.db import models
 from django.utils.translation import gettext_lazy as _
 from core.models import PatientProfile, User, MedicalAnalysis
@@ -108,10 +109,12 @@ class ChatSettings(models.Model):
     def save(self, *args, **kwargs):
         self.pk = 1  # Жестко фиксируем ID, чтобы запись была только одна
         super().save(*args, **kwargs)
+        ChatSettings.get_settings.cache_clear()  # сбрасываем кэш при изменении
 
     @classmethod
+    @lru_cache(maxsize=1)
     def get_settings(cls):
-        obj, created = cls.objects.get_or_create(pk=1)
+        obj, _ = cls.objects.get_or_create(pk=1)
         return obj
 
     def __str__(self):

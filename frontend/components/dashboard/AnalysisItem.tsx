@@ -1,13 +1,12 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { createPortal } from 'react-dom'; // Импортируем Портал
 import { Link } from '@/i18n/routing';
-import { FileText, ArrowRight, Eye, Download, Trash2, Loader2, AlertCircle } from 'lucide-react';
+import { FileText, ArrowRight, Eye, Download, Trash2, Loader2 } from 'lucide-react';
 import { clsx } from 'clsx';
-import { format } from 'date-fns';
-import { ru, enUS, es } from 'date-fns/locale';
+import { formatAnalysisDate, downloadBlob } from '@/lib/analysis-utils';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { viewOriginalFile, deleteAnalysis } from '@/lib/api';
 import { AnalysisResponse } from '@/lib/types';
 import { pdf } from '@react-pdf/renderer';
@@ -27,8 +26,6 @@ export function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: Analysis
     const t = useTranslations('Dashboard.AnalysisItem');
     const locale = useLocale();
 
-    const dateLocale = locale === 'ru' ? ru : locale === 'es' ? es : enUS;
-
     useEffect(() => {
         setMounted(true);
     }, []);
@@ -43,12 +40,7 @@ export function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: Analysis
         try {
             const blob = await pdf(<AnalysisPDF data={analysis} />).toBlob();
             const dateStr = new Date(analysis.created_at || Date.now()).toISOString().split('T')[0];
-            const url = URL.createObjectURL(blob);
-            const link = document.createElement('a');
-            link.href = url;
-            link.download = `Checkups_Report_${dateStr}.pdf`;
-            document.body.appendChild(link); link.click(); document.body.removeChild(link);
-            URL.revokeObjectURL(url);
+            downloadBlob(blob, `Checkups_Report_${dateStr}.pdf`);
         } catch (error) {
             toast({ title: t('toasts.errorTitle'), description: t('toasts.pdfError'), variant: "destructive" });
         } finally {
@@ -87,9 +79,7 @@ export function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: Analysis
         setShowDeleteConfirm(true);
     };
 
-    const handleDeleteConfirm = async (e: React.MouseEvent) => {
-        e.preventDefault(); 
-        e.stopPropagation();
+    const handleDeleteConfirm = async () => {
         setLoading(true);
         try {
             await deleteAnalysis(analysis.uid);
@@ -101,6 +91,10 @@ export function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: Analysis
             setLoading(false);
             setShowDeleteConfirm(false);
         }
+    };
+
+    const handleTrashClose = () => {
+        setShowDeleteConfirm(false);
     };
 
     return (
@@ -121,23 +115,7 @@ export function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: Analysis
                             {analysis.ai_result?.patient_info?.extracted_name 
                                 ? `${analysis.ai_result.patient_info.extracted_name} ${t('from')} ` 
                                 : `${t('defaultName')} ${t('from')} `}
-                            {(() => {
-                                const extDate = analysis.ai_result?.patient_info?.extracted_date;
-                                let d = analysis.created_at ? new Date(analysis.created_at) : new Date();
-                                if (extDate) {
-                                    const parsed = new Date(extDate);
-                                    if (!isNaN(parsed.getTime())) {
-                                        d = parsed;
-                                    } else if (extDate.includes('.')) {
-                                        const parts = extDate.split('.');
-                                        if (parts.length === 3) {
-                                            const parsed2 = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                                            if (!isNaN(parsed2.getTime())) d = parsed2;
-                                        }
-                                    }
-                                }
-                                return format(d, 'd MMMM yyyy', { locale: dateLocale });
-                            })()}
+                            {formatAnalysisDate(analysis.ai_result?.patient_info?.extracted_date, analysis.created_at, locale)}
                         </h4>
                         <span className={clsx(
                             "text-xs font-medium px-2 py-0.5 rounded-full mt-1 inline-block",
@@ -180,38 +158,17 @@ export function AnalysisItem({ analysis, onDeleteSuccess }: { analysis: Analysis
             </div>
 
             {/* ВЫВОДИМ МОДАЛКУ ЧЕРЕЗ ПОРТАЛ В КОРЕНЬ ДОКУМЕНТА */}
-            {mounted && showDeleteConfirm && createPortal(
-                <div 
-                    className="fixed inset-0 z-[100] flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200"
-                    onClick={(e) => { e.preventDefault(); e.stopPropagation(); }} 
-                >
-                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20 p-6 text-center">
-                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <AlertCircle className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">{t('deleteModalTitle')}</h3>
-                        <p className="text-slate-500 mb-6 text-sm">
-                            {t('confirmDelete')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button 
-                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowDeleteConfirm(false); }}
-                                disabled={loading}
-                                className="flex-1 py-2.5 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-70"
-                            >
-                                {t('cancelBtn')}
-                            </button>
-                            <button 
-                                onClick={handleDeleteConfirm}
-                                disabled={loading}
-                                className="flex-1 py-2.5 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 flex items-center justify-center gap-2 disabled:opacity-70"
-                            >
-                                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('confirmDeleteBtn')}
-                            </button>
-                        </div>
-                    </div>
-                </div>,
-                document.body
+            {mounted && (
+                <ConfirmDialog
+                    isOpen={showDeleteConfirm}
+                    title={t('deleteModalTitle')}
+                    description={t('confirmDelete')}
+                    confirmText={t('confirmDeleteBtn')}
+                    cancelText={t('cancelBtn')}
+                    loading={loading}
+                    onConfirm={handleDeleteConfirm}
+                    onClose={handleTrashClose}
+                />
             )}
         </>
     );

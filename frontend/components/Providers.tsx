@@ -2,6 +2,7 @@
 
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useState } from 'react';
+import { ToastProvider } from '@/components/ui/toast';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
   // Инициализируем QueryClient один раз на сессию пользователя
@@ -17,7 +18,7 @@ export default function Providers({ children }: { children: React.ReactNode }) {
 
   return (
     <QueryClientProvider client={queryClient}>
-      {children}
+      <ToastProvider>{children}</ToastProvider>
     </QueryClientProvider>
   );
 }

@@ -82,7 +82,6 @@ const styles = StyleSheet.create({
   causeTitle: { fontWeight: 'bold', color: colors.textMain, marginBottom: 4, fontSize: 11 },
   causeDesc: { color: colors.textMuted },
   
-  footer: { position: 'absolute', bottom: 20, left: 30, right: 30, textAlign: 'center', fontSize: 8, color: colors.textMuted, borderTopWidth: 1, borderTopColor: colors.border, paddingTop: 10 }
 });
 
 export const AnalysisPDF = ({ data }: { data: AnalysisResponse }) => {
@@ -123,12 +122,12 @@ export const AnalysisPDF = ({ data }: { data: AnalysisResponse }) => {
             )}
             <View style={styles.row}>
                 <Text style={styles.label}>Общий статус:</Text>
-                <Text style={{ ...styles.value, color: result.summary.is_critical ? colors.critical : colors.normal, fontWeight: 'bold' }}>
-                {result.summary.is_critical ? 'ТРЕБУЕТСЯ ВНИМАНИЕ ВРАЧА' : 'В ПРЕДЕЛАХ НОРМЫ'}
+                <Text style={{ ...styles.value, color: result.summary?.is_critical ? colors.critical : colors.normal, fontWeight: 'bold' }}>
+                {result.summary?.is_critical ? 'ТРЕБУЕТСЯ ВНИМАНИЕ ВРАЧА' : 'В ПРЕДЕЛАХ НОРМЫ'}
                 </Text>
             </View>
             <Text style={styles.commentText}>
-                "{result.summary.general_comment}"
+                "{result.summary?.general_comment}"
             </Text>
             </View>
 
@@ -202,10 +201,6 @@ export const AnalysisPDF = ({ data }: { data: AnalysisResponse }) => {
 
         </View>
 
-        {/* Подвал */}
-        <Text style={styles.footer} fixed>
-          ВНИМАНИЕ: Данный отчет сгенерирован искусственным интеллектом, не является медицинским диагнозом и носит исключительно информационный характер. Пожалуйста, проконсультируйтесь с лечащим врачом.
-        </Text>
       </Page>
     </Document>
   );

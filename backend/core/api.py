@@ -1,11 +1,8 @@
+import os
 import uuid
 import time
-import json
-import random
-from typing import List, Optional
+from typing import List, Optional, Any
 from ninja import NinjaAPI, UploadedFile, File, Schema, Form
-from ninja.security import HttpBearer
-from ninja.errors import HttpError
 from ninja_jwt.authentication import JWTAuth
 
 # Django imports
@@ -13,21 +10,18 @@ from django.utils import timezone
 from django.shortcuts import get_object_or_404
 from django.db import transaction
 from django.http import FileResponse, Http404, HttpRequest, StreamingHttpResponse
-from typing import Optional, Any
 from django.contrib.auth import authenticate, get_user_model
+from django.contrib.auth.models import AnonymousUser
 from django.contrib.auth.tokens import default_token_generator
 from django.utils.http import urlsafe_base64_encode, urlsafe_base64_decode
 from django.utils.encoding import force_bytes, force_str
-from django.core.mail import send_mail
 from django.conf import settings
 from django.utils.crypto import get_random_string
-from django.core.cache import cache
-from django.utils.translation import gettext as _ # ДОБАВЛЕНО ДЛЯ ЛОКАЛИЗАЦИИ
+from django.utils.translation import gettext as _  # ДОБАВЛЕНО ДЛЯ ЛОКАЛИЗАЦИИ
 
 # JWT imports
-from ninja_jwt.authentication import JWTAuth
-from ninja_jwt.tokens import RefreshToken, AccessToken
-from ninja_jwt.exceptions import InvalidToken, TokenError
+from ninja_jwt.tokens import RefreshToken
+from ninja_jwt.exceptions import TokenError
 
 # Local imports
 from .models import MedicalAnalysis, PatientProfile, User, AnalysisIndicator
@@ -44,7 +38,13 @@ from .schemas import (
     UpdateProfileSchema
 )
 from .tasks import process_analysis_task
+from .services import (
+    claim_analyses_to_user,
+    get_daily_analysis_limit,
+    count_todays_launches,
+)
 from django.template.loader import render_to_string
+from .mail import send_html_email
 
 # --- Схемы для Авторизации ---
 
@@ -76,15 +76,17 @@ User = get_user_model()
 
 class OptionalJWTAuth(JWTAuth):
     """
-    Кастомный класс авторизации. 
-    Если токен есть и он валиден - авторизует. 
-    Если токена нет - просто пропускает как анонима, без ошибки 401.
+    Кастомный класс авторизации.
+    Валидный токен -> владелец. Нет/битый токен -> аноним (без 401),
+    чтобы гостевой флоу по UUID работал. Вернуть None нельзя:
+    django-ninja на falsy-результате auth сам отдаёт 401.
     """
     def __call__(self, request: HttpRequest) -> Optional[Any]:
         try:
-            return super().__call__(request)
+            user = super().__call__(request)
         except Exception:
-            return None
+            return AnonymousUser()
+        return user if user else AnonymousUser()
 
 # ==========================================
 # 1. АВТОРИЗАЦИЯ И УПРАВЛЕНИЕ АККАУНТОМ
@@ -116,13 +118,11 @@ def register(request, payload: RegisterSchema):
                     'password': password
                 })
                 
-                send_mail(
+                send_html_email(
                     subject=mail_subject,
-                    message=mail_message, # Fallback
-                    html_message=html_message, # Красивый HTML
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=True, 
+                    text_body=mail_message,
+                    html_body=html_message,
+                    to=[user.email],
                 )
             except Exception as e:
                 print(f"❌ Ошибка отправки письма при регистрации: {e}")
@@ -172,13 +172,11 @@ def claim_request(request, payload: ClaimRequestOTPSchema):
                     'pin_code': pin_code
                 })
                 
-                send_mail(
+                send_html_email(
                     subject=mail_subject,
-                    message=mail_message,
-                    html_message=html_message,
-                    from_email=settings.DEFAULT_FROM_EMAIL,
-                    recipient_list=[user.email],
-                    fail_silently=True,
+                    text_body=mail_message,
+                    html_body=html_message,
+                    to=[user.email],
                 )
             except Exception as e:
                 print(f"❌ Ошибка отправки письма: {e}")
@@ -194,54 +192,25 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
     if not user:
         return api.create_response(request, {"message": _("Неверный код или пароль")}, status=401)
 
+    claim_analyses_to_user(payload.analysis_uids, user)
     analyses = MedicalAnalysis.objects.filter(uid__in=payload.analysis_uids)
-    
-    with transaction.atomic():
-        for analysis in analyses:
-            if not analysis.user:
-                analysis.user = user
-                
-                # Если у анализа есть профиль-сирота, привязываем его к юзеру
-                if analysis.patient and analysis.patient.user is None:
-                    existing_profile = PatientProfile.objects.filter(user=user, full_name=analysis.patient.full_name).first()
-                    
-                    if existing_profile:
-                        old_orphan = analysis.patient
-                        analysis.patient = existing_profile
-                        analysis.save(update_fields=['user', 'patient'])
-                        old_orphan.delete()
-                    else:
-                        analysis.patient.user = user
-                        analysis.patient.save(update_fields=['user'])
-                        analysis.save(update_fields=['user'])
-                else:
-                    main_profile = PatientProfile.objects.filter(user=user).order_by('created_at').first()
-                    analysis.patient = main_profile
-                    analysis.save(update_fields=['user', 'patient'])
-
-                AnalysisIndicator.objects.filter(analysis=analysis).update(patient=analysis.patient)
 
     # === ИЗМЕНЕНИЕ: ПРОВЕРКА ЛИМИТОВ ПЕРЕД ЗАПУСКОМ ИИ ===
     from .tasks import process_analysis_task
-    today = timezone.now().date()
-    limit = 10 if getattr(user, 'is_pro', False) else 2
+    limit = get_daily_analysis_limit(user)
     lang = getattr(request, 'LANGUAGE_CODE', 'en')
 
-    # Получаем все анализы этого юзера за сегодня (чтобы понять, по счету ли они)
-    todays_analyses = list(MedicalAnalysis.objects.filter(user=user, created_at__date=today).order_by('created_at'))
-    
+    # Сколько «запусков» уже потрачено сегодня
+    launches_today = count_todays_launches(user)
+
     # Берем только те, которые еще ждут обработки
-    pending_analyses = analyses.filter(status=MedicalAnalysis.Status.PENDING)
-    
+    pending_analyses = list(analyses.filter(status=MedicalAnalysis.Status.PENDING))
+
     for pending in pending_analyses:
-        try:
-            position = todays_analyses.index(pending) + 1
-        except ValueError:
-            position = 999
-            
-        if position <= limit:
+        if launches_today < limit:
             # Вписывается в лимит — запускаем нейросеть
             process_analysis_task.delay(pending.uid, lang)
+            launches_today += 1
         else:
             # ЖЕСТКАЯ ЗАЩИТА: Лимит превышен! Блокируем обработку, не тратим деньги
             pending.status = MedicalAnalysis.Status.FAILED
@@ -276,7 +245,7 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
     token = default_token_generator.make_token(user)
     uid = urlsafe_base64_encode(force_bytes(user.pk))
     
-    domain = "https://webdoc.life" # ИСПРАВЛЕНИЕ: Заменил bimark.org на предполагаемый твой
+    domain = os.getenv("FRONTEND_URL", "https://webdoc.life").rstrip("/")
     reset_link = f"{domain}/auth/reset-password?uid={uid}&token={token}"
     
     try:
@@ -288,13 +257,11 @@ def reset_password_request(request, payload: ResetPasswordRequestSchema):
             'reset_link': reset_link
         })
         
-        send_mail(
+        send_html_email(
             subject=mail_subject,
-            message=mail_message,
-            html_message=html_message,
-            from_email=settings.DEFAULT_FROM_EMAIL,
-            recipient_list=[user.email],
-            fail_silently=True,
+            text_body=mail_message,
+            html_body=html_message,
+            to=[user.email],
         )
     except Exception as e:
         print(f"❌ Ошибка отправки письма при сбросе: {e}")
@@ -330,7 +297,7 @@ def change_password(request, payload: ChangePasswordSchema):
 # 2. РАБОТА С АНАЛИЗАМИ (Гибридный доступ)
 # ==========================================
 
-@api.post("/analyses/upload", response=AnalysisResponseSchema, auth=None)
+@api.post("/analyses/upload", response=AnalysisResponseSchema, auth=OptionalJWTAuth())
 def upload_analysis(
     request, 
     file: UploadedFile = File(...), 
@@ -340,32 +307,16 @@ def upload_analysis(
     guest_gender: str = Form(None),
     guest_dob: str = Form(None)
 ):
-    user = None
-    patient_profile = None 
-    
-    auth_header = request.headers.get('Authorization')
-    if auth_header and auth_header.startswith('Bearer '):
-        token_str = auth_header.split(' ')[1]
-        try:
-            access_token = AccessToken(token_str)
-            user = User.objects.get(id=access_token['user_id'])
-        except (TokenError, User.DoesNotExist):
-            pass
-    
-    print(f"🕵️ ДЕБАГ ЗАГРУЗКИ: user={user}, patient_id='{patient_id}', guest_name='{guest_name}'")
-            
-    if user and user.is_authenticated:
-        today = timezone.now().date()
-        analyses_count = MedicalAnalysis.objects.filter(
-            user=user, created_at__date=today
-        ).count()
-        
-        limit = 10 if getattr(user, 'is_pro', False) else 2
-        
-        if analyses_count >= limit:
+    # Единый механизм: OptionalJWTAuth авторизует владельца или пропускает гостя
+    user = request.user if getattr(request.user, 'is_authenticated', False) else None
+    patient_profile = None
+
+    if user:
+        limit = get_daily_analysis_limit(user)
+        if count_todays_launches(user) >= limit:
             return api.create_response(
-                request, 
-                {"message": "limit_reached", "limit": limit}, 
+                request,
+                {"message": "limit_reached", "limit": limit},
                 status=403
             )
         
@@ -398,34 +349,48 @@ def upload_analysis(
 
     analysis = MedicalAnalysis.objects.create(
         file=file,
-        user=user if user and user.is_authenticated else None,
+        user=user,
         patient=patient_profile,
         status=MedicalAnalysis.Status.PENDING
     )
-    
+
     # === ИЗМЕНЕНИЕ: ЛЕНИВАЯ ЗАГРУЗКА (LAZY PROCESSING) ===
     # Мы запускаем Celery-таску ТОЛЬКО если юзер авторизован!
     # Если это гость, файл просто лежит в БД и ждет привязки (claim_verify).
-    if is_first and user and user.is_authenticated:
+    if is_first and user:
         lang = getattr(request, 'LANGUAGE_CODE', 'en')
         from .tasks import process_analysis_task
         transaction.on_commit(lambda: process_analysis_task.delay(analysis.uid, lang))
-        
+
     return analysis
 # ---------------------------------------------------------
 
-@api.get("/analyses/{uid}", response=AnalysisResponseSchema, auth=None)
+def _can_access_analysis(request, analysis) -> bool:
+    """Доступ к анализу: владелец — всегда; орфан-анализ (гость до claim) — по UUID."""
+    if analysis.user_id is None:
+        return True
+    user = getattr(request, 'user', None)
+    return user is not None and user.is_authenticated and analysis.user_id == user.id
+
+
+@api.get("/analyses/{uid}", response=AnalysisResponseSchema, auth=OptionalJWTAuth())
 def get_analysis_result(request, uid: uuid.UUID):
     try:
         analysis = MedicalAnalysis.objects.get(uid=uid)
     except MedicalAnalysis.DoesNotExist:
         raise Http404(_("Анализ не найден"))
 
+    if not _can_access_analysis(request, analysis):
+        return api.create_response(request, {"message": _("Доступ запрещен")}, status=403)
+
     return analysis
 
-@api.get("/analyses/{uid}/download", auth=None)
+@api.get("/analyses/{uid}/download", auth=OptionalJWTAuth())
 def download_analysis_file(request, uid: uuid.UUID):
     analysis = get_object_or_404(MedicalAnalysis, uid=uid)
+
+    if not _can_access_analysis(request, analysis):
+        return api.create_response(request, {"message": _("Доступ запрещен")}, status=403)
 
     if not analysis.file:
         raise Http404(_("Файл не найден"))
@@ -440,17 +405,11 @@ def reanalyze_document(request, uid: uuid.UUID):
     user = request.user
     
     # --- ПРОВЕРКА ЛИМИТОВ ПРИ ПЕРЕСЧЕТЕ ---
-    today = timezone.now().date()
-    analyses_count = MedicalAnalysis.objects.filter(
-        user=user, created_at__date=today
-    ).count()
-    
-    limit = 10 if getattr(user, 'is_pro', False) else 2
-    
-    if analyses_count >= limit:
+    limit = get_daily_analysis_limit(user)
+    if count_todays_launches(user) >= limit:
         return api.create_response(
-            request, 
-            {"message": "limit_reached", "limit": limit}, 
+            request,
+            {"message": "limit_reached", "limit": limit},
             status=403
         )
     # --------------------------------------
@@ -474,25 +433,28 @@ def reanalyze_document(request, uid: uuid.UUID):
 def stream_analysis_status(request, uid: uuid.UUID):
     def event_stream():
         last_status = None
-        while True:
+        # Таймаут: максимум 60 итераций по 3с = 180с, чтобы поток всегда завершался
+        for _ in range(60):
             # Делаем легкий запрос только за нужным полем
             analysis = MedicalAnalysis.objects.filter(uid=uid).only('status').first()
             if not analysis:
                 yield "data: not_found\n\n"
                 break
-            
+
             # Отправляем статус, только если он изменился
             if analysis.status != last_status:
                 yield f"data: {analysis.status}\n\n"
                 last_status = analysis.status
-            
+
             # Если статус финальный — закрываем поток со стороны сервера
             if analysis.status in ['completed', 'failed']:
                 break
-            
-            # Спим 2 секунды. Это не блокирует сервер, так как это генератор!
-            time.sleep(2)
-            
+
+            # Спим 3 секунды (реже дёргаем БД; ponytail: при росте нагрузки — Redis pub/sub)
+            time.sleep(3)
+        else:
+            yield "data: timeout\n\n"
+
     return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
 
 # ==========================================

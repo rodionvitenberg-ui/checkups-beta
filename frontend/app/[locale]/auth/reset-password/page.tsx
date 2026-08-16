@@ -7,6 +7,7 @@ import { Loader2, Mail, Lock, ArrowRight, CheckCircle, ArrowLeft, KeyRound } fro
 import Link from 'next/link';
 import { useToast } from '@/components/ui/toast';
 import { useTranslations } from 'next-intl';
+import { API_BASE_URL } from '@/lib/api';
 
 // Импортируем наш фон
 import StaticBackground from '@/components/background/StaticBackground';
@@ -36,12 +37,10 @@ function ResetPasswordContent() {
         e.preventDefault();
         setIsLoading(true);
 
-        const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-
         try {
             if (mode === 'request') {
                 // 1. ЗАПРОС ССЫЛКИ
-                await axios.post(`${baseUrl}/auth/reset-password-request`, { email });
+                await axios.post(`${API_BASE_URL}/auth/reset-password-request`, { email });
                 
                 setIsSuccess(true);
                 toast({
@@ -72,7 +71,7 @@ function ResetPasswordContent() {
                     return;
                 }
 
-                await axios.post(`${baseUrl}/auth/reset-password-confirm`, {
+                await axios.post(`${API_BASE_URL}/auth/reset-password-confirm`, {
                     uidb64: uid,
                     token: token,
                     new_password: password

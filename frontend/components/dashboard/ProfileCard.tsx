@@ -1,12 +1,13 @@
 'use client';
 
 import { useState } from 'react';
-import { 
-    User, Check, Edit2, X, ChevronDown, 
-    List, Activity, Loader2, Trash2, FileText, AlertCircle, Settings 
+import {
+    User, Check, Edit2, X, ChevronDown,
+    List, Activity, Loader2, Trash2, FileText, Settings
 } from 'lucide-react';
 import { clsx } from 'clsx';
 import { useToast } from '@/components/ui/toast';
+import { ConfirmDialog } from '@/components/ui/confirm-dialog';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { PatientChart } from '@/components/dashboard/PatientChart';
 import { AnalysisItem } from './AnalysisItem'; 
@@ -269,35 +270,16 @@ export function ProfileCard({ profile, isExpanded, onToggle }: { profile: Patien
             </div>
 
             {/* МОДАЛЬНОЕ ОКНО ПОДТВЕРЖДЕНИЯ УДАЛЕНИЯ */}
-            {showDeleteConfirm && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-white/95 backdrop-blur-xl rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 duration-200 border border-white/20 p-6 text-center">
-                        <div className="w-16 h-16 bg-red-50 text-red-500 rounded-full flex items-center justify-center mx-auto mb-4">
-                            <AlertCircle className="w-8 h-8" />
-                        </div>
-                        <h3 className="text-xl font-bold text-slate-900 mb-2">{t('deleteModalTitle')}</h3>
-                        <p className="text-slate-500 mb-6 text-sm">
-                            {t('confirmDelete')}
-                        </p>
-                        <div className="flex gap-3">
-                            <button 
-                                onClick={() => setShowDeleteConfirm(false)}
-                                disabled={deleteProfileMutation.isPending}
-                                className="flex-1 py-2.5 rounded-xl font-semibold text-slate-600 bg-slate-100 hover:bg-slate-200 transition-colors disabled:opacity-70"
-                            >
-                                {t('cancelBtn')}
-                            </button>
-                            <button 
-                                onClick={() => deleteProfileMutation.mutate(profile.id)}
-                                disabled={deleteProfileMutation.isPending}
-                                className="flex-1 py-2.5 rounded-xl font-semibold text-white bg-red-500 hover:bg-red-600 transition-colors shadow-lg shadow-red-500/30 flex items-center justify-center gap-2 disabled:opacity-70"
-                            >
-                                {deleteProfileMutation.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : t('confirmDeleteBtn')}
-                            </button>
-                        </div>
-                    </div>
-                </div>
-            )}
+            <ConfirmDialog
+                isOpen={showDeleteConfirm}
+                title={t('deleteModalTitle')}
+                description={t('confirmDelete')}
+                confirmText={t('confirmDeleteBtn')}
+                cancelText={t('cancelBtn')}
+                loading={deleteProfileMutation.isPending}
+                onConfirm={() => deleteProfileMutation.mutate(profile.id)}
+                onClose={() => setShowDeleteConfirm(false)}
+            />
         </>
     );
 }

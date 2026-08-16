@@ -108,8 +108,8 @@ export default async function LocaleLayout({
           </Providers>
         </NextIntlClientProvider>
 
-        {/* Интеграция Google Analytics */}
-        <GoogleAnalytics gaId="G-XXXXXXXXXX" /> 
+        {/* Интеграция Google Analytics (отключается, если NEXT_PUBLIC_GA_ID не задан) */}
+        {process.env.NEXT_PUBLIC_GA_ID && <GoogleAnalytics gaId={process.env.NEXT_PUBLIC_GA_ID} />}
       </body>
     </html>
   );

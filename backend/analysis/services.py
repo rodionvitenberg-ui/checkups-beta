@@ -1,103 +1,12 @@
-import os
 import json
-import time
-from openai import OpenAI
-from dotenv import load_dotenv
 
-# Принудительно читаем .env
-load_dotenv()
-
-from core.schemas import AIResultSchema
+from core.llm import LLMClient
 from .models import PromptTemplate
 
 class AnalysisPipeline:
     def __init__(self, language_code='ru'):
-        self.api_keys = []
-        
-        # Ищем ключи в окружении (теперь ищем универсальные AI_API_KEY)
-        for key, val in os.environ.items():
-            if key.startswith("AI_API_KEY") and val:
-                self.api_keys.append(val)
-                
-        if not self.api_keys and os.environ.get("AI_API_KEY"):
-            self.api_keys.append(os.environ.get("AI_API_KEY"))
-        
-        if not self.api_keys:
-            print("⚠️ ВНИМАНИЕ: Ключи AI_API_KEY не найдены в .env!")
-            self.api_keys = ["DUMMY_KEY"]
-            
-        self.current_key_idx = 0
-        
-        # --- НАСТРОЙКИ МОДЕЛИ И ПРОВАЙДЕРА ---
-        # Вариант 1: DeepSeek (Официальный API)
-        self.base_url = "https://api.deepseek.com"
-        self.model_name = "deepseek-chat" # Это DeepSeek V3
-        
-        # Вариант 2: OpenRouter (Агрегатор для Qwen, DeepSeek, Llama)
-        # self.base_url = "https://openrouter.ai/api/v1"
-        # self.model_name = "qwen/qwen-2.5-72b-instruct" # Или "deepseek/deepseek-chat"
-        # -------------------------------------
-        
-        self.language_code = language_code 
-
-    def _get_client(self):
-        return OpenAI(
-            api_key=self.api_keys[self.current_key_idx],
-            base_url=self.base_url
-        )
-
-    def _switch_key(self):
-        if self.current_key_idx < len(self.api_keys) - 1:
-            self.current_key_idx += 1
-            print(f"🔄 ЛИМИТЫ ИСЧЕРПАНЫ. Переключаюсь на ключ #{self.current_key_idx + 1}")
-            return True
-        return False
-
-    def _call_llm_with_fallback(self, sys_prompt, user_prompt, require_json=False, max_retries=None, temperature=0.1):
-        if max_retries is None:
-            max_retries = len(self.api_keys) * 2
-
-        for attempt in range(max_retries):
-            try:
-                client = self._get_client()
-                
-                messages = [
-                    {"role": "system", "content": sys_prompt},
-                    {"role": "user", "content": user_prompt}
-                ]
-
-                kwargs = {
-                    "model": self.model_name,
-                    "messages": messages,
-                    "temperature": temperature,
-                }
-                
-                if require_json:
-                    # Стандартный вызов JSON для OpenAI/DeepSeek/OpenRouter
-                    kwargs["response_format"] = {"type": "json_object"}
-
-                response = client.chat.completions.create(**kwargs)
-                result_text = response.choices[0].message.content
-
-                if require_json:
-                    return json.loads(result_text)
-
-                return result_text
-
-            except Exception as e:
-                err_str = str(e).lower()
-                print(f"⚠️ API Error (Попытка {attempt + 1}/{max_retries}): {e}")
-                
-                if "429" in err_str or "rate limit" in err_str or "insufficient_quota" in err_str:
-                    if self._switch_key():
-                        continue 
-                    else:
-                        print("❌ Все ключи исчерпаны! Ждем 20 сек...")
-                        time.sleep(20) 
-                else:
-                    time.sleep(2)
-
-        raise Exception("Failed to call AI API after multiple retries")
+        self.llm = LLMClient(base_url="https://api.deepseek.com", model_name="deepseek-chat")
+        self.language_code = language_code
 
     def _get_prompt(self, role: str) -> str:
         try:
@@ -111,7 +20,7 @@ class AnalysisPipeline:
 
     def run_pipeline(self, safe_text: str, patient_context: str = None) -> dict:
         try:
-            print(f"--- Stage 1: Секретарь (Extraction) [{self.model_name}, Lang: {self.language_code}] ---")
+            print(f"--- Stage 1: Секретарь (Extraction) [{self.llm.model_name}, Lang: {self.language_code}] ---")
             raw_data = self._step_extract(safe_text)
             
             # --- УМНОЕ ОБОГАЩЕНИЕ КОНТЕКСТА ДЕМОГРАФИЕЙ ИЗ БЛАНКА ---
@@ -144,7 +53,7 @@ class AnalysisPipeline:
                 patient_context = (patient_context or "КОНТЕКСТ ПАЦИЕНТА:\n") + additional_context
                 print(f"💡 Контекст обогащен данными из бланка: {additional_context}")
 
-            print(f"--- Stage 2: Профессор (Interpretation) [{self.model_name}] ---")
+            print(f"--- Stage 2: Профессор (Interpretation) [{self.llm.model_name}] ---")
             interpreted_data = self._step_interpret(raw_data, patient_context)
             
             return interpreted_data
@@ -163,11 +72,11 @@ class AnalysisPipeline:
         
         full_prompt = f"ОБЕЗЛИЧЕННЫЙ ТЕКСТ АНАЛИЗА:\n{safe_text}"
         
-        return self._call_llm_with_fallback(
+        return self.llm.complete(
             sys_prompt=sys_prompt,
-            user_prompt=full_prompt, 
+            user_prompt=full_prompt,
             require_json=True,
-            temperature=0.1 
+            temperature=0.1
         )
 
     def _step_interpret(self, raw_data: dict, patient_context: str = None):
@@ -199,9 +108,9 @@ class AnalysisPipeline:
         context_str = f"КОНТЕКСТ ПАЦИЕНТА: {patient_context}" if patient_context else "КОНТЕКСТ ПАЦИЕНТА: Неизвестен."
         full_prompt = f"{context_str}\nВОТ ИСХОДНЫЕ ДАННЫЕ (RAW JSON):\n{json.dumps(raw_data, ensure_ascii=False)}"
         
-        return self._call_llm_with_fallback(
+        return self.llm.complete(
             sys_prompt=sys_prompt,
-            user_prompt=full_prompt, 
+            user_prompt=full_prompt,
             require_json=True,
-            temperature=0.1 
+            temperature=0.1
         )

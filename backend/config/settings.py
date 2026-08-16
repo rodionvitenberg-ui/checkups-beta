@@ -25,12 +25,24 @@ load_dotenv(BASE_DIR / '.env')
 # See https://docs.djangoproject.com/en/6.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.getenv('SECRET_KEY')
+SECRET_KEY = os.getenv(
+    'SECRET_KEY',
+    'django-insecure-dev-only-key-change-me' if os.getenv('DEBUG') == 'True' else None,
+)
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
+if not DEBUG and not SECRET_KEY:
+    raise RuntimeError(
+        "SECRET_KEY is required in production. Set it in backend/.env"
+    )
+
+ALLOWED_HOSTS = [h for h in os.getenv('ALLOWED_HOSTS', '').split(',') if h]
+if not ALLOWED_HOSTS and not DEBUG:
+    raise RuntimeError(
+        "ALLOWED_HOSTS is required in production. Set it in backend/.env"
+    )
 
 
 # Application definition
@@ -158,7 +170,14 @@ STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles') # Папка, куда соберется статика
 
 # Включаем сжатие и кэширование (добавляет уникальные хэши к именам файлов)
-STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+STORAGES = {
+    'default': {
+        'BACKEND': 'django.core.files.storage.FileSystemStorage',
+    },
+    'staticfiles': {
+        'BACKEND': 'whitenoise.storage.CompressedManifestStaticFilesStorage',
+    },
+}
 
 # CELERY SETTINGS
 CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
@@ -200,12 +219,17 @@ CSRF_TRUSTED_ORIGINS = [
     "http://127.0.0.1:3000",
 ]
 
-ANYMAIL = {
-    "RESEND_API_KEY": "re_h7MhmX8c_919WAWjZh9efAZ7hCmrvYp7S",
-}
-
-# Говорим Django использовать API вместо стандартного SMTP
-
-DEFAULT_FROM_EMAIL = 'noreply@bimark.org'
+DEFAULT_FROM_EMAIL = os.getenv('DEFAULT_FROM_EMAIL', 'noreply@bimark.org')
 
 SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+
+# Sentry (опционально): включается только если задан SENTRY_DSN
+SENTRY_DSN = os.getenv('SENTRY_DSN')
+if SENTRY_DSN:
+    import sentry_sdk
+
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        environment='production' if not DEBUG else 'development',
+        traces_sample_rate=float(os.getenv('SENTRY_TRACES_SAMPLE_RATE', '0.1')),
+    )

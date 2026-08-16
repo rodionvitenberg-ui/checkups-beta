@@ -9,8 +9,8 @@ class PatientMetadataSchema(Schema):
     extracted_date: Optional[str] = None 
 
 class SummarySchema(Schema):
-    is_critical: bool
-    general_comment: str
+    is_critical: bool = False
+    general_comment: str = ""
 
 class IndicatorSchema(Schema):
     name: str
@@ -34,9 +34,9 @@ class RecommendationSchema(Schema):
     text: str
 
 class AIResultSchema(Schema):
-    reasoning: Optional[str] = "" 
-    
-    patient_info: Optional[PatientMetadataSchema] = None 
+    reasoning: Optional[str] = ""
+
+    patient_info: Optional[PatientMetadataSchema] = None
     summary: Optional[SummarySchema] = None
     indicators: List[IndicatorSchema] = []
     causes: List[CauseSchema] = []
@@ -58,7 +58,7 @@ class CreateProfileSchema(Schema):
     height: Optional[float] = None
 
 class UpdateProfileSchema(Schema):
-    full_name: str
+    full_name: Optional[str] = None
     birth_date: Optional[date] = None
     gender: Optional[str] = None
     weight: Optional[float] = None

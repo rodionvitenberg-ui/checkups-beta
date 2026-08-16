@@ -14,6 +14,12 @@ COPY . .
 
 ENV NEXT_TELEMETRY_DISABLED=1
 
+# NEXT_PUBLIC_* переменные вшиваются в клиентский бандл НА ЭТАПЕ СБОРКИ.
+# Их нельзя передавать только через runtime environment (docker-compose).
+# ВАЖНО: бэкенд монтирует маршруты в КОРНЕ (без /api).
+ARG NEXT_PUBLIC_API_URL=https://api.webdoc.life
+ENV NEXT_PUBLIC_API_URL=$NEXT_PUBLIC_API_URL
+
 RUN npm run build
 
 # --- ФИНАЛЬНЫЙ СЛОЙ (RUNNER) ---

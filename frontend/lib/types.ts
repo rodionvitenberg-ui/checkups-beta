@@ -41,9 +41,9 @@ export interface AISummary {
 }
 
 export interface AIResult {
-    reasoning: string;
+    reasoning?: string;
     patient_info?: PatientMetadata;
-    summary: AISummary;
+    summary?: AISummary;
     indicators: AIIndicator[];
     causes: AICause[];
     recommendations: AIRecommendation[];

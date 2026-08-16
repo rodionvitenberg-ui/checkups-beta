@@ -8,6 +8,7 @@ import { clsx } from 'clsx';
 import { getProfiles } from '@/lib/api';
 import { PatientProfile } from '@/lib/types';
 import StaticBackground from '@/components/background/StaticBackground';
+import { API_BASE_URL } from '@/lib/api';
 import { sharedFileStore } from '@/lib/store';
 import { useTranslations } from 'next-intl';
 import { useStore } from '@/lib/store';
@@ -110,7 +111,6 @@ export default function UploadPage() {
 
         try {
             let targetUid = '';
-            const baseUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
             const headers: Record<string, string> = {};
             const token = localStorage.getItem('token');
             if (token) headers['Authorization'] = `Bearer ${token}`;
@@ -135,7 +135,7 @@ export default function UploadPage() {
                 }
                 // Для гостей ничего не передаем — бэкенд сам разберется на этапе Claim
 
-                const response = await fetch(`${baseUrl}/analyses/upload`, {
+                const response = await fetch(`${API_BASE_URL}/analyses/upload`, {
                     method: 'POST',
                     headers,
                     body: formData

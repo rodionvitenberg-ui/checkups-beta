@@ -20,6 +20,9 @@ export function PatientChart({ history }: PatientChartProps) {
   // Задаем HEX-код твоего secondary цвета для передачи в SVG-графики (recharts)
   const chartColor = "#3f94ca"; 
 
+  // ВАЖНО: useState вызывается безусловно ДО любых return, чтобы не нарушать правила хуков
+  const [selectedSlug, setSelectedSlug] = useState<string>(history?.[0]?.slug ?? '');
+
   if (!history || history.length === 0) {
     return (
         <div className="text-center flex flex-col items-center justify-center text-slate-400 py-16 bg-slate-50/50 rounded-2xl border border-dashed border-slate-200">
@@ -28,8 +31,6 @@ export function PatientChart({ history }: PatientChartProps) {
         </div>
     );
   }
-
-  const [selectedSlug, setSelectedSlug] = useState<string>(history[0].slug);
 
   const activeChart = useMemo(() => {
     return history.find(h => h.slug === selectedSlug);

@@ -10,6 +10,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     tesseract-ocr-rus \
     tesseract-ocr-eng \
     tesseract-ocr-spa \
+    poppler-utils \
     libgl1 \
     libpq-dev \
     gcc \

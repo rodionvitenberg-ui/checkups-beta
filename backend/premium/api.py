@@ -137,28 +137,29 @@ def chat_with_analysis(request, uid: str, payload: ChatRequestSchema):
     
     def event_stream():
         full_response = []
-        stream_generator = assistant.stream_chat(
-            analysis_data=analysis.ai_result, 
-            patient_context=patient_context, 
-            chat_history=db_history
-        )
-        for chunk in stream_generator:
-            full_response.append(chunk)
-            # Экранируем переносы строк для формата SSE
-            yield f"data: {chunk.replace('\n', '\\n')}\n\n"
-        
-        # 5. Сохраняем полный ответ ИИ в БД после завершения стрима
-        assistant_final_text = "".join(full_response)
-        if assistant_final_text:
-            ChatMessage.objects.create(
-                analysis=analysis, 
-                role='assistant', 
-                content=assistant_final_text
+        try:
+            stream_generator = assistant.stream_chat(
+                analysis_data=analysis.ai_result, 
+                patient_context=patient_context, 
+                chat_history=db_history
             )
-            
-            # ЗАПУСКАЕМ ФОНОВУЮ ТАСКУ Celery!
-            summarize_chat_history_task.delay(analysis.uid)
-            
+            for chunk in stream_generator:
+                full_response.append(chunk)
+                # Экранируем переносы строк для формата SSE
+                yield f"data: {chunk.replace('\n', '\\n')}\n\n"
+        finally:
+            # 5. Сохраняем полный ответ ИИ в БД даже при обрыве стрима
+            assistant_final_text = "".join(full_response)
+            if assistant_final_text:
+                ChatMessage.objects.create(
+                    analysis=analysis,
+                    role='assistant',
+                    content=assistant_final_text
+                )
+
+                # ЗАПУСКАЕМ ФОНОВУЮ ТАСКУ Celery!
+                summarize_chat_history_task.delay(analysis.uid)
+
         yield "data: [DONE]\n\n"
 
     return StreamingHttpResponse(event_stream(), content_type='text/event-stream')
@@ -166,19 +167,21 @@ def chat_with_analysis(request, uid: str, payload: ChatRequestSchema):
 @router.post("/payment/create")
 def create_subscription_payment(request):
     user = request.user
-    
-    # Создаем транзакцию в БД
-    tx = Transaction.objects.create(
-        user=user,
-        amount=10.00, # Цена подписки
-        status='pending'
-    )
-    
+
+    # Переиспользуем активный pending-ордер — повторные клики не плодят дубли
+    tx = Transaction.objects.filter(user=user, status='pending').first()
+    if not tx:
+        tx = Transaction.objects.create(
+            user=user,
+            amount=10.00,  # Цена подписки
+            status='pending'
+        )
+
     try:
         service = CryptomusService()
         payment_url = service.create_payment(
-            order_id=tx.order_id, 
-            amount="10.00", 
+            order_id=tx.order_id,
+            amount="10.00",
             email=user.email
         )
         return {"payment_url": payment_url}
@@ -192,27 +195,30 @@ def create_subscription_payment(request):
 @router.post("/payment/webhook", auth=None)
 def payment_webhook(request):
     try:
-        data = json.loads(request.body)
+        raw_body = request.body
+        data = json.loads(raw_body)
         sign = data.get('sign')
-        
+
         service = CryptomusService()
-        if not service.verify_webhook(data, sign):
+        if not service.verify_webhook(raw_body, sign):
             return JsonResponse({"error": "Invalid signature"}, status=400)
-            
+
         order_id = data.get('order_id')
-        status = data.get('status') # 'paid', 'paid_over', etc.
-        
+        status = data.get('status')  # 'paid', 'paid_over', etc.
+
         if status in ['paid', 'paid_over']:
             tx = Transaction.objects.get(order_id=order_id)
             if tx.status != 'paid':
                 tx.status = 'paid'
                 tx.save()
-                
-                # ВЫДАЕМ PRO НА 30 ДНЕЙ!
+
+                # ВЫДАЕМ PRO НА 30 ДНЕЙ — продлеваем от текущей даты окончания
                 user = tx.user
-                user.pro_expires_at = timezone.now() + timedelta(days=30)
+                current = user.pro_expires_at or timezone.now()
+                new_expiry = max(current, timezone.now()) + timedelta(days=30)
+                user.pro_expires_at = new_expiry
                 user.save(update_fields=['pro_expires_at'])
-                
+
         return JsonResponse({"status": "ok"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)

@@ -66,6 +66,27 @@ class PatientProfile(models.Model):
     
     created_at = models.DateTimeField(auto_now_add=True)
 
+    def age_at(self, on_date=None):
+        """Точный возраст на указанную дату (на момент анализа)."""
+        if not self.birth_date:
+            return None
+        on_date = on_date or timezone.now().date()
+        dob = self.birth_date
+        return on_date.year - dob.year - ((on_date.month, on_date.day) < (dob.month, dob.day))
+
+    def age_display(self, on_date=None):
+        """Читаемое представление возраста: 'лет' или 'месяцев' для младенцев."""
+        age = self.age_at(on_date)
+        if age is None:
+            return None
+        if age > 0:
+            return f"{age} лет/года"
+        # Если ребенку меньше года, считаем месяцы
+        months = (
+            (on_date or timezone.now().date()).year - self.birth_date.year
+        ) * 12 + (on_date or timezone.now().date()).month - self.birth_date.month
+        return f"{max(months, 0)} месяцев"
+
     def __str__(self):
         # Умный __str__ для отладки сирот
         owner = self.user.email if self.user else _("Гость")

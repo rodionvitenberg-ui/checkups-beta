@@ -9,7 +9,7 @@ interface StaticBackgroundProps {
 export default function StaticBackground({ imageUrl }: StaticBackgroundProps) {
   return (
     // Используем fixed, чтобы фон не «прыгал» при изменении высоты вьюпорта на мобилках
-    <div className="fixed inset-0 z-0 pointer-events-none overflow-hidden">
+    <div className="fixed inset-x-0 top-0 h-dvh z-0 pointer-events-none overflow-hidden">
       <Image
         src={imageUrl}
         alt="Background"

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useMemo } from "react";
-import { motion, AnimatePresence, LayoutGroup } from "framer-motion";
+import { motion, AnimatePresence, LayoutGroup } from "motion/react";
 import { Plus } from "lucide-react";
 import Image from "next/image";
 import { clsx } from 'clsx';
@@ -133,7 +133,12 @@ function FAQItem({ item, isOpen, toggle }: { item: FAQItemType, isOpen: boolean,
                         className="overflow-hidden"
                     >
                         <div className="pt-5 text-base text-accent font-medium leading-relaxed">
-                            <div dangerouslySetInnerHTML={{ __html: item.answer.replace(/\n/g, '<br/>') }} />
+                            {item.answer.split('\n').map((line, lIdx) => (
+                                <span key={lIdx}>
+                                    {line}
+                                    {lIdx < item.answer.split('\n').length - 1 && <br />}
+                                </span>
+                            ))}
                         </div>
                     </motion.div>
                 )}

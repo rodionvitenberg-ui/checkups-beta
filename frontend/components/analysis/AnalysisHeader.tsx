@@ -1,10 +1,9 @@
 'use client';
 
 import { FileText, Plus, Eye, Download, Loader2 } from 'lucide-react';
-import { format } from 'date-fns';
-import { ru, enUS, es } from 'date-fns/locale';
 import { AnalysisResponse } from '@/lib/types';
 import { useTranslations, useLocale } from 'next-intl';
+import { formatAnalysisDate } from '@/lib/analysis-utils';
 
 interface AnalysisHeaderProps {
     data: AnalysisResponse;
@@ -25,27 +24,10 @@ export function AnalysisHeader({
 }: AnalysisHeaderProps) {
     const t = useTranslations('Analysis.Header');
     const locale = useLocale();
-    const dateLocale = locale === 'ru' ? ru : locale === 'es' ? es : enUS;
 
     const result = data.ai_result!;
 
-    const analysisDate = (() => {
-        const extDate = result.patient_info?.extracted_date;
-        let d = data.created_at ? new Date(data.created_at) : new Date();
-        if (extDate) {
-            const parsed = new Date(extDate);
-            if (!isNaN(parsed.getTime())) {
-                d = parsed;
-            } else if (extDate.includes('.')) {
-                const parts = extDate.split('.');
-                if (parts.length === 3) {
-                    const parsed2 = new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);
-                    if (!isNaN(parsed2.getTime())) d = parsed2;
-                }
-            }
-        }
-        return format(d, 'd MMMM yyyy', { locale: dateLocale });
-    })();
+    const analysisDate = formatAnalysisDate(result.patient_info?.extracted_date, data.created_at, locale);
 
     return (
         <div className="bg-white/40 backdrop-blur-md rounded-2xl p-6 border border-white/60 shadow-xl shadow-slate-200/50 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 relative overflow-hidden">
@@ -57,7 +39,7 @@ export function AnalysisHeader({
                         <FileText className="w-5 h-5 md:w-6 md:h-6 text-[#3f94ca]" />
                         {t('title')} {analysisDate}
                     </h1>
-                    {!result.summary.is_critical ? (
+                    {result.summary && !result.summary.is_critical ? (
                         <span className="px-3 py-1 bg-[#00be64]/10 text-[#00be64] text-xs font-bold rounded-full uppercase tracking-wide">
                             {t('statusNormal')}
                         </span>
@@ -68,7 +50,7 @@ export function AnalysisHeader({
                     )}
                 </div>
                 <p className="text-sm text-slate-600 max-w-3xl leading-relaxed font-medium">
-                    {result.summary.general_comment}
+                    {result.summary?.general_comment}
                 </p>
             </div>
 

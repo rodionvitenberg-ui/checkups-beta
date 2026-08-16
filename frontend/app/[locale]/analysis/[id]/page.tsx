@@ -15,6 +15,8 @@ import { AnalysisTreeSidebar } from '@/components/analysis/AnalysisTreeSidebar';
 import StaticBackground from '@/components/background/StaticBackground';
 import { RefineAnalysisBlock } from '@/components/analysis/RefineAnalysisBlock';
 import { AnalysisChat } from '@/components/analysis/AnalysisChat';
+import { downloadBlob } from '@/lib/analysis-utils';
+import { API_BASE_URL } from '@/lib/api';
 
 // Импорты наших новых модулей
 import { AnalysisLoading } from '@/components/analysis/AnalysisLoading';
@@ -51,8 +53,7 @@ export default function AnalysisPage() {
           setIsPolling(false);
         } else {
           // Если он всё еще в обработке, открываем потоковое соединение (SSE)
-          const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:8000/api';
-          eventSource = new EventSource(`${apiUrl}/analyses/${id}/status-stream`);
+          eventSource = new EventSource(`${API_BASE_URL}/analyses/${id}/status-stream`);
 
           eventSource.onmessage = async (event) => {
             const status = event.data;
@@ -101,20 +102,7 @@ export default function AnalysisPage() {
     setIsGeneratingPDF(true);
     try {
       const blob = await pdf(<AnalysisPDF data={data} />).toBlob();
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `Checkups_Report_${id.slice(0, 8)}.pdf`;
-      
-      link.style.display = 'none'; 
-      document.body.appendChild(link);
-      link.click();
-      
-      setTimeout(() => {
-        document.body.removeChild(link);
-        URL.revokeObjectURL(url);
-      }, 1000);
-
+      downloadBlob(blob, `Checkups_Report_${id.slice(0, 8)}.pdf`);
     } catch (error) {
       console.error("Ошибка при генерации PDF:", error);
       alert(t('pdfError'));

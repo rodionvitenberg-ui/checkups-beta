@@ -3,31 +3,15 @@ import json
 import base64
 import hashlib
 import requests
-from django.conf import settings
-from openai import OpenAI
+
+from core.llm import LLMClient
 from analysis.models import PromptTemplate
 from .models import ChatSettings
 
 class ChatAssistant:
     def __init__(self, language_code='ru'):
-        self.api_keys = []
-        for key, val in os.environ.items():
-            if key.startswith("AI_API_KEY") and val:
-                self.api_keys.append(val)
-        
-        self.current_key_idx = 0
-        self.base_url = "https://api.deepseek.com"
-        self.model_name = "deepseek-chat"
+        self.llm = LLMClient(base_url="https://api.deepseek.com", model_name="deepseek-chat")
         self.language_code = language_code
-
-    def _get_client(self):
-        return OpenAI(api_key=self.api_keys[self.current_key_idx], base_url=self.base_url)
-
-    def _switch_key(self):
-        if self.current_key_idx < len(self.api_keys) - 1:
-            self.current_key_idx += 1
-            return True
-        return False
 
     def _get_prompt(self) -> str:
         try:
@@ -70,36 +54,17 @@ class ChatAssistant:
         else:
             payload_data = analysis_data # Кидаем огромный JSON как есть
 
-        for attempt in range(max(1, len(self.api_keys))):
-            try:
-                client = self._get_client()
-                sys_prompt = self._get_prompt()
-                
-                # Используем payload_data вместо analysis_data
-                context_block = f"ДАННЫЕ ПАЦИЕНТА:\n{patient_context}\n\nАНАЛИЗ (JSON):\n{json.dumps(payload_data, ensure_ascii=False)}"
-                
-                messages = [{"role": "system", "content": f"{sys_prompt}\n\n{context_block}"}]
-                for msg in chat_history:
-                    role = getattr(msg, 'role', msg.get('role') if isinstance(msg, dict) else 'user')
-                    content = getattr(msg, 'content', msg.get('content') if isinstance(msg, dict) else '')
-                    messages.append({"role": role, "content": content})
+        # Используем общий LLMClient — пул ключей и ротация внутри
+        sys_prompt = self._get_prompt()
+        context_block = f"ДАННЫЕ ПАЦИЕНТА:\n{patient_context}\n\nАНАЛИЗ (JSON):\n{json.dumps(payload_data, ensure_ascii=False)}"
 
-                response = client.chat.completions.create(
-                    model=self.model_name,
-                    messages=messages,
-                    temperature=0.3,
-                    stream=True
-                )
-                
-                for chunk in response:
-                    if chunk.choices[0].delta.content:
-                        yield chunk.choices[0].delta.content
-                return
+        messages = []
+        for msg in chat_history:
+            role = getattr(msg, 'role', msg.get('role') if isinstance(msg, dict) else 'user')
+            content = getattr(msg, 'content', msg.get('content') if isinstance(msg, dict) else '')
+            messages.append({"role": role, "content": content})
 
-            except Exception as e:
-                print(f"Chat stream error: {e}")
-                if not self._switch_key():
-                    yield "Сервис временно недоступен."
+        yield from self.llm.stream(sys_prompt=f"{sys_prompt}\n\n{context_block}", messages=messages)
 
 class CryptomusService:
     API_URL = "https://api.cryptomus.com/v1"
@@ -116,12 +81,13 @@ class CryptomusService:
 
     def create_payment(self, order_id: str, amount: str, email: str) -> str:
         """Создает платеж и возвращает URL для редиректа юзера"""
+        site_url = os.environ.get("SITE_URL", "https://webdoc.life").rstrip("/")
         payload = {
             "amount": str(amount),
             "currency": "USD",
             "order_id": str(order_id),
-            "url_return": "https://твой_домен/dashboard", # Куда вернуть юзера после оплаты
-            "url_callback": "https://твой_домен/api/premium/payment/webhook" # Куда придет Webhook
+            "url_return": f"{site_url}/dashboard",  # Куда вернуть юзера после оплаты
+            "url_callback": f"{site_url}/api/premium/payment/webhook",  # Куда придет Webhook
         }
         
         headers = {
@@ -137,16 +103,17 @@ class CryptomusService:
             return data["result"]["url"] # Возвращаем ссылку на оплату
         raise Exception(f"Cryptomus error: {data}")
 
-    def verify_webhook(self, data: dict, sign: str) -> bool:
-        """Проверяет подлинность вебхука"""
-        dict_copy = data.copy()
-        dict_copy.pop('sign', None) # Удаляем подпись из тела перед проверкой
-        
-        # Сортируем ключи и собираем обратно (требование Cryptomus)
-        # Для упрощения: в проде лучше использовать raw_body + API_KEY, если фреймворк позволяет.
-        # В нашем случае полагаемся на логику md5(json + key)
-        json_str = json.dumps(dict_copy, separators=(',', ':'))
-        encoded = base64.b64encode(json_str.encode('utf-8')).decode('utf-8')
+    def verify_webhook(self, raw_body: bytes, sign: str | None = None) -> bool:
+        """Проверяет подлинность вебхука по СЫРОМУ телу запроса (требование Cryptomus).
+
+        Cryptomus подписывает md5(base64(raw_body) + API_KEY).
+        Парсить тело и пересобирать JSON нельзя — порядок ключей/экранирование
+        не обязаны совпадать с исходным запросом.
+        """
+        if not sign:
+            return False
+
+        encoded = base64.b64encode(raw_body).decode('utf-8')
         expected_sign = hashlib.md5(f"{encoded}{self.payment_key}".encode('utf-8')).hexdigest()
-        
+
         return sign == expected_sign
