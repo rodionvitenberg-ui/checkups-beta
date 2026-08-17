@@ -131,7 +131,9 @@ def register(request, payload: RegisterSchema):
     return {
         "token": str(refresh.access_token),
         "refresh_token": str(refresh),
-        "user_email": user.email
+        "user_email": user.email,
+        "is_pro": user.is_pro,
+        "pro_expires_at": user.pro_expires_at.isoformat() if user.pro_expires_at else None,
     }
 
 @api.post("/auth/login", response=AuthResponseSchema)
@@ -144,7 +146,9 @@ def login(request, payload: LoginSchema):
     return {
         "token": str(refresh.access_token),
         "refresh_token": str(refresh),
-        "user_email": user.email
+        "user_email": user.email,
+        "is_pro": user.is_pro,
+        "pro_expires_at": user.pro_expires_at.isoformat() if user.pro_expires_at else None,
     }
 
 @api.post("/auth/claim-request")
@@ -221,7 +225,9 @@ def claim_verify(request, payload: ClaimVerifyOTPSchema):
     return {
         "token": str(refresh.access_token),
         "refresh_token": str(refresh),
-        "user_email": user.email
+        "user_email": user.email,
+        "is_pro": user.is_pro,
+        "pro_expires_at": user.pro_expires_at.isoformat() if user.pro_expires_at else None,
     }
 
 

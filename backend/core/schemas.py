@@ -85,6 +85,8 @@ class AuthResponseSchema(Schema):
     token: str
     refresh_token: str
     user_email: str
+    is_pro: bool = False
+    pro_expires_at: Optional[datetime] = None
     
 class RefreshRequestSchema(Schema):
     refresh: str

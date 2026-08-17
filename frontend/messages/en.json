@@ -281,7 +281,14 @@
     "errorTooShort": "Password must be at least 6 characters",
     "errorServer": "Incorrect current password or server error",
     "successChanged": "Password changed successfully!"
-  }
+  },
+    "ProStatus": {
+      "activeTitle": "PRO subscription active",
+      "inactiveTitle": "Upgrade to PRO",
+      "activeUntil": "Active until {date}",
+      "inactiveDesc": "Unlock unlimited AI access and advanced analytics",
+      "upgradeBtn": "Upgrade to PRO"
+    }
   },
   "Analysis": {
     "Chat": {

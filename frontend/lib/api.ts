@@ -90,11 +90,12 @@ api.interceptors.response.use(
     }
 );
 
-const setAuthTokens = (token: string, refresh: string, email: string) => {
+const setAuthTokens = (token: string, refresh: string, email: string, isPro: boolean = false) => {
     if (typeof window !== 'undefined') {
         localStorage.setItem('token', token);
         localStorage.setItem('refresh_token', refresh);
         localStorage.setItem('user_email', email);
+        localStorage.setItem('is_pro', isPro ? '1' : '0');
         window.dispatchEvent(new Event('auth-change'));
     }
 };
@@ -105,13 +106,13 @@ const setAuthTokens = (token: string, refresh: string, email: string) => {
 
 export const login = async (data: any): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/login', data);
-    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
+    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email, response.data.is_pro);
     return response.data;
 };
 
 export const register = async (data: any): Promise<AuthResponse> => {
     const response = await api.post<AuthResponse>('/auth/register', data);
-    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
+    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email, response.data.is_pro);
     return response.data;
 };
 
@@ -206,7 +207,7 @@ export const claimVerify = async (
     const response = await api.post<AuthResponse>('/auth/claim-verify', {
         analysis_uids: analysisUids, email, phone, code, password
     });
-    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email);
+    setAuthTokens(response.data.token, response.data.refresh_token, response.data.user_email, response.data.is_pro);
     if (typeof window !== 'undefined') {
         localStorage.setItem('new_analysis_ids', JSON.stringify(analysisUids));
     }
@@ -335,5 +336,10 @@ export const streamAnalysisChat = async (
 export const createPayment = async (): Promise<{ payment_url: string }> => {
     // В axios интерсепторе уже подмешивается токен, так что auth-заголовок уйдет сам
     const response = await api.post('/premium/payment/create');
+    return response.data;
+};
+
+export const getPremiumStatus = async (): Promise<{ is_pro: boolean; pro_expires_at: string | null }> => {
+    const response = await api.get('/premium/payment/status');
     return response.data;
 };

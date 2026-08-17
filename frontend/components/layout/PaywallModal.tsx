@@ -7,12 +7,12 @@ import { useTranslations } from 'next-intl';
 import { Crown, Sparkles, Activity, MessageSquare, ShieldCheck, X, Loader2, Lock } from 'lucide-react';
 
 export default function PaywallModal() {
-    const { isPaywallOpen, setPaywallOpen } = useStore();
+    const { isPaywallOpen, setPaywallOpen, isPro } = useStore();
     const [isLoading, setIsLoading] = useState(false);
     
     const t = useTranslations('Paywall'); 
 
-    if (!isPaywallOpen) return null;
+    if (!isPaywallOpen || isPro) return null;
 
     const handleBuy = async () => {
         setIsLoading(true);

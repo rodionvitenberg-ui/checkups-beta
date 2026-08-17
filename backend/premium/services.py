@@ -66,6 +66,9 @@ class ChatAssistant:
 
         yield from self.llm.stream(sys_prompt=f"{sys_prompt}\n\n{context_block}", messages=messages)
 
+# Стоимость подписки PRO (USD) — единый источник цены
+SUBSCRIPTION_AMOUNT = "10.00"
+
 class CryptomusService:
     API_URL = "https://api.cryptomus.com/v1"
     
@@ -80,14 +83,23 @@ class CryptomusService:
         return hashlib.md5(f"{encoded_payload}{self.payment_key}".encode('utf-8')).hexdigest()
 
     def create_payment(self, order_id: str, amount: str, email: str) -> str:
-        """Создает платеж и возвращает URL для редиректа юзера"""
+        """
+        Создает платеж и возвращает URL для редиректа юзера.
+
+        url_return — куда попадает юзер после оплаты (фронтенд).
+        url_callback — куда Cryptomus шлёт webhook (API бэкенда).
+        API смонтирован в корне (config/urls.py => path('', api.urls)),
+        поэтому callback путь БЕЗ префикса /api.
+        """
         site_url = os.environ.get("SITE_URL", "https://webdoc.life").rstrip("/")
+        backend_url = os.environ.get("BACKEND_URL", "https://api.webdoc.life").rstrip("/")
         payload = {
             "amount": str(amount),
             "currency": "USD",
             "order_id": str(order_id),
+            "email": email,
             "url_return": f"{site_url}/dashboard",  # Куда вернуть юзера после оплаты
-            "url_callback": f"{site_url}/api/premium/payment/webhook",  # Куда придет Webhook
+            "url_callback": f"{backend_url}/premium/payment/webhook",  # Куда придет Webhook
         }
         
         headers = {

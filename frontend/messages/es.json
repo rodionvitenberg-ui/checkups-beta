@@ -283,7 +283,14 @@
     "errorTooShort": "La contraseña debe tener al menos 6 caracteres",
     "errorServer": "Contraseña actual incorrecta o error del servidor",
     "successChanged": "¡Contraseña cambiada con éxito!"
-  }
+  },
+    "ProStatus": {
+      "activeTitle": "Suscripción PRO activa",
+      "inactiveTitle": "Mejora a PRO",
+      "activeUntil": "Activa hasta el {date}",
+      "inactiveDesc": "Desbloquea acceso ilimitado a la IA y análisis avanzados",
+      "upgradeBtn": "Mejorar a PRO"
+    }
   },
   "Analysis": {
     "Chat": {

@@ -4,6 +4,8 @@ export interface AuthResponse {
     token: string;
     refresh_token: string; 
     user_email: string;
+    is_pro: boolean;
+    pro_expires_at?: string | null;
 }
 
 export interface PatientMetadata {

@@ -281,7 +281,14 @@
     "errorTooShort": "Пароль должен содержать минимум 6 символов",
     "errorServer": "Неверный текущий пароль или ошибка сервера",
     "successChanged": "Пароль успешно изменен!"
-  }
+  },
+    "ProStatus": {
+      "activeTitle": "PRO-подписка активна",
+      "inactiveTitle": "Перейдите на PRO",
+      "activeUntil": "Активна до {date}",
+      "inactiveDesc": "Откройте безлимитный доступ к ИИ и расширенной аналитике",
+      "upgradeBtn": "Перейти на PRO"
+    }
   },
   "Analysis": {
     "Chat": {

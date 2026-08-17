@@ -3,7 +3,7 @@ from django.utils import timezone
 from datetime import timedelta
 import json
 from .models import Transaction
-from .services import CryptomusService
+from .services import CryptomusService, SUBSCRIPTION_AMOUNT
 from typing import List
 from django.http import StreamingHttpResponse, JsonResponse
 from django.shortcuts import get_object_or_404
@@ -173,7 +173,7 @@ def create_subscription_payment(request):
     if not tx:
         tx = Transaction.objects.create(
             user=user,
-            amount=10.00,  # Цена подписки
+            amount=SUBSCRIPTION_AMOUNT,
             status='pending'
         )
 
@@ -181,7 +181,7 @@ def create_subscription_payment(request):
         service = CryptomusService()
         payment_url = service.create_payment(
             order_id=tx.order_id,
-            amount="10.00",
+            amount=SUBSCRIPTION_AMOUNT,
             email=user.email
         )
         return {"payment_url": payment_url}
@@ -218,7 +218,23 @@ def payment_webhook(request):
                 new_expiry = max(current, timezone.now()) + timedelta(days=30)
                 user.pro_expires_at = new_expiry
                 user.save(update_fields=['pro_expires_at'])
+        elif status == 'fail':
+            # Помечаем транзакцию как неуспешную (возврат средств и т.п.)
+            tx = Transaction.objects.get(order_id=order_id)
+            if tx.status != 'paid':  # Не трогаем уже оплаченные
+                tx.status = 'fail'
+                tx.save()
 
         return JsonResponse({"status": "ok"})
     except Exception as e:
         return JsonResponse({"error": str(e)}, status=400)
+
+
+# Статус подписки для фронтенда
+@router.get("/payment/status")
+def payment_status(request):
+    user = request.user
+    return {
+        "is_pro": user.is_pro,
+        "pro_expires_at": user.pro_expires_at.isoformat() if user.pro_expires_at else None,
+    }

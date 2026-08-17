@@ -9,6 +9,7 @@ import { FileUploader } from '@/components/home/FileUploader';
 import StaticBackground from '@/components/background/StaticBackground';
 import { ChangePasswordModal } from '@/components/dashboard/ChangePasswordModal';
 import { ProfileCard } from '@/components/dashboard/ProfileCard';
+import { ProStatusCard } from '@/components/dashboard/ProStatusCard';
 import { useTranslations } from 'next-intl';
 
 export default function DashboardPage() {
@@ -78,6 +79,9 @@ export default function DashboardPage() {
                         <span>{t('uploadAnalysis')}</span>
                     </button>
                 </div>
+
+                {/* СТАТУС ПОДПИСКИ PRO */}
+                <ProStatusCard />
 
                 {/* СПИСОК ПРОФИЛЕЙ */}
                 <div className="space-y-5">

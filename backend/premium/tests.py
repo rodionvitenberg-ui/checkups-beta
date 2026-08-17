@@ -1,4 +1,5 @@
 from datetime import timedelta
+from unittest.mock import patch
 
 from django.test import TestCase
 from django.utils import timezone
@@ -33,7 +34,6 @@ class ProExtensionTests(TestCase):
         self.user.pro_expires_at = existing
         self.user.save()
 
-        # Симулируем логику из payment_webhook (продление)
         current = self.user.pro_expires_at or timezone.now()
         new_expiry = max(current, timezone.now()) + timedelta(days=30)
         self.user.pro_expires_at = new_expiry
@@ -45,3 +45,66 @@ class ProExtensionTests(TestCase):
             timedelta(days=50).total_seconds(),
             delta=5,
         )
+
+
+class PaymentWebhookTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="webhook@example.com", password="testpass123"
+        )
+        self.tx = Transaction.objects.create(user=self.user, amount="10.00", status="pending")
+
+    @patch("premium.services.CryptomusService.verify_webhook", return_value=True)
+    def test_webhook_fail_marks_transaction(self, mock_verify):
+        """Webhook со статусом fail помечает транзакцию как неуспешную."""
+        import json
+
+        payload = {"order_id": str(self.tx.order_id), "status": "fail"}
+        response = self.client.post(
+            "/premium/payment/webhook",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+        self.tx.refresh_from_db()
+        self.assertEqual(self.tx.status, "fail")
+
+    @patch("premium.services.CryptomusService.verify_webhook", return_value=True)
+    def test_webhook_paid_grants_pro(self, mock_verify):
+        """Webhook со статусом paid выдаёт PRO и не трогает повторные оплаты."""
+        import json
+
+        payload = {"order_id": str(self.tx.order_id), "status": "paid"}
+        response = self.client.post(
+            "/premium/payment/webhook",
+            data=json.dumps(payload),
+            content_type="application/json",
+        )
+        self.assertEqual(response.status_code, 200)
+
+        self.tx.refresh_from_db()
+        self.assertEqual(self.tx.status, "paid")
+        self.user.refresh_from_db()
+        self.assertTrue(self.user.is_pro)
+
+
+class PaymentStatusEndpointTests(TestCase):
+    def setUp(self):
+        self.user = User.objects.create_user(
+            email="status@example.com", password="testpass123"
+        )
+
+    def test_payment_status_returns_expected_shape(self):
+        """Эндпоинт статуса возвращает is_pro и pro_expires_at."""
+        from premium.api import payment_status
+
+        payload = {"user": self.user}
+        result = payment_status(type("Request", (), payload)())
+        self.assertFalse(result["is_pro"])
+        self.assertIsNone(result["pro_expires_at"])
+
+        self.user.pro_expires_at = timezone.now() + timedelta(days=7)
+        self.user.save()
+        result = payment_status(type("Request", (), {"user": self.user})())
+        self.assertTrue(result["is_pro"])
+        self.assertIsNotNone(result["pro_expires_at"])
